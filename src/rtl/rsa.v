@@ -60,21 +60,29 @@ module rsa(
   parameter ADDR_NAME1       = 8'h01;
   parameter ADDR_VERSION     = 8'h02;
 
+  parameter ADDR_KEYSIZE     = 8'h20;
+  
   parameter CORE_NAME0     = 32'h72736120; // "rsa "
   parameter CORE_NAME1     = 32'h34303936; // "4096"
   parameter CORE_VERSION   = 32'h302e3031; // "0.01"
+
+  // 4096 bits default key size.
+  parameter DEFAULT_KEYSIZE = 4'h4;
 
   
   //----------------------------------------------------------------
   // Registers including update variables and write enable.
   //----------------------------------------------------------------
+  reg [3 : 0] keysize_reg;
+  reg [3 : 0] keysize_new;
+  reg [3 : 0] keysize_we;
 
   
   //----------------------------------------------------------------
   // Wires.
   //----------------------------------------------------------------
-  reg [31 : 0]   tmp_read_data;
-  reg            tmp_error;
+  reg [31 : 0] tmp_read_data;
+  reg          tmp_error;
   
   
   //----------------------------------------------------------------
@@ -99,14 +107,18 @@ module rsa(
     begin
       if (!reset_n)
         begin
-
+          keysize_reg <= KEYSIZE_4096;
         end
       else
         begin
-          
+          if (keysize_we)
+            begin
+              keysize_reg <= keysize_new;
+            end
         end
     end // reg_update
   
+
   //----------------------------------------------------------------
   // api
   //
@@ -114,6 +126,8 @@ module rsa(
   //----------------------------------------------------------------
   always @*
     begin : api
+      keysize_new   = 4'h0;
+      keysize_we    = 0;
       tmp_read_data = 32'h00000000;
       tmp_error     = 0;
       
@@ -123,6 +137,11 @@ module rsa(
             begin
               case (address)
                 // Write operations.
+                ADDR_KEYSIZE:
+                  begin
+                    keysize_new = write_data[3 : 0];
+                    keysize_we  = 0;
+                  end
                 
                 default:
                   begin
@@ -148,6 +167,11 @@ module rsa(
                 ADDR_VERSION:
                   begin
                     tmp_read_data = CORE_VERSION;
+                  end
+                
+                ADDR_KEYSIZE:
+                  begin
+                    tmp_read_data = {28'h0000000, keysize_reg};
                   end
                 
                 default:
