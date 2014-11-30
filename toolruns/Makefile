@@ -41,7 +41,7 @@ TOP_SRC=../src/rtl/rsa.v
 CC=iverilog
 
 
-all: top.sim core.sim keymem.sim encipher.sim decipher.sim
+all: top.sim
 
 top.sim: $(TOP_SRC)
 	$(CC) -o top.sim $(TOP_SRC)
