@@ -60,9 +60,9 @@ module rsa(
   parameter ADDR_VERSION       = 8'h02;
 
   parameter ADDR_KEYSIZE       = 8'h10;
-  parameter ADDR_EXPONENT      = 8'020;
+  parameter ADDR_EXPONENT      = 8'h20;
 
-  paremeter MODULUS_PREFIX     = 4'h1;
+  parameter MODULUS_PREFIX     = 4'h1;
   parameter ADDR_MODULUS_START = 8'h00;
   parameter ADDR_MODULUS_END   = 8'hff;
 
@@ -141,7 +141,7 @@ module rsa(
 
       if (cs)
         begin
-          if (addr[11 : 8] == 4'h1)
+          if (address[11 : 8] == 4'h1)
             begin
               modulus_mem_we = we;
             end
