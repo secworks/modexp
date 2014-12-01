@@ -67,7 +67,7 @@ module rsa(
   parameter ADDR_MODULUS_END   = 8'hff;
 
   parameter CORE_NAME0         = 32'h72736120; // "rsa "
-  parameter CORE_NAME1         = 32'h34303936; // "4096"
+  parameter CORE_NAME1         = 32'h38313932; // "8192"
   parameter CORE_VERSION       = 32'h302e3031; // "0.01"
 
   parameter DEFAULT_KEYSIZE    = 4'h4;
