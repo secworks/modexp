@@ -83,6 +83,9 @@ module rsa(
   reg [31 : 0] modulus_mem [0 : 255];
   reg          modulus_mem_we;
 
+  reg [31 : 0] priv_exp_mem [0 : 255];
+  reg          priv_exp_mem_we;
+
   reg [3 : 0] keysize_reg;
   reg [3 : 0] keysize_new;
   reg [3 : 0] keysize_we;
