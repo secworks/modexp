@@ -214,7 +214,14 @@ module rsa(
 
             D_EXP_PREFIX:
               begin
-                priv_exp_mem_we = 1;
+                if (we)
+                  begin
+                    priv_exp_mem_we = 1;
+                  end
+                else
+                  begin
+                    tmp_read_data = priv_exp_mem[address[7 : 0]];
+                  end
               end
 
             default:
