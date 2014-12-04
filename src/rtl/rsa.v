@@ -74,7 +74,7 @@ module rsa(
   parameter CORE_NAME1         = 32'h38313932; // "8192"
   parameter CORE_VERSION       = 32'h302e3031; // "0.01"
 
-  parameter DEFAULT_KEYSIZE    = 4'h4;
+  parameter DEFAULT_KEYSIZE    = 8'h80;
 
 
   //----------------------------------------------------------------
@@ -83,12 +83,24 @@ module rsa(
   reg [31 : 0] modulus_mem [0 : 255];
   reg          modulus_mem_we;
 
-  reg [31 : 0] priv_exp_mem [0 : 255];
-  reg          priv_exp_mem_we;
+  reg [31 : 0] message_mem [0 : 255];
+  reg          message_mem_we;
 
-  reg [3 : 0] keysize_reg;
-  reg [3 : 0] keysize_new;
-  reg [3 : 0] keysize_we;
+  reg [31 : 0] exponent_reg;
+  reg [31 : 0] exponent_new;
+  reg          exponent_we;
+
+  reg [7 : 0]  keysize_reg;
+  reg [7 : 0]  keysize_new;
+  reg          keysize_we;
+
+  reg [7 : 0]  modulus_rd_ptr_reg;
+  reg [7 : 0]  modulus_rd_ptr_new;
+  reg          modulus_rd_ptr_we;
+
+  reg [7 : 0]  message_rd_ptr_reg;
+  reg [7 : 0]  message_rd_ptr_new;
+  reg          message_rd_ptr_we;
 
 
   //----------------------------------------------------------------
