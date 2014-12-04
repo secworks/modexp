@@ -66,9 +66,9 @@ module rsa(
   parameter ADDR_MODULUS_START = 8'h00;
   parameter ADDR_MODULUS_END   = 8'hff;
 
-  parameter D_EXP_PREFIX       = 4'h2;
-  parameter D_EXP_START        = 8'h00;
-  parameter D_EXP_END          = 8'hff;
+  parameter MESSAGE_PREFIX     = 4'h2;
+  parameter MESSAGE_START      = 8'h00;
+  parameter MESSAGE_END        = 8'hff;
 
   parameter CORE_NAME0         = 32'h72736120; // "rsa "
   parameter CORE_NAME1         = 32'h38313932; // "8192"
