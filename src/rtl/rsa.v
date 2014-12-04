@@ -202,7 +202,14 @@ module rsa(
 
             MODULUS_PREFIX:
               begin
-                modulus_mem_we = we;
+                if (we)
+                  begin
+                    modulus_mem_we = we;
+                  end
+                else
+                  begin
+                    tmp_read_data = modulus_mem[address[7 : 0]];
+                  end
               end
 
             D_EXP_PREFIX:
