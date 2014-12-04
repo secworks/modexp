@@ -140,67 +140,81 @@ module rsa(
   //----------------------------------------------------------------
   always @*
     begin : api
-      keysize_new    = 4'h0;
-      keysize_we     = 0;
-      tmp_read_data  = 32'h00000000;
-      tmp_error      = 0;
-      modulus_mem_we = 0;
+      keysize_new     = 4'h0;
+      keysize_we      = 0;
+      tmp_read_data   = 32'h00000000;
+      tmp_error       = 0;
+      modulus_mem_we  = 0;
+      priv_exp_mem_we = 0;
 
       if (cs)
         begin
-          if (address[11 : 8] == 4'h1)
-            begin
-              modulus_mem_we = we;
-            end
-          else
-            begin
-              if (we)
-                begin
-                  case (address)
-                    // Write operations.
-                    ADDR_KEYSIZE:
-                      begin
-                        keysize_new = write_data[3 : 0];
-                        keysize_we  = 0;
-                      end
+          case (address[11 : 8])
+            GENERAL_PREFIX:
+              begin
+                if (we)
+                  begin
+                    case (address)
+                      // Write operations.
+                      ADDR_KEYSIZE:
+                        begin
+                          keysize_new = write_data[3 : 0];
+                          keysize_we  = 0;
+                        end
 
-                    default:
-                      begin
-                        tmp_error = 1;
-                      end
-                  endcase // case (addr)
-                end // if (write_read)
-              else
-                begin
-                  case (address)
-                    // Read operations.
-                    ADDR_NAME0:
-                      begin
-                        tmp_read_data = CORE_NAME0;
-                      end
+                      default:
+                        begin
+                          tmp_error = 1;
+                        end
+                    endcase // case (addr)
+                  end // if (write_read)
+                else
+                  begin
+                    case (address)
+                      // Read operations.
+                      ADDR_NAME0:
+                        begin
+                          tmp_read_data = CORE_NAME0;
+                        end
 
-                    ADDR_NAME1:
-                      begin
-                        tmp_read_data = CORE_NAME1;
-                      end
+                      ADDR_NAME1:
+                        begin
+                          tmp_read_data = CORE_NAME1;
+                        end
 
-                    ADDR_VERSION:
-                      begin
-                        tmp_read_data = CORE_VERSION;
-                      end
+                      ADDR_VERSION:
+                        begin
+                          tmp_read_data = CORE_VERSION;
+                        end
 
-                    ADDR_KEYSIZE:
-                      begin
-                        tmp_read_data = {28'h0000000, keysize_reg};
-                      end
+                      ADDR_KEYSIZE:
+                        begin
+                          tmp_read_data = {28'h0000000, keysize_reg};
+                        end
 
-                    default:
-                      begin
-                        tmp_error = 1;
-                      end
-                  endcase // case (addr)
-                end
-            end // else: !if(addr[11 : 8] == 4'h1)
+                      default:
+                        begin
+                          tmp_error = 1;
+                        end
+                    endcase // case (addr)
+                  end
+              end
+
+            MODULUS_PREFIX:
+              begin
+                modulus_mem_we = we;
+              end
+
+            D_EXP_PREFIX:
+              begin
+                priv_exp_mem_we = 1;
+              end
+
+            default:
+              begin
+
+              end
+          endcase // case (address[11 : 8])
         end // if (cs)
     end // addr_decoder
 endmodule // rsa
