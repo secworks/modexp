@@ -82,9 +82,11 @@ module rsa(
   //----------------------------------------------------------------
   reg [31 : 0] modulus_mem [0 : 255];
   reg          modulus_mem_we;
+  reg [31 : 0] modulus_data;
 
   reg [31 : 0] message_mem [0 : 255];
   reg          message_mem_we;
+  reg [31 : 0] message_data;
 
   reg [31 : 0] exponent_reg;
   reg [31 : 0] exponent_new;
@@ -133,13 +135,44 @@ module rsa(
     begin
       if (!reset_n)
         begin
-          keysize_reg <= DEFAULT_KEYSIZE;
+          exponent_reg       <= 32'h00000000;
+          modulus_rd_ptr_reg <= 8'h00;
+          message_rd_ptr_reg <= 8'h00;
+          keysize_reg        <= DEFAULT_KEYSIZE;
         end
       else
         begin
+          modulus_data <= modulus_mem[modulus_rd_ptr_reg];
+          message_data <= message_mem[message_rd_ptr_reg];
+
           if (modulus_mem_we)
             begin
               modulus_mem[address[7 : 0]] <= write_data;
+            end
+
+          if (message_mem_we)
+            begin
+              message_mem[address[7 : 0]] <= write_data;
+            end
+
+          if (exponent_we)
+            begin
+              exponent_reg <= write_data;
+            end
+
+          if (keysize_we)
+            begin
+              keysize_reg <= write[7 : 0];
+            end
+
+          if (modulus_rd_ptr_we)
+            begin
+              modulus_rd_ptr_reg <= modulus_rd_ptr_new;
+            end
+
+          if (message_rd_ptr_we)
+            begin
+              message_rd_ptr_reg <= message_rd_ptr_new;
             end
         end
     end // reg_update
