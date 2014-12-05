@@ -104,6 +104,18 @@ module rsa(
   reg [7 : 0]  message_rd_ptr_new;
   reg          message_rd_ptr_we;
 
+  reg          encdec_reg;
+  reg          encdec_new;
+  reg          encdec_we;
+
+  reg          start_reg;
+  reg          start_new;
+  reg          start_we;
+
+  reg          done_reg;
+  reg          done_new;
+  reg          done_we;
+
 
   //----------------------------------------------------------------
   // Wires.
