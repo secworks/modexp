@@ -76,6 +76,17 @@ module rsa(
 
   parameter DEFAULT_KEYSIZE    = 8'h80;
 
+  parameter DECIPHER_MODE      = 1'b0;
+  parameter ENCIPHER_MODE      = 1'b1;
+
+  parameter CTRL_IDLE          = 3'h0;
+  parameter CTRL_START         = 3'h1;
+  parameter CTRL_INIT          = 3'h2;
+  parameter CTRL_RESIDUE0      = 3'h3;
+  parameter CTRL_ITERATE       = 3'h4;
+  parameter CTRL_RESIDUE1      = 3'h5;
+  parameter CTRL_DONE          = 3'h6;
+
 
   //----------------------------------------------------------------
   // Registers including update variables and write enable.
@@ -116,6 +127,10 @@ module rsa(
   reg          done_new;
   reg          done_we;
 
+  reg [2 : 0]  rsa_ctrl_reg;
+  reg [2 : 0]  rsa_ctrl_new;
+  reg          rsa_ctrl_we;
+
 
   //----------------------------------------------------------------
   // Wires.
@@ -151,6 +166,10 @@ module rsa(
           modulus_rd_ptr_reg <= 8'h00;
           message_rd_ptr_reg <= 8'h00;
           keysize_reg        <= DEFAULT_KEYSIZE;
+          encdec_reg         <= ENCIPHER_MODE;
+          start_reg          <= 1'b0;
+          done_reg           <= 1'b0;
+          rsa_ctrl_reg       <= CTRL_IDLE;
         end
       else
         begin
