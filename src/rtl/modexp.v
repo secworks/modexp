@@ -159,6 +159,7 @@ module modexp(
   // Concurrent connectivity for ports etc.
   //----------------------------------------------------------------
   assign read_data = tmp_read_data;
+  assign done      = done_reg;
   assign error     = tmp_error;
 
 
