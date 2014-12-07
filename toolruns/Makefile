@@ -2,7 +2,8 @@
 #
 # Makefile
 # --------
-# Makefile for building the RSA core and top simulations.
+# Makefile for building the modular exponentiation core and
+# top simulations.
 #
 #
 # Author: Joachim Strombergson
@@ -36,7 +37,7 @@
 #
 #===================================================================
 
-TOP_SRC=../src/rtl/rsa.v
+TOP_SRC=../src/rtl/modexp.v
 
 CC=iverilog
 
@@ -56,7 +57,7 @@ clean:
 
 
 help:
-	@echo "Build system for simulation of RSA core"
+	@echo "Build system for simulation of modular exponentation core"
 	@echo ""
 	@echo "Supported targets:"
 	@echo "------------------"
