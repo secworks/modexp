@@ -1,9 +1,23 @@
 //======================================================================
 //
-// rsa.v
-// -----
-// Top level wrapper for the RSA public key core. This wrapper
-// provides a simple memory like interface with 32 bit data access.
+// modexp.v
+// --------
+// Modular exponentiation core for implementing public key algorithms
+// such as RSA, DH, ElGamal etc.
+//
+// The core calculates the following function:
+//
+//   C = M ** e mod N
+//
+//   M is a message with a length of n bits
+//   e is the exponent with a length of at most 32 bits
+//   N is the modulus  with a length of n bits
+//   n is can be 32 and up to and including 8192 bits in steps
+//   of 32 bits.
+//
+// The core has a 32-bit memory like interface, but provides
+// status signals to inform the system that a given operation
+// has is done. Additionally, any errors will also be asserted.
 //
 //
 // Author: Joachim Strombergson
@@ -37,18 +51,20 @@
 //
 //======================================================================
 
-module rsa(
-           input wire           clk,
-           input wire           reset_n,
+module modexp(
+              input wire           clk,
+              input wire           reset_n,
 
-           input wire           cs,
-           input wire           we,
+              input wire           cs,
+              input wire           we,
 
-           input wire  [11 : 0] address,
-           input wire  [31 : 0] write_data,
-           output wire [31 : 0] read_data,
-           output wire          error
-          );
+              input wire  [11 : 0] address,
+              input wire  [31 : 0] write_data,
+              output wire [31 : 0] read_data,
+
+              output wire          done,
+              output wire          error
+             );
 
 
   //----------------------------------------------------------------
@@ -307,8 +323,8 @@ module rsa(
           endcase // case (address[11 : 8])
         end // if (cs)
     end // addr_decoder
-endmodule // rsa
+endmodule // modexp
 
 //======================================================================
-// EOF rsa.v
+// EOF modexp.v
 //======================================================================
