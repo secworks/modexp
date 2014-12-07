@@ -1,27 +1,31 @@
-rsa
-===
+modexp
+======
 
-RSA hardware implementation written i Verilog. Supports key lengths up to at least 4096 bit keys.
+Modular exponentiation core for implementing public key algorithms such
+as RSA, DH, ElGamal etc.
 
+The core calculates the following function:
 
-## Introduction ##
-This implementation of the RSA public key system supports keypair
-generation, encryption/decryption and signing/verification. The first
-version will assume that the random numbers used are supplied.
+  C = M ** e mod N
 
-The implementation (the core) is written in Verilog 2001. There will be
-a python model and possibly a c model that matches the HW-implementation
-closely.
+  M is a message with a length of n bits
+  e is the exponent with a length of at most 32 bits
+  N is the modulus  with a length of n bits
+  n is can be 32 and up to and including 8192 bits in steps
+  of 32 bits.
 
-The core will support keys of at least 4096 bits, and shorter key sizes
-like 1024 and 2048 too.
+The core has a 32-bit memory like interface, but provides status signals
+to inform the system that a given operation has is done. Additionally,
+any errors will also be asserted.
+
+The core is written in Verilog and suitable for implementation in FPGA
+and ASIC devices.
 
 
 ## Implementation details ##
 
 The core will perform blinding to protect against side channel
-attacks. The first iteration will not to padding, but will support
-padding in the second iteration.
+attacks.
 
 
 ## FPGA-results ##
@@ -30,7 +34,14 @@ No results yet.
 
 
 ## Status ##
-***(2013-03-14)***
+
+***(2014-12-07)***
+
+Renamed the core tom modexp from rsa to make it more clear that it
+provides generic modular exponentiation, not RSA.
+
+
+***(2014-10-01)***
 
 Very early phase. Started to collect information and drawing some rough
 ideas on paper.
