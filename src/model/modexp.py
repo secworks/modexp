@@ -50,6 +50,16 @@ VERBOSE = False
 
 
 #-------------------------------------------------------------------
+# modexp()
+#
+# Perform generic modular exponention of the given message M
+# using the exponent e and modulus N.
+#-------------------------------------------------------------------
+def modexp(M, e, N):
+    return (M ** e) % N
+
+
+#-------------------------------------------------------------------
 # main()
 #
 # Parse any arguments and run the tests.
@@ -57,6 +67,22 @@ VERBOSE = False
 def main():
     print("modular exponentition")
     print("---------------------")
+
+    M = 12345
+    e = 3
+    N = 12347
+
+    print("M = %d, e = %d, N = %d" % (M, e, N))
+    print(modexp(M, e, N))
+    print("")
+
+    M = 2**8192 - 37
+    e = 3
+    N = 2**8192 - 1
+
+    print("M = %d, e = %d, N = %d" % (M, e, N))
+    print(modexp(M, e, N))
+    print("")
 
 
 #-------------------------------------------------------------------
