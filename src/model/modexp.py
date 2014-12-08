@@ -50,21 +50,38 @@ VERBOSE = False
 
 
 #-------------------------------------------------------------------
-# modexp()
-#
-# Perform generic modular exponention of the given message M
-# using the exponent e and modulus N.
+# keytest()
 #-------------------------------------------------------------------
-def modexp(M, e, N):
-    return (M ** e) % N
+def keytest():
+    print("key encryption and decryption")
+    print("-----------------------------")
+
+    p = 11
+    q = 13
+    n = p * q
+    tiotent = (p - 1) * (q - 1)
+
+    print("p = %d, q = %d, n = %d, tiotent = %d" % (p, q, n, tiotent))
+
+    e = 7
+    d = 103
+
+    print("e = %d, d = %d" % (e, d))
+
+    print("Public key: e, n = %d, %d" % (e, n))
+    print("private key: d = %d" % (d))
+
+    m = 9
+    cm = modexp(m, e, n)
+    m2 = modexp(cm, d, n)
+    print("Encryption of message m  = %d -> cm = %d" % (m, cm))
+    print("Decryption of message cm = %d -> m  = %d" % (cm, m2))
 
 
 #-------------------------------------------------------------------
-# main()
-#
-# Parse any arguments and run the tests.
+# modtest()
 #-------------------------------------------------------------------
-def main():
+def modtest():
     print("modular exponentition")
     print("---------------------")
 
@@ -83,6 +100,26 @@ def main():
     print("M = %d, e = %d, N = %d" % (M, e, N))
     print(modexp(M, e, N))
     print("")
+
+
+#-------------------------------------------------------------------
+# modexp()
+#
+# Perform generic modular exponention of the given message M
+# using the exponent e and modulus N.
+#-------------------------------------------------------------------
+def modexp(M, e, N):
+    return (M ** e) % N
+
+
+#-------------------------------------------------------------------
+# main()
+#
+# Parse any arguments and run the tests.
+#-------------------------------------------------------------------
+def main():
+    modtest()
+    keytest()
 
 
 #-------------------------------------------------------------------
