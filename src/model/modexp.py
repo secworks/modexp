@@ -54,10 +54,13 @@ VERBOSE = False
 #
 # Generate a keypair (and exponent) with n bits in length.
 #-------------------------------------------------------------------
-def gen_keypair(keylength):
+def gen_keypair(bitlen):
+    print("Generating keys with %d bits" % (bitlen))
+    print("")
+
     e = 3
-    pub = 41
-    priv = 13
+    pub = 2**bitlen - 1
+    priv = pub - 2
 
     return (pub, priv, e)
 
@@ -131,6 +134,8 @@ def modexp(M, e, N):
 # Parse any arguments and run the tests.
 #-------------------------------------------------------------------
 def main():
+    my_keypair = gen_keypair(12)
+    print(my_keypair)
     modtest()
     keytest()
 
