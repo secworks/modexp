@@ -50,13 +50,13 @@ VERBOSE = False
 
 #-------------------------------------------------------------------
 #-------------------------------------------------------------------
-def multiply(i, j, bitlength):
+def iter_multiply(i, j, bitlen):
     n = i
     r = 0
-    for bit in range(bitlength):
+    for bit in range(bitlen):
         if (j & (1 << bit)):
-            r = (r + n) % p
-        n = (n + n) % p
+            r = (r + n) % 2**bitlen
+        n = (n + n) % 2**bitlen
     return r
 
 
@@ -67,8 +67,8 @@ def exponentiate(i, j, bitlength):
     r = 1
     for bit in range(bitlength):
         if (j & (1 << bit)):
-            r = multiply(r, n)
-        n = multiply(n, n)
+            r = iter_multiply(r, n, bitlength)
+        n = iter_multiply(n, n, bitlength)
     return r
 
 
@@ -161,6 +161,10 @@ def main():
     print(my_keypair)
     modtest()
     keytest()
+
+    # test of iterative multiply and exponentiation
+    print(iter_multiply(8, 8, 4))
+    print(exponentiate(8, 8, 4))
 
 
 #-------------------------------------------------------------------
