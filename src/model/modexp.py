@@ -49,8 +49,12 @@ import sys
 VERBOSE = False
 
 #-------------------------------------------------------------------
+# iter_mult()
+#
+# Attempt at builing an iterative multiplier i*j that are
+# bitlen number of bits.
 #-------------------------------------------------------------------
-def iter_multiply(i, j, bitlen):
+def iter_mult(i, j, bitlen):
     n = i
     r = 0
     for bit in range(bitlen):
@@ -61,14 +65,17 @@ def iter_multiply(i, j, bitlen):
 
 
 #-------------------------------------------------------------------
+# iter_exp()
+#
+# Iterative exponentiator.
 #-------------------------------------------------------------------
-def exponentiate(i, j, bitlength):
+def iter_exp(i, j, bitlength):
     n = i
     r = 1
     for bit in range(bitlength):
         if (j & (1 << bit)):
-            r = iter_multiply(r, n, bitlength)
-        n = iter_multiply(n, n, bitlength)
+            r = iter_mult(r, n, bitlength)
+        n = iter_mult(n, n, bitlength)
     return r
 
 
@@ -163,8 +170,8 @@ def main():
     keytest()
 
     # test of iterative multiply and exponentiation
-    print(iter_multiply(8, 8, 4))
-    print(exponentiate(8, 8, 4))
+    print(iter_mult(8, 8, 4))
+    print(iter_exp(8, 8, 4))
 
 
 #-------------------------------------------------------------------
