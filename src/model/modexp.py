@@ -55,12 +55,16 @@ VERBOSE = False
 # bitlen number of bits.
 #-------------------------------------------------------------------
 def iter_mult(i, j, bitlen):
-    n = i
+    print("Mult of 0x%08x and 0x%08x of max 0x%08x bits" %
+          (i, j, bitlen))
+
     r = 0
+    max = 2**bitlen - 1
     for bit in range(bitlen):
-        if (j & (1 << bit)):
-            r = (r + n) % 2**bitlen
-        n = (n + n) % 2**bitlen
+        mask = ((j & (1 << bit)))
+        r = (r + (i * mask)) & max
+        print("bit: 0x%08x, mask = 0x%01x, r = 0x%08x" %
+              (bit, mask, r))
     return r
 
 
@@ -164,14 +168,17 @@ def modexp(M, e, N):
 # Parse any arguments and run the tests.
 #-------------------------------------------------------------------
 def main():
-    my_keypair = gen_keypair(12)
-    print(my_keypair)
-    modtest()
-    keytest()
+#    my_keypair = gen_keypair(12)
+#    print(my_keypair)
+#    modtest()
+#    keytest()
 
     # test of iterative multiply and exponentiation
-    print(iter_mult(8, 8, 4))
-    print(iter_exp(8, 8, 4))
+    print(iter_mult(2, 3, 4))
+    print(iter_mult(2543, 1201, 12))
+    print(iter_mult(2543, 1201, 16))
+    print(iter_mult(2543, 1201, 23))
+#    print(iter_exp(8, 8, 4))
 
 
 #-------------------------------------------------------------------
