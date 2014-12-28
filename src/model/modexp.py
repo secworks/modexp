@@ -176,6 +176,7 @@ def main():
 
     # test of iterative multiply and exponentiation
     print(iter_mult(2, 3, 4))
+    print(iter_mult(2, 3, 5))
     print(iter_mult(2543, 1201, 12))
     print(iter_mult(2543, 1201, 16))
     print(iter_mult(2543, 1201, 23))
