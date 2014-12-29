@@ -52,8 +52,8 @@ VERBOSE = False
 #-------------------------------------------------------------------
 # iter_mult()
 #
-# Attempt at builing an iterative multiplier i*j that are
-# bitlen number of bits.
+# Iterative multiplier (i*j) with operands that are bitlen
+# number of bits.
 #-------------------------------------------------------------------
 def iter_mult(i, j, bitlen):
     print("Mult of 0x%08x and 0x%08x of max 0x%08x bits" %
@@ -61,6 +61,7 @@ def iter_mult(i, j, bitlen):
 
     r = 0
     max = 2**bitlen - 1
+
     for bit in range(bitlen):
         mask = ((j & (1 << bit)))
         r = (r + (i * mask)) & max
@@ -72,16 +73,17 @@ def iter_mult(i, j, bitlen):
 #-------------------------------------------------------------------
 # iter_exp()
 #
-# Iterative exponentiator.
+# Iterative exponentiator (i ** j) with operands that are
+# bitlen number of bits.
 #-------------------------------------------------------------------
-def iter_exp(i, j, bitlength):
+def iter_exp(i, j, bitlen):
+    print("Exp of 0x%08x and 0x%08x of max 0x%08x bits" %
+          (i, j, bitlen))
+
     n = i
-    r = 1
-    for bit in range(bitlength):
-        if (j & (1 << bit)):
-            r = iter_mult(r, n, bitlength)
-        n = iter_mult(n, n, bitlength)
-    return r
+    for bit in range(j):
+        n = iter_mult(n, n, bitlen)
+    return n
 
 
 #-------------------------------------------------------------------
@@ -174,13 +176,16 @@ def main():
 #    modtest()
 #    keytest()
 
-    # test of iterative multiply and exponentiation
+    # test of iterative multiply.
     print(iter_mult(2, 3, 4))
     print(iter_mult(2, 3, 5))
     print(iter_mult(2543, 1201, 12))
     print(iter_mult(2543, 1201, 16))
     print(iter_mult(2543, 1201, 23))
-#    print(iter_exp(8, 8, 4))
+
+    # test of iterative exponentiation.
+    print(iter_exp(2, 3, 12))
+    print(iter_exp(8, 8, 4))
 
 
 #-------------------------------------------------------------------
