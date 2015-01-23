@@ -100,7 +100,7 @@ module modexp(
   parameter CTRL_INIT          = 3'h2;
   parameter CTRL_RESIDUE0      = 3'h3;
   parameter CTRL_ITERATE       = 3'h4;
-  parameter CTRL_RESIDUE1      = 3'h5;
+  parameter CTRL_RESIDUE       = 3'h5;
   parameter CTRL_DONE          = 3'h6;
 
 
@@ -141,9 +141,9 @@ module modexp(
   reg          done_new;
   reg          done_we;
 
-  reg [2 : 0]  rsa_ctrl_reg;
-  reg [2 : 0]  rsa_ctrl_new;
-  reg          rsa_ctrl_we;
+  reg [2 : 0]  modexp_ctrl_reg;
+  reg [2 : 0]  modexp_ctrl_new;
+  reg          modexp_ctrl_we;
 
 
   //----------------------------------------------------------------
@@ -184,7 +184,7 @@ module modexp(
           encdec_reg         <= ENCIPHER_MODE;
           start_reg          <= 1'b0;
           done_reg           <= 1'b0;
-          rsa_ctrl_reg       <= CTRL_IDLE;
+          modexp_ctrl_reg    <= CTRL_IDLE;
         end
       else
         begin
@@ -219,6 +219,11 @@ module modexp(
           if (message_rd_ptr_we)
             begin
               message_rd_ptr_reg <= message_rd_ptr_new;
+            end
+
+          if (modexp_ctrl_we)
+            begin
+              modexp_ctrl_reg <= modexp_ctrl_new;
             end
         end
     end // reg_update
@@ -325,7 +330,61 @@ module modexp(
               end
           endcase // case (address[11 : 8])
         end // if (cs)
-    end // addr_decoder
+    end // api
+
+
+  //----------------------------------------------------------------
+  // modexp_ctrl
+  //
+  // Control FSM logic needed to perform the modexp operation.
+  //----------------------------------------------------------------
+  always @*
+    begin
+      modexp_ctrl_new = CTRL_IDLE;
+      modexp_ctrl_we  = 0;
+
+      case (modexp_ctrl_reg)
+        CTRL_IDLE:
+          begin
+
+          end
+
+        CTRL_START:
+          begin
+
+          end
+
+          CTRL_INIT:
+          begin
+
+          end
+
+          CTRL_RESIDUE0:
+          begin
+
+          end
+
+        CTRL_ITERATE:
+          begin
+
+          end
+
+        CTRL_RESIDUE:
+          begin
+
+          end
+
+        CTRL_DONE:
+          begin
+
+          end
+
+        default:
+
+          begin
+          end
+      endcase // case (modexp_ctrl_reg)
+    end
 endmodule // modexp
 
 //======================================================================
