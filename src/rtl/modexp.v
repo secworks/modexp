@@ -137,9 +137,9 @@ module modexp(
   reg          start_new;
   reg          start_we;
 
-  reg          done_reg;
-  reg          done_new;
-  reg          done_we;
+  reg          ready_reg;
+  reg          ready_new;
+  reg          ready_we;
 
   reg [2 : 0]  modexp_ctrl_reg;
   reg [2 : 0]  modexp_ctrl_new;
@@ -157,7 +157,7 @@ module modexp(
   // Concurrent connectivity for ports etc.
   //----------------------------------------------------------------
   assign read_data = tmp_read_data;
-  assign done      = done_reg;
+  assign ready      = ready_reg;
   assign error     = tmp_error;
 
 
@@ -183,7 +183,7 @@ module modexp(
           modsize_reg        <= DEFAULT_MODSIZE;
           encdec_reg         <= ENCIPHER_MODE;
           start_reg          <= 1'b0;
-          done_reg           <= 1'b0;
+          ready_reg           <= 1'b0;
           modexp_ctrl_reg    <= CTRL_IDLE;
         end
       else
@@ -342,11 +342,16 @@ module modexp(
     begin
       modexp_ctrl_new = CTRL_IDLE;
       modexp_ctrl_we  = 0;
+      ready_new       = 0;
+      ready_we        = 0;
 
       case (modexp_ctrl_reg)
         CTRL_IDLE:
           begin
-
+            modexp_ctrl_new = CTRL_START;
+            modexp_ctrl_we  = 1;
+            ready_new       = 0;
+            ready_we        = 1;
           end
 
         CTRL_START:
@@ -376,7 +381,10 @@ module modexp(
 
         CTRL_DONE:
           begin
-
+            modexp_ctrl_new = CTRL_IDLE;
+            modexp_ctrl_we  = 1;
+            ready_new       = 1;
+            ready_we        = 1;
           end
 
         default:
