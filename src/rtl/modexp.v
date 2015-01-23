@@ -75,7 +75,7 @@ module modexp(
   parameter ADDR_NAME1         = 8'h01;
   parameter ADDR_VERSION       = 8'h02;
 
-  parameter ADDR_KEYSIZE       = 8'h10;
+  parameter ADDR_MODSIZE       = 8'h10;
   parameter ADDR_EXPONENT      = 8'h20;
 
   parameter MODULUS_PREFIX     = 4'h1;
@@ -90,7 +90,7 @@ module modexp(
   parameter CORE_NAME1         = 32'h38313932; // "8192"
   parameter CORE_VERSION       = 32'h302e3031; // "0.01"
 
-  parameter DEFAULT_KEYSIZE    = 8'h80;
+  parameter DEFAULT_MODSIZE    = 8'h80;
 
   parameter DECIPHER_MODE      = 1'b0;
   parameter ENCIPHER_MODE      = 1'b1;
@@ -182,7 +182,7 @@ module modexp(
           exponent_reg       <= 32'h00000000;
           modulus_rd_ptr_reg <= 8'h00;
           message_rd_ptr_reg <= 8'h00;
-          keysize_reg        <= DEFAULT_KEYSIZE;
+          keysize_reg        <= DEFAULT_MODSIZE;
           encdec_reg         <= ENCIPHER_MODE;
           start_reg          <= 1'b0;
           done_reg           <= 1'b0;
@@ -249,7 +249,7 @@ module modexp(
                   begin
                     case (address)
                       // Write operations.
-                      ADDR_KEYSIZE:
+                      ADDR_MODSIZE:
                         begin
                           keysize_new = write_data[3 : 0];
                           keysize_we  = 0;
@@ -280,7 +280,7 @@ module modexp(
                           tmp_read_data = CORE_VERSION;
                         end
 
-                      ADDR_KEYSIZE:
+                      ADDR_MODSIZE:
                         begin
                           tmp_read_data = {28'h0000000, keysize_reg};
                         end
