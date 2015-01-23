@@ -115,13 +115,11 @@ module modexp(
   reg          message_mem_we;
   reg [31 : 0] message_data;
 
-  reg [31 : 0] exponent_reg;
-  reg [31 : 0] exponent_new;
-  reg          exponent_we;
+  reg [7 : 0]  modsize_reg;
+  reg          modsize_we;
 
-  reg [7 : 0]  keysize_reg;
-  reg [7 : 0]  keysize_new;
-  reg          keysize_we;
+  reg [31 : 0] exponent_reg;
+  reg          exponent_we;
 
   reg [7 : 0]  modulus_rd_ptr_reg;
   reg [7 : 0]  modulus_rd_ptr_new;
@@ -182,7 +180,7 @@ module modexp(
           exponent_reg       <= 32'h00000000;
           modulus_rd_ptr_reg <= 8'h00;
           message_rd_ptr_reg <= 8'h00;
-          keysize_reg        <= DEFAULT_MODSIZE;
+          modsize_reg        <= DEFAULT_MODSIZE;
           encdec_reg         <= ENCIPHER_MODE;
           start_reg          <= 1'b0;
           done_reg           <= 1'b0;
@@ -208,9 +206,9 @@ module modexp(
               exponent_reg <= write_data;
             end
 
-          if (keysize_we)
+          if (modsize_we)
             begin
-              keysize_reg <= write[7 : 0];
+              modsize_reg <= write_data[7 : 0];
             end
 
           if (modulus_rd_ptr_we)
@@ -233,8 +231,8 @@ module modexp(
   //----------------------------------------------------------------
   always @*
     begin : api
-      keysize_new     = 4'h0;
-      keysize_we      = 0;
+      modsize_we      = 0;
+      exponent_we     = 0;
       tmp_read_data   = 32'h00000000;
       tmp_error       = 0;
       modulus_mem_we  = 0;
@@ -251,8 +249,12 @@ module modexp(
                       // Write operations.
                       ADDR_MODSIZE:
                         begin
-                          keysize_new = write_data[3 : 0];
-                          keysize_we  = 0;
+                          modsize_we  = 1;
+                        end
+
+                      ADDR_EXPONENT:
+                        begin
+                          exponent_we = 1;
                         end
 
                       default:
@@ -282,7 +284,7 @@ module modexp(
 
                       ADDR_MODSIZE:
                         begin
-                          tmp_read_data = {28'h0000000, keysize_reg};
+                          tmp_read_data = {28'h0000000, modsize_reg};
                         end
 
                       default:
