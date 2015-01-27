@@ -19,7 +19,7 @@ to inform the system that a given operation has is done. Additionally,
 any errors will also be asserted.
 
 The core is written in Verilog 2001 and suitable for implementation in
-FPGA and ASIC devices.
+FPGA and ASIC devices. No vendor specific macros are used in the code.
 
 
 ## Implementation details ##
