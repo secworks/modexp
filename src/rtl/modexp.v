@@ -115,14 +115,19 @@ module modexp(
   reg          message_mem_we;
   reg [31 : 0] message_data;
 
-  reg [7 : 0]  modsize_reg;
-  reg          modsize_we;
-
   reg [31 : 0] exponent_mem [0 : 255];
   reg          exponent_we;
+  reg [31 : 0] exponent_data;
 
   reg [31 : 0] residue_mem [0 : 255];
   reg          residue_we;
+  reg [31 : 0] residue_data;
+
+  reg [7 : 0]  modsize_len_reg;
+  reg          modsize_len_we;
+
+  reg [7 : 0]  exponent_len_reg;
+  reg          exponent_we;
 
   reg [7 : 0]  modulus_rd_ptr_reg;
   reg [7 : 0]  modulus_rd_ptr_new;
@@ -154,6 +159,9 @@ module modexp(
   //----------------------------------------------------------------
   reg [31 : 0] tmp_read_data;
   reg          tmp_error;
+
+  reg [7 : 0]  op_a_addr;
+  reg [7 : 0]  op_b_addr;
 
 
   //----------------------------------------------------------------
