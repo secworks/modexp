@@ -62,47 +62,54 @@ module modexp(
               input wire  [31 : 0] write_data,
               output wire [31 : 0] read_data,
 
-              output wire          done,
-              output wire          error
+              output wire          ready
              );
 
 
   //----------------------------------------------------------------
   // Internal constant and parameter definitions.
   //----------------------------------------------------------------
-  localparam GENERAL_PREFIX     = 4'h0;
-  localparam ADDR_NAME0         = 8'h00;
-  localparam ADDR_NAME1         = 8'h01;
-  localparam ADDR_VERSION       = 8'h02;
+  localparam GENERAL_PREFIX      = 4'h0;
+  localparam ADDR_NAME0          = 8'h00;
+  localparam ADDR_NAME1          = 8'h01;
+  localparam ADDR_VERSION        = 8'h02;
 
-  localparam ADDR_MODSIZE       = 8'h10;
-  localparam ADDR_EXPONENT      = 8'h20;
+  localparam ADDR_MODSIZE        = 8'h10;
+  localparam ADDR_EXPONENT       = 8'h20;
 
-  localparam MODULUS_PREFIX     = 4'h1;
-  localparam ADDR_MODULUS_START = 8'h00;
-  localparam ADDR_MODULUS_END   = 8'hff;
+  localparam MODULUS_PREFIX      = 4'h1;
+  localparam ADDR_MODULUS_START  = 8'h00;
+  localparam ADDR_MODULUS_END    = 8'hff;
 
-  localparam MESSAGE_PREFIX     = 4'h2;
-  localparam MESSAGE_START      = 8'h00;
-  localparam MESSAGE_END        = 8'hff;
+  localparam EXPONENT_PREFIX     = 4'h2;
+  localparam ADDR_EXPONENT_START = 8'h00;
+  localparam ADDR_EXPONENT_END   = 8'hff;
 
-  localparam CORE_NAME0         = 32'h72736120; // "rsa "
-  localparam CORE_NAME1         = 32'h38313932; // "8192"
-  localparam CORE_VERSION       = 32'h302e3031; // "0.01"
+  localparam MESSAGE_PREFIX      = 4'h3;
+  localparam MESSAGE_START       = 8'h00;
+  localparam MESSAGE_END         = 8'hff;
 
-  localparam DEFAULT_MODLENGTH  = 8'h80;
-  localparam DEFAULT_EXPLENGTH  = 8'h80;
+  localparam RESULT_PREFIX       = 4'h4;
+  localparam RESULT_START        = 8'h00;
+  localparam RESULT_END          = 8'hff;
 
-  localparam DECIPHER_MODE      = 1'b0;
-  localparam ENCIPHER_MODE      = 1'b1;
+  localparam DEFAULT_MODLENGTH   = 8'h80;
+  localparam DEFAULT_EXPLENGTH   = 8'h80;
 
-  localparam CTRL_IDLE          = 3'h0;
-  localparam CTRL_START         = 3'h1;
-  localparam CTRL_INIT          = 3'h2;
-  localparam CTRL_RESIDUE0      = 3'h3;
-  localparam CTRL_ITERATE       = 3'h4;
-  localparam CTRL_RESIDUE       = 3'h5;
-  localparam CTRL_DONE          = 3'h6;
+  localparam DECIPHER_MODE       = 1'b0;
+  localparam ENCIPHER_MODE       = 1'b1;
+
+  localparam CTRL_IDLE           = 3'h0;
+  localparam CTRL_START          = 3'h1;
+  localparam CTRL_INIT           = 3'h2;
+  localparam CTRL_RESIDUE0       = 3'h3;
+  localparam CTRL_ITERATE        = 3'h4;
+  localparam CTRL_RESIDUE        = 3'h5;
+  localparam CTRL_DONE           = 3'h6;
+
+  localparam CORE_NAME0          = 32'h72736120; // "rsa "
+  localparam CORE_NAME1          = 32'h38313932; // "8192"
+  localparam CORE_VERSION        = 32'h302e3031; // "0.01"
 
 
   //----------------------------------------------------------------
@@ -118,25 +125,25 @@ module modexp(
   reg [07 : 0] message_mem_int_rd_addr;
   reg [31 : 0] message_mem_int_rd_data;
   reg [31 : 0] message_mem_api_rd_data;
-  reg [31 : 0] message_mem_wr_data;
-  reg          message_mem_we;
+  reg          message_mem_api_we;
 
   reg [31 : 0] exponent_mem [0 : 255];
-  reg [31 : 0] exponent_mem_rd_data;
-  reg [31 : 0] exponent_mem_wr_data;
-  reg          exponent_mem_we;
+  reg [07 : 0] exponent_mem_int_rd_addr;
+  reg [31 : 0] exponent_mem_int_rd_data;
+  reg [31 : 0] exponent_mem_api_rd_data;
+  reg          exponent_mem_api_we;
+
+  reg [31 : 0] result_mem [0 : 255];
+  reg [31 : 0] result_mem_api_rd_data;
+  reg [07 : 0] result_mem_int_wr_addr;
+  reg [31 : 0] result_mem_int_wr_data;
+  reg          result_mem_int_we;
 
   reg [31 : 0] residue_mem [0 : 255];
   reg [31 : 0] residue_mem_rd_data;
   reg [07 : 0] residue_mem_wr_addr;
   reg [31 : 0] residue_mem_wr_data;
   reg          residue_mem_we;
-
-  reg [31 : 0] result_mem [0 : 255];
-  reg [31 : 0] result_mem_rd_data;
-  reg [07 : 0] result_mem_wr_addr;
-  reg [31 : 0] result_mem_wr_data;
-  reg          result_mem_we;
 
   reg [31 : 0] p_mem [0 : 255];
   reg [31 : 0] p_mem_rd_data;
@@ -209,6 +216,7 @@ module modexp(
   // Concurrent connectivity for ports etc.
   //----------------------------------------------------------------
   assign read_data = tmp_read_data;
+  assign ready     = ready_reg;
 
 
   //----------------------------------------------------------------
@@ -255,7 +263,7 @@ module modexp(
           modlen_reg         <= DEFAULT_EXPLENGTH;
           encdec_reg         <= ENCIPHER_MODE;
           start_reg          <= 1'b0;
-          ready_reg          <= 1'b0;
+          ready_reg          <= 1'b1;
           modexp_ctrl_reg    <= CTRL_IDLE;
         end
       else
@@ -267,13 +275,20 @@ module modexp(
               modulus_mem[address[7 : 0]] <= write_data;
             end
 
+          exponent_mem_int_rd_data <= exponent_mem[exponent_mem_int_rd_addr];
+          exponent_mem_api_rd_data <= exponent_mem[address[7 : 0]];
+          if (exponent_mem_api_we)
+            begin
+              exponent_mem[address[7 : 0]] <= write_data;
+            end
 
-          message_mem_int_rd_data <= message_mem[message_rd_ptr_reg];
+          message_mem_int_rd_data <= message_mem[message_mem_int_rd_addr];
           message_mem_api_rd_data <= message_mem[address[7 : 0]];
-          if (message_mem_we)
+          if (message_mem_api_we)
             begin
               message_mem[address[7 : 0]] <= write_data;
             end
+
 //
 //          if (exponent_mem_we)
 //            begin
@@ -307,27 +322,24 @@ module modexp(
         end
     end // reg_update
 
-//
-//
-//  //----------------------------------------------------------------
-//  // api
-//  //
-//  // The interface command decoding logic.
-//  //----------------------------------------------------------------
-//  always @*
-//    begin : api
-//      modsize_we      = 0;
-//      exponent_we     = 0;
-//      tmp_read_data   = 32'h00000000;
-//      tmp_error       = 0;
-//      modulus_mem_we  = 0;
-//      priv_exp_mem_we = 0;
-//
-//      if (cs)
-//        begin
-//          case (address[11 : 8])
-//            GENERAL_PREFIX:
-//              begin
+
+
+  //----------------------------------------------------------------
+  // api
+  //
+  // The interface command decoding logic.
+  //----------------------------------------------------------------
+  always @*
+    begin : api
+      modulus_mem_api_we  = 1'b0;
+      exponent_mem_api_we = 1'b0;
+      message_mem_api_we  = 1'b0;
+
+      if (cs)
+        begin
+          case (address[11 : 8])
+            GENERAL_PREFIX:
+              begin
 //                if (we)
 //                  begin
 //                    case (address)
@@ -378,102 +390,126 @@ module modexp(
 //                        end
 //                    endcase // case (addr)
 //                  end
-//              end
-//
-//            MODULUS_PREFIX:
+              end
+
+            MODULUS_PREFIX:
+              begin
+                if (we)
+                  begin
+                    modulus_mem_api_we = 1'b1;
+                  end
+                else
+                  begin
+                    tmp_read_data = modulus_mem_int_rd_data;
+                  end
+              end
+
+            EXPONENT_PREFIX:
+              begin
+                if (we)
+                  begin
+                    exponent_mem_api_we = 1'b1;
+                  end
+                else
+                  begin
+                    tmp_read_data = exponent_mem_api_rd_data;
+                  end
+              end
+
+            MESSAGE_PREFIX:
+              begin
+                if (we)
+                  begin
+                    message_mem_api_we = 1'b1;
+                  end
+                else
+                  begin
+                    tmp_read_data = message_mem_api_rd_data;
+                  end
+              end
+
+//            RESULT_PREFIX:
 //              begin
 //                if (we)
 //                  begin
-//                    modulus_mem_we = we;
+//                    modulus_mem_api_we = 1'b1;
 //                  end
 //                else
 //                  begin
-//                    tmp_read_data = modulus_mem[address[7 : 0]];
+//                    tmp_read_data = modulus_mem_int_rd_data;
 //                  end
 //              end
-//
-//            D_EXP_PREFIX:
-//              begin
-//                if (we)
-//                  begin
-//                    priv_exp_mem_we = 1;
-//                  end
-//                else
-//                  begin
-//                    tmp_read_data = priv_exp_mem[address[7 : 0]];
-//                  end
-//              end
-//
-//            default:
-//              begin
-//
-//              end
-//          endcase // case (address[11 : 8])
-//        end // if (cs)
-//    end // api
-//
-//
-//  //----------------------------------------------------------------
-//  // modexp_ctrl
-//  //
-//  // Control FSM logic needed to perform the modexp operation.
-//  //----------------------------------------------------------------
-//  always @*
-//    begin
-//      modexp_ctrl_new = CTRL_IDLE;
-//      modexp_ctrl_we  = 0;
-//      ready_new       = 0;
-//      ready_we        = 0;
-//
-//      case (modexp_ctrl_reg)
-//        CTRL_IDLE:
-//          begin
-//            modexp_ctrl_new = CTRL_START;
-//            modexp_ctrl_we  = 1;
-//            ready_new       = 0;
-//            ready_we        = 1;
-//          end
-//
-//        CTRL_START:
-//          begin
-//
-//          end
-//
-//          CTRL_INIT:
-//          begin
-//
-//          end
-//
-//          CTRL_RESIDUE0:
-//          begin
-//
-//          end
-//
-//        CTRL_ITERATE:
-//          begin
-//
-//          end
-//
-//        CTRL_RESIDUE:
-//          begin
-//
-//          end
-//
-//        CTRL_DONE:
-//          begin
-//            modexp_ctrl_new = CTRL_IDLE;
-//            modexp_ctrl_we  = 1;
-//            ready_new       = 1;
-//            ready_we        = 1;
-//          end
-//
-//        default:
-//
-//          begin
-//          end
-//      endcase // case (modexp_ctrl_reg)
-//    end
-//
+
+            default:
+              begin
+
+              end
+          endcase // case (address[11 : 8])
+        end // if (cs)
+    end // api
+
+
+  //----------------------------------------------------------------
+  // modexp_ctrl
+  //
+  // Control FSM logic needed to perform the modexp operation.
+  //----------------------------------------------------------------
+  always @*
+    begin
+      ready_new       = 0;
+      ready_we        = 0;
+      modexp_ctrl_new = CTRL_IDLE;
+      modexp_ctrl_we  = 0;
+
+      case (modexp_ctrl_reg)
+        CTRL_IDLE:
+          begin
+            ready_new       = 0;
+            ready_we        = 1;
+            modexp_ctrl_new = CTRL_DONE;
+            modexp_ctrl_we  = 1;
+          end
+
+        CTRL_START:
+          begin
+
+          end
+
+          CTRL_INIT:
+          begin
+
+          end
+
+          CTRL_RESIDUE0:
+          begin
+
+          end
+
+        CTRL_ITERATE:
+          begin
+
+          end
+
+        CTRL_RESIDUE:
+          begin
+
+          end
+
+        CTRL_DONE:
+          begin
+            ready_new       = 1;
+            ready_we        = 1;
+            modexp_ctrl_new = CTRL_IDLE;
+            modexp_ctrl_we  = 1;
+          end
+
+        default:
+          begin
+          end
+
+      endcase // case (modexp_ctrl_reg)
+    end
+
 endmodule // modexp
 
 //======================================================================
