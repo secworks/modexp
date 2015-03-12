@@ -99,6 +99,12 @@ module modexp(
   localparam DECIPHER_MODE       = 1'b0;
   localparam ENCIPHER_MODE       = 1'b1;
 
+  localparam MONTPROD_SELECT0    = 3'h0;
+  localparam MONTPROD_SELECT1    = 3'h1;
+  localparam MONTPROD_SELECT2    = 3'h2;
+  localparam MONTPROD_SELECT3    = 3'h3;
+  localparam MONTPROD_SELECT4    = 3'h4;
+
   localparam CTRL_IDLE           = 3'h0;
   localparam CTRL_START          = 3'h1;
   localparam CTRL_INIT           = 3'h2;
@@ -140,6 +146,7 @@ module modexp(
   reg          result_mem_int_we;
 
   reg [31 : 0] residue_mem [0 : 255];
+  reg [07 : 0] residue_mem_rd_addr;
   reg [31 : 0] residue_mem_rd_data;
   reg [07 : 0] residue_mem_wr_addr;
   reg [31 : 0] residue_mem_wr_data;
@@ -163,14 +170,6 @@ module modexp(
   reg [7 : 0]  explen_reg;
   reg          explen_we;
 
-  reg [7 : 0]  modulus_rd_ptr_reg;
-  reg [7 : 0]  modulus_rd_ptr_new;
-  reg          modulus_rd_ptr_we;
-
-  reg [7 : 0]  message_rd_ptr_reg;
-  reg [7 : 0]  message_rd_ptr_new;
-  reg          message_rd_ptr_we;
-
   reg          encdec_reg;
   reg          encdec_new;
   reg          encdec_we;
@@ -182,6 +181,10 @@ module modexp(
   reg          ready_reg;
   reg          ready_new;
   reg          ready_we;
+
+  reg [2 : 0]  montprod_select_reg;
+  reg [2 : 0]  montprod_select_new;
+  reg          montprod_select_we;
 
   reg [2 : 0]  modexp_ctrl_reg;
   reg [2 : 0]  modexp_ctrl_new;
@@ -234,11 +237,11 @@ module modexp(
                          .opa_addr(montprod_opa_addr),
                          .opa_data(montprod_opa_data),
 
-                         .opb_addr(montprod_opa_addr),
+                         .opb_addr(montprod_opb_addr),
                          .opb_data(montprod_opb_data),
 
                          .opm_addr(montprod_opm_addr),
-                         .opm_data(montprod_opm_data),
+                         .opm_data(message_mem_int_rd_data),
 
                          .result_addr(montprod_result_addr),
                          .result_data(montprod_result_data),
@@ -257,71 +260,37 @@ module modexp(
     begin
       if (!reset_n)
         begin
-          modulus_rd_ptr_reg <= 8'h00;
-          message_rd_ptr_reg <= 8'h00;
-          modlen_reg         <= DEFAULT_MODLENGTH;
-          modlen_reg         <= DEFAULT_EXPLENGTH;
-          encdec_reg         <= ENCIPHER_MODE;
-          start_reg          <= 1'b0;
-          ready_reg          <= 1'b1;
-          modexp_ctrl_reg    <= CTRL_IDLE;
+          ready_reg           <= 1'b1;
+          montprod_select_reg <= MONTPROD_SELECT0;
+          modexp_ctrl_reg     <= CTRL_IDLE;
         end
       else
         begin
           modulus_mem_int_rd_data <= modulus_mem[modulus_mem_int_rd_addr];
           modulus_mem_api_rd_data <= modulus_mem[address[7 : 0]];
           if (modulus_mem_api_we)
-            begin
               modulus_mem[address[7 : 0]] <= write_data;
-            end
 
           exponent_mem_int_rd_data <= exponent_mem[exponent_mem_int_rd_addr];
           exponent_mem_api_rd_data <= exponent_mem[address[7 : 0]];
           if (exponent_mem_api_we)
-            begin
               exponent_mem[address[7 : 0]] <= write_data;
-            end
 
-          message_mem_int_rd_data <= message_mem[message_mem_int_rd_addr];
+          message_mem_int_rd_data <= message_mem[montprod_opm_addr];
           message_mem_api_rd_data <= message_mem[address[7 : 0]];
           if (message_mem_api_we)
-            begin
               message_mem[address[7 : 0]] <= write_data;
-            end
 
-//
-//          if (exponent_mem_we)
-//            begin
-//              exponent_mem[address[7 : 0]] <= write_data;
-//            end
-//
-//          if (residue_mem_we)
-//            begin
-//              residue_mem[residue_mem_wr_addr] <= residue_mem_wr_data;
-//            end
-//
-//          if (modsize_we)
-//            begin
-//              modsize_reg <= write_data[7 : 0];
-//            end
-//
-//          if (modulus_rd_ptr_we)
-//            begin
-//              modulus_rd_ptr_reg <= modulus_rd_ptr_new;
-//            end
-//
-//          if (message_rd_ptr_we)
-//            begin
-//              message_rd_ptr_reg <= message_rd_ptr_new;
-//            end
-//
-//          if (modexp_ctrl_we)
-//            begin
-//              modexp_ctrl_reg <= modexp_ctrl_new;
-//            end
+          if (ready_we)
+            ready_reg <= ready_new;
+
+          if (montprod_select_we)
+            montprod_select_reg <= montprod_select_new;
+
+          if (modexp_ctrl_we)
+            modexp_ctrl_reg <= modexp_ctrl_new;
         end
     end // reg_update
-
 
 
   //----------------------------------------------------------------
@@ -334,6 +303,7 @@ module modexp(
       modulus_mem_api_we  = 1'b0;
       exponent_mem_api_we = 1'b0;
       message_mem_api_we  = 1'b0;
+      tmp_read_data       = 32'h00000000;
 
       if (cs)
         begin
@@ -400,7 +370,7 @@ module modexp(
                   end
                 else
                   begin
-                    tmp_read_data = modulus_mem_int_rd_data;
+                    tmp_read_data = modulus_mem_api_rd_data;
                   end
               end
 
@@ -450,24 +420,69 @@ module modexp(
 
 
   //----------------------------------------------------------------
+  // montprod_op_select
+  //
+  // Select operands used during montprod calculations depending
+  // on what operation we want to do
+  //----------------------------------------------------------------
+  always @*
+    begin : montprod_op_select
+      modulus_mem_int_rd_addr  = 8'h00;
+      message_mem_int_rd_addr  = 8'h00;
+      exponent_mem_int_rd_addr = 8'h00;
+      residue_mem_rd_addr      = 8'h00;
+      montprod_opa_data        = 32'h00000000;
+      montprod_opb_data        = 32'h00000000;
+
+      case (montprod_select_reg)
+        MONTPROD_SELECT0:
+          begin
+            modulus_mem_int_rd_addr = montprod_opa_addr;
+            montprod_opa_data       = modulus_mem_int_rd_data;
+
+            message_mem_int_rd_addr = montprod_opb_addr;
+            montprod_opb_data       = message_mem_int_rd_data;
+          end
+
+        MONTPROD_SELECT1:
+          begin
+            modulus_mem_int_rd_addr = montprod_opa_addr;
+            montprod_opa_data       = modulus_mem_int_rd_data;
+
+            message_mem_int_rd_addr = montprod_opb_addr;
+            montprod_opb_data       = message_mem_int_rd_data;
+          end
+
+        default:
+          begin
+          end
+      endcase // case (montprod_selcect_reg)
+    end
+
+
+  //----------------------------------------------------------------
   // modexp_ctrl
   //
   // Control FSM logic needed to perform the modexp operation.
   //----------------------------------------------------------------
   always @*
     begin
-      ready_new       = 0;
-      ready_we        = 0;
-      modexp_ctrl_new = CTRL_IDLE;
-      modexp_ctrl_we  = 0;
+      ready_new           = 0;
+      ready_we            = 0;
+      montprod_select_new = MONTPROD_SELECT0;
+      montprod_select_we  = 0;
+      modexp_ctrl_new     = CTRL_IDLE;
+      modexp_ctrl_we      = 0;
 
       case (modexp_ctrl_reg)
         CTRL_IDLE:
           begin
-            ready_new       = 0;
-            ready_we        = 1;
-            modexp_ctrl_new = CTRL_DONE;
-            modexp_ctrl_we  = 1;
+            ready_new           = 0;
+            ready_we            = 1;
+            montprod_select_new = MONTPROD_SELECT1;
+            montprod_select_we  = 0;
+            modexp_ctrl_new     = CTRL_DONE;
+            modexp_ctrl_we      = 1;
           end
 
         CTRL_START:
@@ -497,10 +512,12 @@ module modexp(
 
         CTRL_DONE:
           begin
-            ready_new       = 1;
-            ready_we        = 1;
-            modexp_ctrl_new = CTRL_IDLE;
-            modexp_ctrl_we  = 1;
+            ready_new           = 1;
+            ready_we            = 1;
+            montprod_select_new = MONTPROD_SELECT0;
+            montprod_select_we  = 0;
+            modexp_ctrl_new     = CTRL_IDLE;
+            modexp_ctrl_we      = 1;
           end
 
         default:
