@@ -63,11 +63,14 @@ module montprod(
   //----------------------------------------------------------------
   // Internal constant and parameter definitions.
   //----------------------------------------------------------------
-  parameter CTRL_IDLE  = 3'h0;
-  parameter CTRL_START = 3'h1;
-  parameter CTRL_INIT  = 3'h2;
-  parameter CTRL_DONE  = 3'h6;
-
+  parameter CTRL_IDLE         = 3'h0;
+  parameter CTRL_INIT_Z       = 3'h1;
+  parameter CTRL_LOOP_INIT    = 3'h2;
+  parameter CTRL_LOOP_ITER    = 3'h3; //calculate q = (s - b * A) & 1;. Also abort loop if done. 
+  parameter CTRL_L_CALC_SM    = 3'h4; //s = (s + q*M + b*A) >>> 1;, if(q==1) S+= M. Takes (1..length) cycles.
+  parameter CTRL_L_CALC_SA    = 3'h5; //s = (s + q*M + b*A) >>> 1;, if(b==1) S+= A. Takes (1..length) cycles.
+  parameter CTRL_L_CALC_SDIV2 = 3'h6; //s = (s + q*M + b*A) >>> 1; s>>=1. Takes (1..length) cycles.
+  parameter CTRL_DONE         = 3'h7; 
 
   //----------------------------------------------------------------
   // Registers including update variables and write enable.
@@ -94,6 +97,19 @@ module montprod(
   reg [2 : 0]  montprod_ctrl_reg;
   reg [2 : 0]  montprod_ctrl_new;
   reg          montprod_ctrl_we;
+
+  reg [31 : 0] A_mem [0 : 255];
+  reg [31 : 0] B_mem [0 : 255];
+  reg [31 : 0] s_mem [0 : 255];
+
+  reg          q; //q = (s - b * A) & 1
+  reg          b; //b: bit of B
+  
+  reg [12 : 0] loop_counter;
+  reg [12 : 0] loop_counter_new;
+
+  reg [07 : 0] word_index;
+  reg [07 : 0] word_index_new;
 
 
   //----------------------------------------------------------------
@@ -156,17 +172,6 @@ module montprod(
       tmp_mem_we      = 1'b0;
     end // prodcalc
 
-
-  // State 0. Do nothing. Move to state 1. upon operation to perform
-  // State 1. Zero S, takes (1..length) cycles. Move to state 2 when done.
-  // State 2. The big loop.
-  // State 2.1 if(...) TEMP= S-A. takes (1..length) cycles. Moves to state 2.2 when done.
-  // State 2.2. if(...) S= S+M
-  // State 2.3. if(...) S= S+A 
-  // State 2.4. s = s >> 1. Takes (1..length) cycles
-  // State 2.4. loop length*32 times
-
-
   //----------------------------------------------------------------
   // montprod_ctrl
   //
@@ -184,6 +189,96 @@ module montprod(
               begin
                 ready_new = 1'b0;
                 ready_we  = 1'b1;
+                montprod_ctrl_new = CTRL_INIT_Z;
+                montprod_ctrl_we <= 1'b1;
+                word_index_new = length-1;
+              end
+            else
+              begin
+                montprod_ctrl_we = 1'b0;
+              end
+          end
+
+        CTRL_INIT_Z:
+          begin
+            word_index_new = word_index - 1;
+            if (word_index == 0)
+              begin
+                 montprod_ctrl_new = CTRL_LOOP_INIT;
+                 montprod_ctrl_we = 1'b1;
+              end
+            else
+              begin
+                 montprod_ctrl_we = 1'b0;
+              end
+          end
+
+
+        CTRL_LOOP_INIT:
+          begin
+            montprod_ctrl_new = CTRL_LOOP_ITER;
+            loop_counter_new = 32*length - 1;
+          end
+
+        CTRL_LOOP_ITER: //calculate q = (s - b * A) & 1;. Also abort loop if done. 
+          begin
+            q = s_mem[ length-1 ][0] ^ A_mem[ length-1 ][0];
+            loop_counter_new = loop_counter - 1;
+            if (loop_counter == 0)
+              begin
+                montprod_ctrl_new = CTRL_DONE;
+                montprod_ctrl_we = 1'b1;
+              end
+            else
+              begin
+                montprod_ctrl_new = CTRL_L_CALC_SM;
+                montprod_ctrl_we = 1'b1;
+              end
+          end
+
+        CTRL_L_CALC_SM:
+          begin
+            if (word_index == 0)
+              begin
+                montprod_ctrl_new = CTRL_L_CALC_SA;
+                montprod_ctrl_we = 1'b1;
+                word_index_new = length - 1;
+              end
+            else
+              begin
+                montprod_ctrl_we = 1'b0;
+                word_index_new = word_index - 1;
+              end
+          end
+
+
+        CTRL_L_CALC_SA:
+          begin
+            if (word_index == 0)
+              begin
+                montprod_ctrl_new = CTRL_L_CALC_SDIV2;
+                montprod_ctrl_we = 1'b1;
+                word_index_new = length - 1;
+              end
+            else
+              begin
+                montprod_ctrl_we = 1'b0;
+                word_index_new = word_index - 1;
+              end
+          end
+
+
+        CTRL_L_CALC_SDIV2:
+          begin
+            word_index_new = word_index - 1;
+            if (word_index == 8'h0)
+              begin
+                montprod_ctrl_new = CTRL_LOOP_ITER; //loop
+                montprod_ctrl_we = 1'b1;
+              end
+            else
+              begin
+                montprod_ctrl_we = 1'b1;
               end
           end
 
