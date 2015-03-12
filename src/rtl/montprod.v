@@ -131,7 +131,7 @@ module montprod(
         end
       else
         begin
-          tmp_mem_rd_data <= tmp_mem[tmp_rd_addr];
+          tmp_mem_rd_data <= tmp_mem[tmp_mem_rd_addr];
 
           if (tmp_mem_we)
             tmp_mem[tmp_mem_wr_addr] <= tmp_mem_wr_data;
@@ -181,6 +181,10 @@ module montprod(
           begin
             ready_new = 1'b1;
             ready_we  = 1'b1;
+          end
+
+        default:
+          begin
           end
 
       endcase // case (montprod_ctrl_reg)
