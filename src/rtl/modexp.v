@@ -402,6 +402,11 @@ module modexp(
                   end
               end
 
+            RESULT_PREFIX:
+              begin
+                tmp_read_data = result_mem_api_rd_data;
+              end
+
 //            RESULT_PREFIX:
 //              begin
 //                if (we)
@@ -446,6 +451,8 @@ module modexp(
 
             message_mem_int_rd_addr = montprod_opb_addr;
             montprod_opb_data       = message_mem_int_rd_data;
+
+
           end
 
         MONTPROD_SELECT1:
