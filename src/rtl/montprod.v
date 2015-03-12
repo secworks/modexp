@@ -157,6 +157,16 @@ module montprod(
     end // prodcalc
 
 
+  // State 0. Do nothing. Move to state 1. upon operation to perform
+  // State 1. Zero S, takes (1..length) cycles. Move to state 2 when done.
+  // State 2. The big loop.
+  // State 2.1 if(...) TEMP= S-A. takes (1..length) cycles. Moves to state 2.2 when done.
+  // State 2.2. if(...) S= S+M
+  // State 2.3. if(...) S= S+A 
+  // State 2.4. s = s >> 1. Takes (1..length) cycles
+  // State 2.4. loop length*32 times
+
+
   //----------------------------------------------------------------
   // montprod_ctrl
   //
