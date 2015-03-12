@@ -70,64 +70,91 @@ module modexp(
   //----------------------------------------------------------------
   // Internal constant and parameter definitions.
   //----------------------------------------------------------------
-  parameter GENERAL_PREFIX     = 4'h0;
-  parameter ADDR_NAME0         = 8'h00;
-  parameter ADDR_NAME1         = 8'h01;
-  parameter ADDR_VERSION       = 8'h02;
+  localparam GENERAL_PREFIX     = 4'h0;
+  localparam ADDR_NAME0         = 8'h00;
+  localparam ADDR_NAME1         = 8'h01;
+  localparam ADDR_VERSION       = 8'h02;
 
-  parameter ADDR_MODSIZE       = 8'h10;
-  parameter ADDR_EXPONENT      = 8'h20;
+  localparam ADDR_MODSIZE       = 8'h10;
+  localparam ADDR_EXPONENT      = 8'h20;
 
-  parameter MODULUS_PREFIX     = 4'h1;
-  parameter ADDR_MODULUS_START = 8'h00;
-  parameter ADDR_MODULUS_END   = 8'hff;
+  localparam MODULUS_PREFIX     = 4'h1;
+  localparam ADDR_MODULUS_START = 8'h00;
+  localparam ADDR_MODULUS_END   = 8'hff;
 
-  parameter MESSAGE_PREFIX     = 4'h2;
-  parameter MESSAGE_START      = 8'h00;
-  parameter MESSAGE_END        = 8'hff;
+  localparam MESSAGE_PREFIX     = 4'h2;
+  localparam MESSAGE_START      = 8'h00;
+  localparam MESSAGE_END        = 8'hff;
 
-  parameter CORE_NAME0         = 32'h72736120; // "rsa "
-  parameter CORE_NAME1         = 32'h38313932; // "8192"
-  parameter CORE_VERSION       = 32'h302e3031; // "0.01"
+  localparam CORE_NAME0         = 32'h72736120; // "rsa "
+  localparam CORE_NAME1         = 32'h38313932; // "8192"
+  localparam CORE_VERSION       = 32'h302e3031; // "0.01"
 
-  parameter DEFAULT_MODSIZE    = 8'h80;
+  localparam DEFAULT_MODLENGTH  = 8'h80;
+  localparam DEFAULT_EXPLENGTH  = 8'h80;
 
-  parameter DECIPHER_MODE      = 1'b0;
-  parameter ENCIPHER_MODE      = 1'b1;
+  localparam DECIPHER_MODE      = 1'b0;
+  localparam ENCIPHER_MODE      = 1'b1;
 
-  parameter CTRL_IDLE          = 3'h0;
-  parameter CTRL_START         = 3'h1;
-  parameter CTRL_INIT          = 3'h2;
-  parameter CTRL_RESIDUE0      = 3'h3;
-  parameter CTRL_ITERATE       = 3'h4;
-  parameter CTRL_RESIDUE       = 3'h5;
-  parameter CTRL_DONE          = 3'h6;
+  localparam CTRL_IDLE          = 3'h0;
+  localparam CTRL_START         = 3'h1;
+  localparam CTRL_INIT          = 3'h2;
+  localparam CTRL_RESIDUE0      = 3'h3;
+  localparam CTRL_ITERATE       = 3'h4;
+  localparam CTRL_RESIDUE       = 3'h5;
+  localparam CTRL_DONE          = 3'h6;
 
 
   //----------------------------------------------------------------
   // Registers including update variables and write enable.
   //----------------------------------------------------------------
   reg [31 : 0] modulus_mem [0 : 255];
-  reg          modulus_mem_we;
-  reg [31 : 0] modulus_data;
+  reg [07 : 0] modulus_mem_int_rd_addr;
+  reg [31 : 0] modulus_mem_int_rd_data;
+  reg [31 : 0] modulus_mem_api_rd_data;
+  reg          modulus_mem_api_we;
 
   reg [31 : 0] message_mem [0 : 255];
+  reg [07 : 0] message_mem_int_rd_addr;
+  reg [31 : 0] message_mem_int_rd_data;
+  reg [31 : 0] message_mem_api_rd_data;
+  reg [31 : 0] message_mem_wr_data;
   reg          message_mem_we;
-  reg [31 : 0] message_data;
 
   reg [31 : 0] exponent_mem [0 : 255];
-  reg          exponent_we;
-  reg [31 : 0] exponent_data;
+  reg [31 : 0] exponent_mem_rd_data;
+  reg [31 : 0] exponent_mem_wr_data;
+  reg          exponent_mem_we;
 
   reg [31 : 0] residue_mem [0 : 255];
-  reg          residue_we;
-  reg [31 : 0] residue_data;
+  reg [31 : 0] residue_mem_rd_data;
+  reg [07 : 0] residue_mem_wr_addr;
+  reg [31 : 0] residue_mem_wr_data;
+  reg          residue_mem_we;
 
-  reg [7 : 0]  modsize_len_reg;
-  reg          modsize_len_we;
+  reg [31 : 0] result_mem [0 : 255];
+  reg [31 : 0] result_mem_rd_data;
+  reg [07 : 0] result_mem_wr_addr;
+  reg [31 : 0] result_mem_wr_data;
+  reg          result_mem_we;
 
-  reg [7 : 0]  exponent_len_reg;
-  reg          exponent_we;
+  reg [31 : 0] p_mem [0 : 255];
+  reg [31 : 0] p_mem_rd_data;
+  reg [07 : 0] p_mem_wr_addr;
+  reg [31 : 0] p_mem_wr_data;
+  reg          p_mem_we;
+
+  reg [31 : 0] tmp2_mem [0 : 255];
+  reg [31 : 0] tmp2_mem_rd_data;
+  reg [07 : 0] tmp2_mem_wr_addr;
+  reg [31 : 0] tmp2_mem_wr_data;
+  reg          tmp2_mem_we;
+
+  reg [7 : 0]  modlen_reg;
+  reg          modlen_we;
+
+  reg [7 : 0]  explen_reg;
+  reg          explen_we;
 
   reg [7 : 0]  modulus_rd_ptr_reg;
   reg [7 : 0]  modulus_rd_ptr_new;
@@ -157,24 +184,58 @@ module modexp(
   //----------------------------------------------------------------
   // Wires.
   //----------------------------------------------------------------
-  reg [31 : 0] tmp_read_data;
-  reg          tmp_error;
+  reg [31 : 0]  tmp_read_data;
+  reg           tmp_error;
 
-  reg [7 : 0]  op_a_addr;
-  reg [7 : 0]  op_b_addr;
+  reg           montprod_calc;
+  wire          montprod_ready;
+  reg [07 : 0]  montprod_length;
+
+  wire [07 : 0] montprod_opa_addr;
+  reg [31 : 0]  montprod_opa_data;
+
+  wire [07 : 0] montprod_opb_addr;
+  reg [31 : 0]  montprod_opb_data;
+
+  wire [07 : 0] montprod_opm_addr;
+  reg [31 : 0]  montprod_opm_data;
+
+  wire [07 : 0] montprod_result_addr;
+  wire [31 : 0] montprod_result_data;
+  wire          montprod_result_we;
 
 
   //----------------------------------------------------------------
   // Concurrent connectivity for ports etc.
   //----------------------------------------------------------------
   assign read_data = tmp_read_data;
-  assign ready     = ready_reg;
-  assign error     = tmp_error;
 
 
   //----------------------------------------------------------------
   // core instantiation.
   //----------------------------------------------------------------
+  montprod montprod_inst(
+                         .clk(clk),
+                         .reset_n(reset_n),
+
+                         .calculate(montprod_calc),
+                         .ready(montprod_ready),
+
+                         .length(montprod_length),
+
+                         .opa_addr(montprod_opa_addr),
+                         .opa_data(montprod_opa_data),
+
+                         .opb_addr(montprod_opa_addr),
+                         .opb_data(montprod_opb_data),
+
+                         .opm_addr(montprod_opm_addr),
+                         .opm_data(montprod_opm_data),
+
+                         .result_addr(montprod_result_addr),
+                         .result_data(montprod_result_data),
+                         .result_we(montprod_result_we)
+                        );
 
 
   //----------------------------------------------------------------
@@ -188,56 +249,64 @@ module modexp(
     begin
       if (!reset_n)
         begin
-          exponent_reg       <= 32'h00000000;
           modulus_rd_ptr_reg <= 8'h00;
           message_rd_ptr_reg <= 8'h00;
-          modsize_reg        <= DEFAULT_MODSIZE;
+          modlen_reg         <= DEFAULT_MODLENGTH;
+          modlen_reg         <= DEFAULT_EXPLENGTH;
           encdec_reg         <= ENCIPHER_MODE;
           start_reg          <= 1'b0;
-          ready_reg           <= 1'b0;
+          ready_reg          <= 1'b0;
           modexp_ctrl_reg    <= CTRL_IDLE;
         end
       else
         begin
-          modulus_data <= modulus_mem[modulus_rd_ptr_reg];
-          message_data <= message_mem[message_rd_ptr_reg];
-
-          if (modulus_mem_we)
+          modulus_mem_int_rd_data <= modulus_mem[modulus_mem_int_rd_addr];
+          modulus_mem_api_rd_data <= modulus_mem[address[7 : 0]];
+          if (modulus_mem_api_we)
             begin
               modulus_mem[address[7 : 0]] <= write_data;
             end
 
+
+          message_mem_int_rd_data <= message_mem[message_rd_ptr_reg];
+          message_mem_api_rd_data <= message_mem[address[7 : 0]];
           if (message_mem_we)
             begin
               message_mem[address[7 : 0]] <= write_data;
             end
-
-          if (exponent_we)
-            begin
-              exponent_reg <= write_data;
-            end
-
-          if (modsize_we)
-            begin
-              modsize_reg <= write_data[7 : 0];
-            end
-
-          if (modulus_rd_ptr_we)
-            begin
-              modulus_rd_ptr_reg <= modulus_rd_ptr_new;
-            end
-
-          if (message_rd_ptr_we)
-            begin
-              message_rd_ptr_reg <= message_rd_ptr_new;
-            end
-
-          if (modexp_ctrl_we)
-            begin
-              modexp_ctrl_reg <= modexp_ctrl_new;
-            end
+//
+//          if (exponent_mem_we)
+//            begin
+//              exponent_mem[address[7 : 0]] <= write_data;
+//            end
+//
+//          if (residue_mem_we)
+//            begin
+//              residue_mem[residue_mem_wr_addr] <= residue_mem_wr_data;
+//            end
+//
+//          if (modsize_we)
+//            begin
+//              modsize_reg <= write_data[7 : 0];
+//            end
+//
+//          if (modulus_rd_ptr_we)
+//            begin
+//              modulus_rd_ptr_reg <= modulus_rd_ptr_new;
+//            end
+//
+//          if (message_rd_ptr_we)
+//            begin
+//              message_rd_ptr_reg <= message_rd_ptr_new;
+//            end
+//
+//          if (modexp_ctrl_we)
+//            begin
+//              modexp_ctrl_reg <= modexp_ctrl_new;
+//            end
         end
     end // reg_update
+
 //
 //
 //  //----------------------------------------------------------------
