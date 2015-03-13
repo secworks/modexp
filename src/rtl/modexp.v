@@ -282,8 +282,8 @@ module modexp(
               message_mem[address[7 : 0]] <= write_data;
 
           result_mem_api_rd_data <= result_mem [address[7 : 0]];
-          if (result_mem_int_we)
-              result_mem[result_mem_int_wr_addr] <= result_mem_int_wr_data;
+          if (montprod_result_we)
+              result_mem[montprod_result_addr] <= montprod_result_data;
 
           if (ready_we)
             ready_reg <= ready_new;
@@ -451,8 +451,6 @@ module modexp(
 
             message_mem_int_rd_addr = montprod_opb_addr;
             montprod_opb_data       = message_mem_int_rd_data;
-
-
           end
 
         MONTPROD_SELECT1:
