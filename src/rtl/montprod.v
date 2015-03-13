@@ -98,10 +98,6 @@ module montprod(
   reg [2 : 0]  montprod_ctrl_new;
   reg          montprod_ctrl_we;
 
-  reg [31 : 0] A_mem [0 : 255];
-  reg [31 : 0] B_mem [0 : 255];
-  reg [31 : 0] M_mem [0 : 255];
-
   reg [31 : 0] s_mem [0 : 255];
   reg [31 : 0] s_mem_new;
   reg          s_mem_we;
@@ -198,10 +194,20 @@ module montprod(
       //tmp_mem_we       = 1'b0;
       B_word_index     = loop_counter[12:5];
       B_bit_index      = 31 - loop_counter[4:0];
-      b                = B_mem[ B_word_index ][ B_bit_index ]; 
-      q                = s_mem[ length-1 ][0] ^ (A_mem[ length-1 ][0] & b);
+      b                = opb_data[ B_bit_index ]; 
+      q                = s_mem[ length-1 ][0] ^ (opa_data[0] & b); //opa_addr will point to length-1 to get A LSB.
       word_index_dec   = word_index - 1;
       loop_counter_dec = loop_counter - 1;
+
+      case (montprod_ctrl_reg)
+        CTRL_LOOP_ITER:
+          opa_addr_reg = length-1; //q = (s[length-1] ^ A[length-1]) & 1;
+        default:
+          opa_addr_reg = word_index;
+       endcase
+       opb_addr_reg = word_index;
+       opm_addr_reg = word_index;
+          
 
       case (montprod_ctrl_reg)
         CTRL_LOOP_INIT:
@@ -239,12 +245,12 @@ module montprod(
         CTRL_L_CALC_SM:
           begin
             add_argument1[31:0] = s_mem[word_index];
-            add_argument2[31:0] = A_mem[word_index];
+            add_argument2[31:0] = opm_data;
           end
         CTRL_L_CALC_SA:
           begin
             add_argument1[31:0] = s_mem[word_index];
-            add_argument2[31:0] = A_mem[word_index];
+            add_argument2[31:0] = opa_data;
           end
         default:
           begin
