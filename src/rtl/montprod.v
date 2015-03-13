@@ -75,12 +75,12 @@ module montprod(
   //----------------------------------------------------------------
   // Registers including update variables and write enable.
   //----------------------------------------------------------------
-  reg [31 : 0] tmp_mem [0 : 255];
-  reg [07 : 0] tmp_mem_rd_addr;
-  reg [31 : 0] tmp_mem_rd_data;
-  reg [07 : 0] tmp_mem_wr_addr;
-  reg [31 : 0] tmp_mem_wr_data;
-  reg          tmp_mem_we;
+  //reg [31 : 0] tmp_mem [0 : 255];
+  //reg [07 : 0] tmp_mem_rd_addr;
+  //reg [31 : 0] tmp_mem_rd_data;
+  //reg [07 : 0] tmp_mem_wr_addr;
+  //reg [31 : 0] tmp_mem_wr_data;
+  //reg          tmp_mem_we;
 
   reg [07 : 0] opa_addr_reg;
   reg [07 : 0] opb_addr_reg;
@@ -165,10 +165,10 @@ module montprod(
         end
       else
         begin
-          tmp_mem_rd_data <= tmp_mem[tmp_mem_rd_addr];
+          //tmp_mem_rd_data <= tmp_mem[tmp_mem_rd_addr];
 
-          if (tmp_mem_we)
-            tmp_mem[tmp_mem_wr_addr] <= tmp_mem_wr_data;
+          //if (tmp_mem_we)
+          //  tmp_mem[tmp_mem_wr_addr] <= tmp_mem_wr_data;
 
           if (ready_we)
             ready_reg <= ready_new;
@@ -192,10 +192,10 @@ module montprod(
   //----------------------------------------------------------------
   always @*
     begin : prodcalc
-      tmp_mem_rd_addr  = 8'h00;
-      tmp_mem_wr_addr  = 8'h00;
-      tmp_mem_wr_data  = 32'h00000000;
-      tmp_mem_we       = 1'b0;
+      //tmp_mem_rd_addr  = 8'h00;
+      //tmp_mem_wr_addr  = 8'h00;
+      //tmp_mem_wr_data  = 32'h00000000;
+      //tmp_mem_we       = 1'b0;
       B_word_index     = loop_counter[12:5];
       B_bit_index      = 31 - loop_counter[4:0];
       b                = B_mem[ B_word_index ][ B_bit_index ]; 
