@@ -128,6 +128,7 @@ module montprod(
   //----------------------------------------------------------------
   // Wires.
   //----------------------------------------------------------------
+  reg tmp_result_we;
 
 
   //----------------------------------------------------------------
@@ -139,7 +140,7 @@ module montprod(
 
   assign result_addr = result_addr_reg;
   assign result_data = result_data_reg;
-  assign result_we   = result_we_reg;
+  assign result_we   = tmp_result_we;
 
   assign ready       = ready_reg;
 
@@ -196,29 +197,29 @@ module montprod(
 
       B_word_index     = loop_counter[12:5];
 
-      B_bit_index      = 31 - loop_counter[4:0];
+      B_bit_index      = 5'h1f - loop_counter[4:0];
 
       b                = opb_data[ B_bit_index ];
 
       //opa_addr will point to length-1 to get A LSB.
       q                = s_mem[ length-1 ][0] ^ (opa_data[0] & b);
-      word_index_dec   = word_index - 1;
-      loop_counter_dec = loop_counter - 1;
+      word_index_dec   = word_index - 1'b1;
+      loop_counter_dec = loop_counter - 1'b1;
 
       result_addr_reg  = word_index;
       result_data_reg  = s_mem[word_index];
 
       case (montprod_ctrl_reg)
         CTRL_EMIT_S:
-           result_we = 1'b1;
+           tmp_result_we = 1'b1;
         default:
-           result_we = 1'b0;
+           tmp_result_we = 1'b0;
       endcase
 
       case (montprod_ctrl_reg)
         CTRL_LOOP_ITER:
           //q = (s[length-1] ^ A[length-1]) & 1;
-          opa_addr_reg = length-1;
+          opa_addr_reg = length - 1'b1;
 
         default:
           opa_addr_reg = word_index;
@@ -230,7 +231,7 @@ module montprod(
 
       case (montprod_ctrl_reg)
         CTRL_LOOP_INIT:
-          loop_counter_new = (length*32)-1;
+          loop_counter_new = {length, 5'b00000} - 1'b1;
 
         CTRL_LOOP_ITER:
           loop_counter_new = loop_counter_dec;
@@ -240,19 +241,19 @@ module montprod(
       endcase
 
       if (reset_word_index == 1'b1)
-          word_index_new = length - 1;
+          word_index_new = length - 1'b1;
 
       else
-          word_index_new = word_index - 1;
+          word_index_new = word_index - 1'b1;
 
 
       add_argument1[32] = 1'b0;
       add_argument2[32] = 1'b0;
 
       if ( add_carry_in == 1'b1 )
-        add = add_argument1 + add_argument2 + 1;
+        add = add_argument1 + add_argument2 + 1'b1;
       else
-        add = add_argument1 + add_argument2 + 0;
+        add = add_argument1 + add_argument2 + 1'b0;
 
       s_mem_new = add[31 : 0];
 
