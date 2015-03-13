@@ -248,7 +248,7 @@ module montprod(
           end
         default:
           begin
-            // don't care, guess 0 is a good value
+            // output is not directly used, but it is important that carry out will be zero.
             add_argument1[31:0] = 32'b0;
             add_argument2[31:0] = 32'b0;
           end
