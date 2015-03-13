@@ -107,9 +107,13 @@ module montprod(
   
   reg [12 : 0] loop_counter;
   reg [12 : 0] loop_counter_new;
+  reg [12 : 0] loop_counter_dec;
+  reg [07 : 0] B_word_index; //loop counter as a word index
+  reg [04 : 0] B_bit_index; //loop counter as a bit index
 
   reg [07 : 0] word_index;
   reg [07 : 0] word_index_new;
+  reg [07 : 0] word_index_dec;
 
 
   //----------------------------------------------------------------
@@ -144,6 +148,8 @@ module montprod(
         begin
           ready_reg         <= 1'b0;
           montprod_ctrl_reg <= CTRL_IDLE;
+          loop_counter      <= 13'h0;
+          word_index        <= 8'h0;
         end
       else
         begin
@@ -166,10 +172,30 @@ module montprod(
   //----------------------------------------------------------------
   always @*
     begin : prodcalc
-      tmp_mem_rd_addr = 8'h00;
-      tmp_mem_wr_addr = 8'h00;
-      tmp_mem_wr_data = 32'h00000000;
-      tmp_mem_we      = 1'b0;
+      tmp_mem_rd_addr  = 8'h00;
+      tmp_mem_wr_addr  = 8'h00;
+      tmp_mem_wr_data  = 32'h00000000;
+      tmp_mem_we       = 1'b0;
+      B_word_index     = loop_counter[12:5];
+      B_bit_index      = 31 - loop_counter[4:0];
+      b                = B_mem[ B_word_index ][ B_bit_index ]; 
+      q                = s_mem[ length-1 ][0] ^ (A_mem[ length-1 ][0] & b);
+      word_index_dec   = word_index - 1;
+      loop_counter_dec = loop_counter - 1;
+
+      if (montprod_ctrl_reg == CTRL_LOOP_INIT)
+        begin
+          loop_counter_new = (length*32)-1;
+        end
+      else if (montprod_ctrl_reg == CTRL_LOOP_ITER)
+        begin
+          loop_counter_new = loop_counter_dec; 
+        end
+      else
+        begin
+          loop_counter_new = loop_counter;
+        end; 
+ 
     end // prodcalc
 
   //----------------------------------------------------------------
@@ -190,8 +216,7 @@ module montprod(
                 ready_new = 1'b0;
                 ready_we  = 1'b1;
                 montprod_ctrl_new = CTRL_INIT_Z;
-                montprod_ctrl_we <= 1'b1;
-                word_index_new = length-1;
+                montprod_ctrl_we = 1'b1;
               end
             else
               begin
@@ -201,7 +226,6 @@ module montprod(
 
         CTRL_INIT_Z:
           begin
-            word_index_new = word_index - 1;
             if (word_index == 0)
               begin
                  montprod_ctrl_new = CTRL_LOOP_INIT;
@@ -217,13 +241,10 @@ module montprod(
         CTRL_LOOP_INIT:
           begin
             montprod_ctrl_new = CTRL_LOOP_ITER;
-            loop_counter_new = 32*length - 1;
           end
 
         CTRL_LOOP_ITER: //calculate q = (s - b * A) & 1;. Also abort loop if done. 
           begin
-            q = s_mem[ length-1 ][0] ^ A_mem[ length-1 ][0];
-            loop_counter_new = loop_counter - 1;
             if (loop_counter == 0)
               begin
                 montprod_ctrl_new = CTRL_DONE;
@@ -242,12 +263,10 @@ module montprod(
               begin
                 montprod_ctrl_new = CTRL_L_CALC_SA;
                 montprod_ctrl_we = 1'b1;
-                word_index_new = length - 1;
               end
             else
               begin
                 montprod_ctrl_we = 1'b0;
-                word_index_new = word_index - 1;
               end
           end
 
