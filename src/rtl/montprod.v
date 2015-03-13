@@ -64,7 +64,7 @@ module montprod(
   // Internal constant and parameter definitions.
   //----------------------------------------------------------------
   parameter CTRL_IDLE         = 3'h0;
-  parameter CTRL_INIT_Z       = 3'h1;
+  parameter CTRL_INIT_S       = 3'h1;
   parameter CTRL_LOOP_INIT    = 3'h2;
   parameter CTRL_LOOP_ITER    = 3'h3; //calculate q = (s - b * A) & 1;. Also abort loop if done. 
   parameter CTRL_L_CALC_SM    = 3'h4; //s = (s + q*M + b*A) >>> 1;, if(q==1) S+= M. Takes (1..length) cycles.
@@ -215,7 +215,7 @@ module montprod(
               begin
                 ready_new = 1'b0;
                 ready_we  = 1'b1;
-                montprod_ctrl_new = CTRL_INIT_Z;
+                montprod_ctrl_new = CTRL_INIT_S;
                 montprod_ctrl_we = 1'b1;
               end
             else
@@ -224,7 +224,7 @@ module montprod(
               end
           end
 
-        CTRL_INIT_Z:
+        CTRL_INIT_S:
           begin
             if (word_index == 0)
               begin
