@@ -103,6 +103,8 @@ module montprod(
   reg [31 : 0] s_mem [0 : 255];
   reg [31 : 0] s_mem_new;
   reg          s_mem_we;
+  reg [07 : 0] s_mem_addr;
+  reg [31 : 0] s_mem_read_data;
 
   reg          q; //q = (s - b * A) & 1
   reg          q_reg;
@@ -175,7 +177,7 @@ module montprod(
               montprod_ctrl_reg <= montprod_ctrl_new;
 
           if (s_mem_we)
-            s_mem[word_index] <= s_mem_new;
+            s_mem[s_mem_addr] <= s_mem_new;
 
           word_index <= word_index_new;
           loop_counter <= loop_counter_new;
@@ -201,13 +203,24 @@ module montprod(
 
       b                = opb_data[ B_bit_index ];
 
+      case (montprod_ctrl_reg)
+        CTRL_LOOP_ITER:
+          s_mem_addr = length-1;
+        default:
+          s_mem_addr = word_index;
+      endcase
+
+      s_mem_read_data = s_mem[ s_mem_addr ];
+
+
       //opa_addr will point to length-1 to get A LSB.
-      q                = s_mem[ length-1 ][0] ^ (opa_data[0] & b);
+      //s_read_addr will point to length-1
+      q                = s_mem_read_data[0] ^ (opa_data[0] & b);
       word_index_dec   = word_index - 1'b1;
       loop_counter_dec = loop_counter - 1'b1;
 
       result_addr_reg  = word_index;
-      result_data_reg  = s_mem[word_index];
+      result_data_reg  = s_mem_read_data;
 
       case (montprod_ctrl_reg)
         CTRL_EMIT_S:
