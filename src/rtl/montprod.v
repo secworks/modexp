@@ -77,12 +77,6 @@ module montprod(
   //----------------------------------------------------------------
   // Registers including update variables and write enable.
   //----------------------------------------------------------------
-  //reg [31 : 0] tmp_mem [0 : 255];
-  //reg [07 : 0] tmp_mem_rd_addr;
-  //reg [31 : 0] tmp_mem_rd_data;
-  //reg [07 : 0] tmp_mem_wr_addr;
-  //reg [31 : 0] tmp_mem_wr_data;
-  //reg          tmp_mem_we;
 
   reg [07 : 0] opa_addr_reg;
   reg [07 : 0] opb_addr_reg;
@@ -122,17 +116,19 @@ module montprod(
   reg [07 : 0] word_index_dec;
 
 
-  reg [32 : 0] add;
-  reg [32 : 0] add_argument1;
-  reg [32 : 0] add_argument2;
+  reg [31 : 0] add_argument1;
+  reg [31 : 0] add_argument2;
   reg          add_carry_in;
+  reg          add_carry_new;
 
   reg          reset_word_index;
 
   //----------------------------------------------------------------
   // Wires.
   //----------------------------------------------------------------
-  reg tmp_result_we;
+  reg           tmp_result_we;
+  wire [31 : 0] add_result;
+  wire          add_carry_out;
 
 
   //----------------------------------------------------------------
@@ -147,6 +143,20 @@ module montprod(
   assign result_we   = tmp_result_we;
 
   assign ready       = ready_reg;
+
+  adder32 s_adder(
+    .a(add_argument1),
+    .b(add_argument2),
+    .carry_in(add_carry_in),
+    .sum(add_result),
+    .carry_out(add_carry_out)
+  );
+
+  always @*
+    begin : adder
+      s_mem_new = add_result;
+      add_carry_new = add_carry_out;
+    end
 
 
   //----------------------------------------------------------------
@@ -181,7 +191,7 @@ module montprod(
 
           word_index <= word_index_new;
           loop_counter <= loop_counter_new;
-          add_carry_in <= add[32] & !montprod_ctrl_we; //no carry over between different operations
+          add_carry_in <= add_carry_new & !montprod_ctrl_we; //no carry over between different operations
 
           if (montprod_ctrl_reg == CTRL_LOOP_ITER)
             begin
@@ -190,7 +200,6 @@ module montprod(
             end
       end
     end // reg_update
-
 
   //----------------------------------------------------------------
   // prodcalc
@@ -260,42 +269,32 @@ module montprod(
           word_index_new = word_index - 1'b1;
 
 
-      add_argument1[32] = 1'b0;
-      add_argument2[32] = 1'b0;
-
-      if ( add_carry_in == 1'b1 )
-        add = add_argument1 + add_argument2 + 1'b1;
-      else
-        add = add_argument1 + add_argument2;
-
-      s_mem_new = add[31 : 0];
-
       case (montprod_ctrl_reg)
         CTRL_INIT_S:
           begin
             // write 0 to initilize s.
-            add_argument1[31:0] = 32'b0;
-            add_argument2[31:0] = 32'b0;
+            add_argument1 = 32'b0;
+            add_argument2 = 32'b0;
           end
 
         CTRL_L_CALC_SM:
           begin
-            add_argument1[31:0] = s_mem[word_index];
-            add_argument2[31:0] = opm_data;
+            add_argument1 = s_mem_read_data;
+            add_argument2 = opm_data;
           end
 
         CTRL_L_CALC_SA:
           begin
-            add_argument1[31:0] = s_mem[word_index];
-            add_argument2[31:0] = opa_data;
+            add_argument1 = s_mem_read_data;
+            add_argument2 = opa_data;
           end
 
         default:
           begin
             // output is not directly used, but it is important
             // that carry out will be zero.
-            add_argument1[31:0] = 32'b0;
-            add_argument2[31:0] = 32'b0;
+            add_argument1 = 32'b0;
+            add_argument2 = 32'b0;
           end
       endcase
     end // prodcalc
