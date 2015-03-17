@@ -325,6 +325,11 @@ module montprod(
                 montprod_ctrl_we = 1'b1;
                 reset_word_index = 1'b1;
               end
+            else
+              begin
+                ready_new = 1'b1;
+                ready_we  = 1'b1;
+              end
           end
 
         CTRL_INIT_S:
