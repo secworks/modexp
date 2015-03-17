@@ -121,6 +121,9 @@ module montprod(
   reg          add_carry_in;
   reg          add_carry_new;
 
+  reg          shr_carry_in;
+  reg          shr_carry_new;
+
   reg          reset_word_index;
 
   //----------------------------------------------------------------
@@ -129,6 +132,9 @@ module montprod(
   reg           tmp_result_we;
   wire [31 : 0] add_result;
   wire          add_carry_out;
+
+  wire          shr_carry_out;
+  wire [31 : 0] shr_adiv2;
 
 
   //----------------------------------------------------------------
@@ -152,11 +158,12 @@ module montprod(
     .carry_out(add_carry_out)
   );
 
-  always @*
-    begin : adder
-      s_mem_new = add_result;
-      add_carry_new = add_carry_out;
-    end
+  shr32 shifter(
+     .a( s_mem_read_data ),
+     .carry_in( shr_carry_in ),
+     .adiv2( shr_adiv2 ),
+     .carry_out( shr_carry_out )
+  );
 
 
   //----------------------------------------------------------------
@@ -174,6 +181,7 @@ module montprod(
           loop_counter      <= 13'h0;
           word_index        <= 8'h0;
           add_carry_in      <= 1'b0;
+          shr_carry_in      <= 1'b0;
           montprod_ctrl_reg <= CTRL_IDLE;
           b_reg             <= 1'b0;
           q_reg             <= 1'b0;
@@ -184,7 +192,10 @@ module montprod(
             ready_reg <= ready_new;
 
           if (montprod_ctrl_we)
-              montprod_ctrl_reg <= montprod_ctrl_new;
+            begin
+               $display("montprod new state: %x", montprod_ctrl_new);
+               montprod_ctrl_reg <= montprod_ctrl_new;
+             end
 
           if (s_mem_we)
             s_mem[s_mem_addr] <= s_mem_new;
@@ -201,6 +212,10 @@ module montprod(
       end
     end // reg_update
 
+
+  
+  
+
   //----------------------------------------------------------------
   // prodcalc
   //----------------------------------------------------------------
@@ -209,8 +224,20 @@ module montprod(
       B_word_index     = loop_counter[12:5];
 
       B_bit_index      = 5'h1f - loop_counter[4:0];
+      
+      case (montprod_ctrl_reg)
+        CTRL_LOOP_ITER:
+          //q = (s[length-1] ^ A[length-1]) & 1;
+          opa_addr_reg = length - 1'b1;
 
-      b                = opb_data[ B_bit_index ];
+        default:
+          opa_addr_reg = word_index;
+       endcase
+
+       opb_addr_reg = B_word_index;
+       opm_addr_reg = word_index;
+
+       b = opb_data[ B_bit_index ];
 
       case (montprod_ctrl_reg)
         CTRL_LOOP_ITER:
@@ -225,7 +252,15 @@ module montprod(
       //opa_addr will point to length-1 to get A LSB.
       //s_read_addr will point to length-1
       q                = s_mem_read_data[0] ^ (opa_data[0] & b);
-      word_index_dec   = word_index - 1'b1;
+
+
+      case (montprod_ctrl_reg)
+        CTRL_LOOP_ITER:
+           $display("DEBUG: b: %d q: %d opa_data %x opb_data %x s_mem_read_data %x", b, q, opa_data, opb_data, s_mem_read_data);
+        default:
+          begin end
+      endcase 
+
       loop_counter_dec = loop_counter - 1'b1;
 
       result_addr_reg  = word_index;
@@ -238,40 +273,41 @@ module montprod(
            tmp_result_we = 1'b0;
       endcase
 
-      case (montprod_ctrl_reg)
-        CTRL_LOOP_ITER:
-          //q = (s[length-1] ^ A[length-1]) & 1;
-          opa_addr_reg = length - 1'b1;
-
-        default:
-          opa_addr_reg = word_index;
-       endcase
-
-       opb_addr_reg = word_index;
-       opm_addr_reg = word_index;
-
 
       case (montprod_ctrl_reg)
         CTRL_LOOP_INIT:
           loop_counter_new = {length, 5'b00000} - 1'b1;
 
         CTRL_LOOP_ITER:
-          loop_counter_new = loop_counter_dec;
+          begin
+            $display("loop counter", loop_counter_new);
+            loop_counter_new = loop_counter_dec;
+          end
 
         default:
           loop_counter_new = loop_counter;
       endcase
 
+
+      //FIXME this order is invalid for CTRL_L_DIV2. Fix fix fix§
       if (reset_word_index == 1'b1)
           word_index_new = length - 1'b1;
-
       else
           word_index_new = word_index - 1'b1;
+    end // prodcalc
 
 
+  always @*
+    begin : s_writer_process
+      s_mem_new = add_result;
+      add_carry_new = add_carry_out;
+      shr_carry_new = 1'b0;
+
+      s_mem_we          = 1'b0;
       case (montprod_ctrl_reg)
         CTRL_INIT_S:
           begin
+            s_mem_we = 1'b1;
             // write 0 to initilize s.
             add_argument1 = 32'b0;
             add_argument2 = 32'b0;
@@ -279,14 +315,28 @@ module montprod(
 
         CTRL_L_CALC_SM:
           begin
+            //s = (s + q*M + b*A) >>> 1;, if(q==1) S+= M. Takes (1..length) cycles.
+            s_mem_we = q_reg;
             add_argument1 = s_mem_read_data;
             add_argument2 = opm_data;
           end
 
         CTRL_L_CALC_SA:
           begin
+            //s = (s + q*M + b*A) >>> 1;, if(b==1) S+= A. Takes (1..length) cycles.
+            s_mem_we = b_reg;
             add_argument1 = s_mem_read_data;
             add_argument2 = opa_data;
+          end
+
+        CTRL_L_CALC_SDIV2:
+          begin
+            //s = (s + q*M + b*A) >>> 1; s>>=1.  Takes (1..length) cycles.
+            s_mem_we = 1'b1;
+            s_mem_new = shr_adiv2;
+            shr_carry_new = shr_carry_out;
+            add_argument1 = 32'b0; // dont care
+            add_argument2 = 32'b0; // dont care
           end
 
         default:
@@ -310,7 +360,6 @@ module montprod(
       ready_new         = 1'b0;
       ready_we          = 1'b0;
       reset_word_index  = 1'b0;
-      s_mem_we          = 1'b0;
       montprod_ctrl_new = CTRL_IDLE;
       montprod_ctrl_we  = 1'b0;
 
@@ -365,11 +414,8 @@ module montprod(
               end
           end
 
-        //s = (s + q*M + b*A) >>> 1;, if(q==1) S+= M.
-        // Takes (1..length) cycles.
         CTRL_L_CALC_SM:
           begin
-            s_mem_we = q_reg;
             if (word_index == 0)
               begin
                 reset_word_index  = 1'b1;
@@ -378,11 +424,8 @@ module montprod(
               end
           end
 
-        //s = (s + q*M + b*A) >>> 1;, if(b==1) S+= A.
-        // Takes (1..length) cycles.
         CTRL_L_CALC_SA:
           begin
-            s_mem_we = b_reg;
             if (word_index == 0)
               begin
                 montprod_ctrl_new = CTRL_L_CALC_SDIV2;
@@ -391,11 +434,8 @@ module montprod(
               end
           end
 
-        //s = (s + q*M + b*A) >>> 1; s>>=1.
-        // Takes (1..length) cycles.
         CTRL_L_CALC_SDIV2:
           begin
-            s_mem_we = 1'b1;
             if (word_index == 8'h0)
               begin
                 montprod_ctrl_new = CTRL_LOOP_ITER; //loop

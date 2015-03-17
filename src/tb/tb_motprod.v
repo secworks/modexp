@@ -67,6 +67,7 @@ always @*
     tb_opa_data = tb_a[tb_opa_addr];
     tb_opb_data = tb_b[tb_opb_addr];
     tb_opm_data = tb_m[tb_opm_addr];
+    $display("a %x %x b %x %x m %x %x", tb_opa_addr, tb_a[tb_opa_addr], tb_opb_addr, tb_b[tb_opb_addr], tb_opm_addr, tb_m[tb_opm_addr]); 
   end
 
 always @*
@@ -170,13 +171,14 @@ task test_mont_prod(
     begin: copy_test_vectors
       integer i;
       integer j;
-      for (i=0; i<256; i=i+1)
-        j = i * 32;
+      for (i=32'h0; i<256; i=i+1)
         begin
+          j = {i, 5'h0};
           tb_a[i] = a[j +: 32];
           tb_b[i] = b[j +: 32];
           tb_m[i] = m[j +: 32];
           tb_r[i] = 32'h0;
+          $display("*** init %0x: a: %x b: %x m: %x r: %x", i, tb_a[i], tb_b[i], tb_m[i], tb_r[i]);
         end
     end
     $display("*** test vector copied");
