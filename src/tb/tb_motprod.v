@@ -121,8 +121,17 @@ endtask // init_dut
 task wait_ready();
   begin
     $display("*** wait_ready");
-    while (tb_ready == 0)
-      #(2 * CLK_HALF_PERIOD);
+    begin: wait_loop
+      integer i;
+      for (i=0; i<1000000; i=i+1)
+        if (tb_ready == 0)
+          #(2 * CLK_HALF_PERIOD);
+    end
+    if (tb_ready == 0)
+       begin
+         $display("*** wait_ready failed, never became ready!");
+         $finish;
+       end
   end
 endtask // wait_ready
 
@@ -141,6 +150,7 @@ endtask // signal_calculate
 //----------------------------------------------------------------
 //----------------------------------------------------------------
 task test_mont_prod(
+    input [7 : 0]      length,
     input [0 : 8192-1] a, 
     input [0 : 8192-1] b, 
     input [0 : 8192-1] m,
@@ -174,6 +184,25 @@ initial
     $display("   -- Testbench for montprod started --");
     init_sim();
     reset_dut();
+//* A=  b B= 11 M= 13 A*B= 10 Ar=  9 Br=  7 Ar*Br=  1 A*B= 10
+    test_mont_prod( 1, {32'h9, 8160'h0}, {32'h7, 8160'h0}, {32'h13,8160'h0}, {32'h1,8160'h0} ); 
+//* A=  b B= 13 M= 11 A*B=  5 Ar=  b Br=  2 Ar*Br=  5 A*B=  5
+//* A= 11 B=  b M= 13 A*B= 10 Ar=  7 Br=  9 Ar*Br=  1 A*B= 10
+//* A= 11 B= 13 M=  b A*B=  4 Ar=  2 Br=  a Ar*Br=  5 A*B=  4
+//* A= 13 B=  b M= 11 A*B=  5 Ar=  2 Br=  b Ar*Br=  5 A*B=  5
+//* A= 13 B= 11 M=  b A*B=  4 Ar=  a Br=  2 Ar*Br=  5 A*B=  4
+//* A=10001 B= 11 M= 13 A*B=  7 Ar= 11 Br=  7 Ar*Br=  4 A*B=  7
+//* A=10001 B= 13 M= 11 A*B=  4 Ar=  2 Br=  2 Ar*Br=  4 A*B=  4
+//* A= 11 B=10001 M= 13 A*B=  7 Ar=  7 Br= 11 Ar*Br=  4 A*B=  7
+//* A= 11 B= 13 M=10001 A*B=143 Ar= 11 Br= 13 Ar*Br=143 A*B=143
+//* A= 13 B=10001 M= 11 A*B=  4 Ar=  2 Br=  2 Ar*Br=  4 A*B=  4
+//* A= 13 B= 11 M=10001 A*B=143 Ar= 13 Br= 11 Ar*Br=143 A*B=143
+//* A=10001 B= 11 M=7fffffff A*B=110011 Ar=20002 Br= 22 Ar*Br=220022 A*B=110011
+//* A=10001 B=7fffffff M= 11 A*B= 10 Ar=  2 Br=  8 Ar*Br= 10 A*B= 10
+//* A= 11 B=10001 M=7fffffff A*B=110011 Ar= 22 Br=20002 Ar*Br=220022 A*B=110011
+//* A= 11 B=7fffffff M=10001 A*B=7ff8 Ar= 11 Br=8000 Ar*Br=7ff8 A*B=7ff8
+//* A=7fffffff B=10001 M= 11 A*B= 10 Ar=  8 Br=  2 Ar*Br= 10 A*B= 10
+//* A=7fffffff B= 11 M=10001 A*B=7ff8 Ar=8000 Br= 11 Ar*Br=7ff8 A*B=7ff8
 
     $display("   -- Testbench for montprod done. --");
     $finish;
