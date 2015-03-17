@@ -17,3 +17,7 @@ src/model/c/.project
 src/model/c/.cproject
 
 src/model/c/Debug/rsa
+
+*.swp
+
+*.vvp
