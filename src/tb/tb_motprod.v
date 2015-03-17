@@ -65,8 +65,17 @@ montprod dut(
 always @*
   begin : read_test_memory
     tb_opa_data = tb_a[tb_opa_addr];
-    tb_opb_data = tb_a[tb_opb_addr];
-    tb_opm_data = tb_a[tb_opm_addr];
+    tb_opb_data = tb_b[tb_opb_addr];
+    tb_opm_data = tb_m[tb_opm_addr];
+  end
+
+always @*
+  begin : write_test_memory
+    if (tb_result_we == 1'b1)
+      begin
+        $display("write %d: %x", tb_result_addr, tb_result_data);
+        tb_r[tb_result_addr] = tb_result_data;
+      end
   end
 
 //----------------------------------------------------------------
@@ -160,18 +169,31 @@ task test_mont_prod(
     $display("*** test started");
     begin: copy_test_vectors
       integer i;
-      for (i=0; i<8192; i=i+32)
+      integer j;
+      for (i=0; i<256; i=i+1)
+        j = i * 32;
         begin
-          tb_a[i] = a[i +: 32];
-          tb_b[i] = b[i +: 32];
-          tb_m[i] = m[i +: 32];
-          tb_r[i] = 0;
+          tb_a[i] = a[j +: 32];
+          tb_b[i] = b[j +: 32];
+          tb_m[i] = m[j +: 32];
+          tb_r[i] = 32'h0;
         end
     end
     $display("*** test vector copied");
     wait_ready();
+    tb_length = length;
     signal_calculate();
     wait_ready();
+    begin: verify_test_vectors
+      integer i;
+      integer j;
+      for (i=0; i<256; i=i+1)
+        begin
+          j = i * 32;
+          $display("offset: %d expected %x actual %x", i, expected[j +: 32], tb_r[i]); 
+        end
+    end
+
     $display("*** test stopped");
   end
 endtask
