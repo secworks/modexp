@@ -62,7 +62,7 @@ montprod dut(
  .result_we(tb_result_we)
 );
 
-always @*
+always @(posedge tb_clk)
   begin : read_test_memory
     tb_opa_data = tb_a[tb_opa_addr];
     tb_opb_data = tb_b[tb_opb_addr];
