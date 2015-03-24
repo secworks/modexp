@@ -63,23 +63,23 @@ module montprod(
   //----------------------------------------------------------------
   // Internal constant and parameter definitions.
   //----------------------------------------------------------------
-  localparam CTRL_IDLE         = 4'h0;
-  localparam CTRL_INIT_S       = 4'h1;
-  localparam CTRL_LOOP_INIT    = 4'h2;
-  localparam CTRL_LOOP_ITER    = 4'h3;
-  localparam CTRL_LOOP_BQ      = 4'h4;
-  localparam CTRL_L_CALC_SM    = 4'h5;
-  localparam CTRL_L_CALC_SA    = 4'h6;
-  localparam CTRL_L_CALC_SDIV2 = 4'h7;
-  localparam CTRL_EMIT_S       = 4'h8;
-  localparam CTRL_DONE         = 4'h9;
+  localparam CTRL_IDLE           = 4'h0;
+  localparam CTRL_INIT_S         = 4'h1;
+  localparam CTRL_LOOP_INIT      = 4'h2;
+  localparam CTRL_LOOP_ITER      = 4'h3;
+  localparam CTRL_LOOP_BQ        = 4'h4;
+  localparam CTRL_L_CALC_SM      = 4'h5;
+  localparam CTRL_L_STALLPIPE_SM = 4'h6;
+  localparam CTRL_L_CALC_SA      = 4'h7;
+  localparam CTRL_L_STALLPIPE_SA = 4'h8;
+  localparam CTRL_L_CALC_SDIV2   = 4'h9;
+  localparam CTRL_EMIT_S         = 4'hA;
+  localparam CTRL_DONE           = 4'hB;
 
-  localparam SMUX_ADD          = 1'h0;
-  localparam SMUX_SHR          = 1'h1;
-
-  localparam ADDER_MUX_0       = 2'h0;
-  localparam ADDER_MUX_SA      = 2'h2;
-  localparam ADDER_MUX_SM      = 2'h3;
+  localparam SMUX_0            = 2'h0;
+  localparam SMUX_ADD_SM       = 2'h1;
+  localparam SMUX_ADD_SA       = 2'h2;
+  localparam SMUX_SHR          = 2'h3;
 
   //----------------------------------------------------------------
   // Registers including update variables and write enable.
@@ -101,11 +101,8 @@ module montprod(
   reg [3 : 0]  montprod_ctrl_new;
   reg          montprod_ctrl_we;
 
-  reg          s_mux_new;
-  reg          s_mux_reg;
-
-  reg [01 : 0] adder_mux_new;
-  reg [01 : 0] adder_mux_reg;
+  reg  [1 : 0] s_mux_new;
+  reg  [1 : 0] s_mux_reg;
 
   reg [31 : 0] s_mem [0 : 255];
   reg [31 : 0] s_mem_new;
@@ -131,10 +128,10 @@ module montprod(
   reg [07 : 0] word_index_dec;
 
 
-  reg [31 : 0] add_argument1;
-  reg [31 : 0] add_argument2;
-  reg          add_carry_in;
-  reg          add_carry_new;
+  reg          add_carry_in_sa;
+  reg          add_carry_new_sa;
+  reg          add_carry_in_sm;
+  reg          add_carry_new_sm;
 
   reg          shr_carry_in;
   reg          shr_carry_new;
@@ -145,8 +142,10 @@ module montprod(
   // Wires.
   //----------------------------------------------------------------
   reg           tmp_result_we;
-  wire [31 : 0] add_result;
-  wire          add_carry_out;
+  wire [31 : 0] add_result_sa;
+  wire          add_carry_out_sa;
+  wire [31 : 0] add_result_sm;
+  wire          add_carry_out_sm;
 
   wire          shr_carry_out;
   wire [31 : 0] shr_adiv2;
@@ -165,12 +164,20 @@ module montprod(
 
   assign ready       = ready_reg;
 
-  adder32 s_adder(
-    .a(add_argument1),
-    .b(add_argument2),
-    .carry_in(add_carry_in),
-    .sum(add_result),
-    .carry_out(add_carry_out)
+  adder32 s_adder_sa(
+    .a(s_mem_read_data),
+    .b(opa_data),
+    .carry_in(add_carry_in_sa),
+    .sum(add_result_sa),
+    .carry_out(add_carry_out_sa)
+  );
+
+  adder32 s_adder_sm(
+    .a(s_mem_read_data),
+    .b(opm_data),
+    .carry_in(add_carry_in_sm),
+    .sum(add_result_sm),
+    .carry_out(add_carry_out_sm)
   );
 
   shr32 shifter(
@@ -181,39 +188,54 @@ module montprod(
   );
 
   always @*
-    begin : s_mux
-      case (s_mux_reg)
-        SMUX_ADD:
-          s_mem_new = add_result;
-        SMUX_SHR:
-          s_mem_new = shr_adiv2;
-        default:
-          s_mem_new = add_result;
-      endcase 
-      $display("SMUX%x: %x", s_mux_reg, s_mem_new);
+    begin : s_debug
+      $display("S[ 0 ]: %x", s_mem[0] );
+    end
+
+  always @ (posedge clk) 
+    begin : fsm_debug
+      if (montprod_ctrl_we)
+        case (montprod_ctrl_new)
+          CTRL_IDLE:
+            $display("FSM: IDLE");
+          CTRL_INIT_S:
+            $display("FSM: INIT_S");
+          CTRL_LOOP_INIT:
+            $display("FSM: LOOP_INIT");
+          CTRL_LOOP_ITER:
+            $display("FSM: LOOP_ITER");
+          CTRL_LOOP_BQ:
+            $display("FSM: LOOP_BQ");
+          CTRL_L_CALC_SM:
+            $display("FSM: LOOP_CALC_SM");
+          CTRL_L_CALC_SA:
+            $display("FSM: LOOP_CALC_SA");
+          CTRL_L_STALLPIPE_SA:
+            $display("FSM: STALL_PIPE");
+          CTRL_L_CALC_SDIV2:
+            $display("FSM: LOOP_CALC_SDIV2");
+          CTRL_EMIT_S:
+            $display("FSM: LOOP_EMIT_S");
+          CTRL_DONE:
+            $display("FSM: DONE");
+          default:
+            $display("FSM: %x", montprod_ctrl_new);
+        endcase
     end
 
   always @*
-    begin : adder_mux
-      case (adder_mux_reg)
-        ADDER_MUX_SA:
-          begin
-            add_argument1 = s_mem_read_data;
-            add_argument2 = opa_data;
-            $display("adder: S %x + A %x = %x", s_mem_read_data, opa_data, s_mem_read_data + opa_data); 
-          end
-        ADDER_MUX_SM:
-          begin
-            add_argument1 = s_mem_read_data;
-            add_argument2 = opm_data;
-            $display("adder: S %x + M %x = %x", s_mem_read_data, opm_data, s_mem_read_data + opm_data); 
-          end
-        default:
-          begin
-            add_argument1 = 32'b0;
-            add_argument2 = 32'b0;
-          end
-      endcase
+    begin : s_mux
+      case (s_mux_reg)
+        SMUX_0:
+          s_mem_new = 32'b0;
+        SMUX_ADD_SA:
+          s_mem_new = add_result_sa;
+        SMUX_ADD_SM:
+          s_mem_new = add_result_sm;
+        SMUX_SHR:
+          s_mem_new = shr_adiv2;
+      endcase 
+      $display("SMUX%x: %x", s_mux_reg, s_mem_new);
     end
 
   //----------------------------------------------------------------
@@ -230,13 +252,13 @@ module montprod(
           ready_reg         <= 1'b0;
           loop_counter      <= 13'h0;
           word_index        <= 8'h0;
-          add_carry_in      <= 1'b0;
+          add_carry_in_sa   <= 1'b0;
+          add_carry_in_sm   <= 1'b0;
           shr_carry_in      <= 1'b0;
           montprod_ctrl_reg <= CTRL_IDLE;
           b_reg             <= 1'b0;
           q_reg             <= 1'b0;
-          s_mux_reg         <= SMUX_ADD;
-          adder_mux_reg     <= ADDER_MUX_0;
+          s_mux_reg         <= SMUX_0;
           s_mem_we          <= 1'b0;
           s_mem_wr_addr     <= 7'h0;
         end
@@ -247,7 +269,6 @@ module montprod(
 
           if (montprod_ctrl_we)
             begin
-               $display("montprod new state: %x", montprod_ctrl_new);
                montprod_ctrl_reg <= montprod_ctrl_new;
              end
 
@@ -257,13 +278,16 @@ module montprod(
 
           if (s_mem_we)
             begin
-              $display("write to S[ %x ]", s_mem_wr_addr );
+              //$display("write to S[ %x ]", s_mem_wr_addr );
               s_mem[s_mem_wr_addr] <= s_mem_new;
             end
 
+          s_mem_read_data <= s_mem[ s_mem_addr ];
+
           word_index <= word_index_new;
           loop_counter <= loop_counter_new;
-          add_carry_in <= add_carry_new & !montprod_ctrl_we; //no carry over between different operations
+          add_carry_in_sa <= add_carry_new_sa;
+          add_carry_in_sm <= add_carry_new_sm;
 
           if (montprod_ctrl_reg == CTRL_LOOP_BQ)
             begin
@@ -272,13 +296,8 @@ module montprod(
             end
 
           s_mux_reg <= s_mux_new;
-          adder_mux_reg <= adder_mux_new;
       end
     end // reg_update
-
-  always @*
-    begin
-    end
 
   always @*
    begin : bq_process
@@ -347,7 +366,6 @@ module montprod(
           s_mem_addr = word_index;
       endcase
 
-      s_mem_read_data = s_mem[ s_mem_addr ];
 
 
 
@@ -372,31 +390,33 @@ module montprod(
 
   always @*
     begin : s_writer_process
-      s_mux_new     = SMUX_ADD;
-      adder_mux_new = ADDER_MUX_0;
-      add_carry_new = add_carry_out;
-      shr_carry_new = 1'b0;
+      add_carry_new_sa = 1'b0;
+      add_carry_new_sm = 1'b0;
+      shr_carry_new    = 1'b0;
+      s_mux_new        = SMUX_0;
 
       s_mem_we_new  = 1'b0;
       case (montprod_ctrl_reg)
         CTRL_INIT_S:
           begin
             s_mem_we_new = 1'b1;
-            adder_mux_new = ADDER_MUX_0; // write 0 to initilize s.
+            s_mux_new    = SMUX_0; // write 0
           end
 
         CTRL_L_CALC_SM:
           begin
             //s = (s + q*M + b*A) >>> 1;, if(q==1) S+= M. Takes (1..length) cycles.
-            s_mem_we_new  = q_reg;
-            adder_mux_new = ADDER_MUX_SM;
+            s_mem_we_new     = q_reg;
+            s_mux_new        = SMUX_ADD_SM;
+            add_carry_new_sm = add_carry_out_sm;
           end
 
         CTRL_L_CALC_SA:
           begin
             //s = (s + q*M + b*A) >>> 1;, if(b==1) S+= A. Takes (1..length) cycles.
-            s_mem_we_new  = b_reg;
-            adder_mux_new = ADDER_MUX_SA;
+            s_mem_we_new     = b_reg;
+            s_mux_new        = SMUX_ADD_SA;
+            add_carry_new_sa = add_carry_out_sa;
           end
 
         CTRL_L_CALC_SDIV2:
@@ -491,18 +511,32 @@ module montprod(
               begin
                 reset_word_index  = 1'b1;
                 montprod_ctrl_we  = 1'b1;
-                montprod_ctrl_new = CTRL_L_CALC_SA;
+                montprod_ctrl_new = CTRL_L_STALLPIPE_SM;
               end
+          end
+
+        CTRL_L_STALLPIPE_SM:
+          begin
+            montprod_ctrl_new = CTRL_L_CALC_SA;
+            montprod_ctrl_we = 1'b1;
+            reset_word_index = 1'b1;
           end
 
         CTRL_L_CALC_SA:
           begin
             if (word_index == 0)
               begin
-                montprod_ctrl_new = CTRL_L_CALC_SDIV2;
+                reset_word_index  = 1'b1;
+                montprod_ctrl_new = CTRL_L_STALLPIPE_SA;
                 montprod_ctrl_we = 1'b1;
-                reset_word_index = 1'b1;
               end
+          end
+
+        CTRL_L_STALLPIPE_SA:
+          begin
+            montprod_ctrl_new = CTRL_L_CALC_SDIV2;
+            montprod_ctrl_we = 1'b1;
+            reset_word_index = 1'b1; //TODO word counter should go in oppositre direction for DIV2 (SHR)
           end
 
         CTRL_L_CALC_SDIV2:
