@@ -122,6 +122,7 @@ module montprod(
   reg [12 : 0] loop_counter_dec;
   reg [07 : 0] B_word_index; //loop counter as a word index
   reg [04 : 0] B_bit_index; //loop counter as a bit index
+  reg [04 : 0] B_bit_index_reg; //loop counter as a bit index
 
   reg [07 : 0] word_index;
   reg [07 : 0] word_index_new;
@@ -186,6 +187,11 @@ module montprod(
      .adiv2( shr_adiv2 ),
      .carry_out( shr_carry_out )
   );
+
+  always @*
+    begin : bq_debug
+      $display("====================> B: %x Q: %x <=====================", b_reg, q_reg);
+    end
 
   always @*
     begin : s_debug
@@ -261,6 +267,7 @@ module montprod(
           s_mux_reg         <= SMUX_0;
           s_mem_we          <= 1'b0;
           s_mem_wr_addr     <= 7'h0;
+          B_bit_index_reg   <= 5'h0;
         end
       else
         begin
@@ -286,14 +293,13 @@ module montprod(
 
           word_index <= word_index_new;
           loop_counter <= loop_counter_new;
+          shr_carry_in <= shr_carry_new;
           add_carry_in_sa <= add_carry_new_sa;
           add_carry_in_sm <= add_carry_new_sm;
 
-          if (montprod_ctrl_reg == CTRL_LOOP_BQ)
-            begin
-              q_reg <= q;
-              b_reg <= b;
-            end
+          B_bit_index_reg <= B_bit_index;
+          q_reg <= q;
+          b_reg <= b;
 
           s_mux_reg <= s_mux_new;
       end
@@ -301,18 +307,21 @@ module montprod(
 
   always @*
    begin : bq_process
-      b = opb_data[ B_bit_index ];
-      
-      //opa_addr will point to length-1 to get A LSB.
-      //s_read_addr will point to length-1
-      q = s_mem_read_data[0] ^ (opa_data[0] & b);
-      
-      case (montprod_ctrl_reg)
-        CTRL_LOOP_BQ:
-           $display("DEBUG: b: %d q: %d opa_data %x opb_data %x s_mem_read_data %x", b, q, opa_addr_reg, opa_data, opb_data, s_mem_read_data);
-        default:
-          begin end
-      endcase 
+      b = b_reg;
+      q = q_reg;
+      if (montprod_ctrl_reg == CTRL_LOOP_BQ)
+         begin
+           b = opb_data[ B_bit_index_reg ];
+           //opa_addr will point to length-1 to get A LSB.
+           //s_read_addr will point to length-1
+           q = s_mem_read_data[0] ^ (opa_data[0] & b);
+        end     
+      //case (montprod_ctrl_reg)
+      //  CTRL_LOOP_BQ:
+      //     $display("DEBUG: b: %d q: %d opa_data %x opb_data %x s_mem_read_data %x", b, q, opa_addr_reg, opa_data, opb_data, s_mem_read_data);
+      //  default:
+      //    begin end
+      //endcase 
    end  
   
   
@@ -390,8 +399,6 @@ module montprod(
 
   always @*
     begin : s_writer_process
-      add_carry_new_sa = 1'b0;
-      add_carry_new_sm = 1'b0;
       shr_carry_new    = 1'b0;
       s_mux_new        = SMUX_0;
 
@@ -408,7 +415,6 @@ module montprod(
             //s = (s + q*M + b*A) >>> 1;, if(q==1) S+= M. Takes (1..length) cycles.
             s_mem_we_new     = q_reg;
             s_mux_new        = SMUX_ADD_SM;
-            add_carry_new_sm = add_carry_out_sm;
           end
 
         CTRL_L_CALC_SA:
@@ -416,7 +422,6 @@ module montprod(
             //s = (s + q*M + b*A) >>> 1;, if(b==1) S+= A. Takes (1..length) cycles.
             s_mem_we_new     = b_reg;
             s_mux_new        = SMUX_ADD_SA;
-            add_carry_new_sa = add_carry_out_sa;
           end
 
         CTRL_L_CALC_SDIV2:
@@ -424,13 +429,24 @@ module montprod(
             //s = (s + q*M + b*A) >>> 1; s>>=1.  Takes (1..length) cycles.
             s_mux_new     = SMUX_SHR;
             s_mem_we_new  = 1'b1;
-            shr_carry_new = shr_carry_out;
           end
 
         default:
           begin
           end
       endcase
+
+      add_carry_new_sa = 1'b0;
+      add_carry_new_sm = 1'b0;
+      case (s_mux_reg)
+        SMUX_ADD_SM:
+          add_carry_new_sm = add_carry_out_sm;
+        SMUX_ADD_SA:
+          add_carry_new_sa = add_carry_out_sa;
+        SMUX_SHR:
+          shr_carry_new = shr_carry_out;
+      endcase
+
     end // prodcalc
 
 
