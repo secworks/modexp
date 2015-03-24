@@ -41,6 +41,9 @@ reg [31 : 0] tb_b [0 : 255]; //tb_opb_data reads here
 reg [31 : 0] tb_m [0 : 255]; //tb_opm_data reads here
 reg [31 : 0] tb_r [0 : 255]; //tb_result_data writes here
 
+integer test_mont_prod_success;
+integer test_mont_prod_fail;
+
 //----------------------------------------------------------------
 // Device Under Test.
 //----------------------------------------------------------------
@@ -116,6 +119,8 @@ task init_sim();
     tb_reset_n    = 0;
     tb_length     = 0;
     tb_calculate  = 0;
+    test_mont_prod_success = 0;
+    test_mont_prod_fail    = 0;
   end
 endtask // init_dut
 
@@ -158,6 +163,7 @@ endtask // signal_calculate
 
 
 //----------------------------------------------------------------
+// Tests the montgomery multiplications
 //----------------------------------------------------------------
 task test_mont_prod(
     input [7 : 0]      length,
@@ -189,11 +195,22 @@ task test_mont_prod(
     begin: verify_test_vectors
       integer i;
       integer j;
-      for (i=0; i<256; i=i+1)
+      integer success;
+      integer fail;
+      success = 1;
+      fail = 0;
+      for (i=0; i<length; i=i+1)
         begin
           j = i * 32;
           $display("offset: %d expected %x actual %x", i, expected[j +: 32], tb_r[i]); 
+          if (expected[j +: 32] != tb_r[i])
+            begin
+              success = 0;
+              fail = 1;
+            end
         end
+      test_mont_prod_success = test_mont_prod_success + success;
+      test_mont_prod_fail    = test_mont_prod_fail + fail;
     end
 
     $display("*** test stopped");
@@ -211,8 +228,11 @@ initial
 //* A=  b B= 11 M= 13 A*B= 10 Ar=  9 Br=  7 Ar*Br=  1 A*B= 10
     test_mont_prod( 1, {32'h9, 8160'h0}, {32'h7, 8160'h0}, {32'h13,8160'h0}, {32'h1,8160'h0} ); 
 //* A=  b B= 13 M= 11 A*B=  5 Ar=  b Br=  2 Ar*Br=  5 A*B=  5
+    test_mont_prod( 1, {32'hb, 8160'h0}, {32'h2, 8160'h0}, {32'h13,8160'h0}, {32'h5,8160'h0} ); 
 //* A= 11 B=  b M= 13 A*B= 10 Ar=  7 Br=  9 Ar*Br=  1 A*B= 10
+    test_mont_prod( 1, {32'h7, 8160'h0}, {32'h9, 8160'h0}, {32'h13,8160'h0}, {32'h1,8160'h0} ); 
 //* A= 11 B= 13 M=  b A*B=  4 Ar=  2 Br=  a Ar*Br=  5 A*B=  4
+    test_mont_prod( 1, {32'h2, 8160'h0}, {32'ha, 8160'h0}, {32'h13,8160'h0}, {32'h5,8160'h0} ); 
 //* A= 13 B=  b M= 11 A*B=  5 Ar=  2 Br=  b Ar*Br=  5 A*B=  5
 //* A= 13 B= 11 M=  b A*B=  4 Ar=  a Br=  2 Ar*Br=  5 A*B=  4
 //* A=10001 B= 11 M= 13 A*B=  7 Ar= 11 Br=  7 Ar*Br=  4 A*B=  7
@@ -229,6 +249,8 @@ initial
 //* A=7fffffff B= 11 M=10001 A*B=7ff8 Ar=8000 Br= 11 Ar*Br=7ff8 A*B=7ff8
 
     $display("   -- Testbench for montprod done. --");
+    $display(" tests success: %d", test_mont_prod_success);
+    $display(" tests failed:  %d", test_mont_prod_fail);
     $finish;
   end // montprod
 endmodule // tb_montprod
