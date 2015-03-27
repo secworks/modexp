@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------
 // Simulator directives.
 //------------------------------------------------------------------
@@ -67,10 +66,10 @@ montprod dut(
 
 always @(posedge tb_clk)
   begin : read_test_memory
-    tb_opa_data = tb_a[tb_opa_addr];
-    tb_opb_data = tb_b[tb_opb_addr];
-    tb_opm_data = tb_m[tb_opm_addr];
-    $display("a %x %x b %x %x m %x %x", tb_opa_addr, tb_a[tb_opa_addr], tb_opb_addr, tb_b[tb_opb_addr], tb_opm_addr, tb_m[tb_opm_addr]); 
+    tb_opa_data <= tb_a[tb_opa_addr];
+    tb_opb_data <= tb_b[tb_opb_addr];
+    tb_opm_data <= tb_m[tb_opm_addr];
+    $display("a %x %x b %x %x m %x %x", tb_opa_addr, tb_a[tb_opa_addr], tb_opb_addr, tb_b[tb_opb_addr], tb_opm_addr, tb_m[tb_opm_addr]);
   end
 
 always @*
@@ -167,8 +166,8 @@ endtask // signal_calculate
 //----------------------------------------------------------------
 task test_mont_prod(
     input [7 : 0]      length,
-    input [0 : 8192-1] a, 
-    input [0 : 8192-1] b, 
+    input [0 : 8192-1] a,
+    input [0 : 8192-1] b,
     input [0 : 8192-1] m,
     input [0 : 8192-1] expected
   );
@@ -202,7 +201,7 @@ task test_mont_prod(
       for (i=0; i<length; i=i+1)
         begin
           j = i * 32;
-          $display("offset: %d expected %x actual %x", i, expected[j +: 32], tb_r[i]); 
+          $display("offset: %d expected %x actual %x", i, expected[j +: 32], tb_r[i]);
           if (expected[j +: 32] != tb_r[i])
             begin
               success = 0;
@@ -226,13 +225,13 @@ initial
     init_sim();
     reset_dut();
 //* A=  b B= 11 M= 13 A*B= 10 Ar=  9 Br=  7 Ar*Br=  1 A*B= 10
-    test_mont_prod( 1, {32'h9, 8160'h0}, {32'h7, 8160'h0}, {32'h13,8160'h0}, {32'h1,8160'h0} ); 
+    test_mont_prod( 1, {32'h9, 8160'h0}, {32'h7, 8160'h0}, {32'h13,8160'h0}, {32'h1,8160'h0} );
 //* A=  b B= 13 M= 11 A*B=  5 Ar=  b Br=  2 Ar*Br=  5 A*B=  5
-    test_mont_prod( 1, {32'hb, 8160'h0}, {32'h2, 8160'h0}, {32'h13,8160'h0}, {32'h5,8160'h0} ); 
+    test_mont_prod( 1, {32'hb, 8160'h0}, {32'h2, 8160'h0}, {32'h13,8160'h0}, {32'h5,8160'h0} );
 //* A= 11 B=  b M= 13 A*B= 10 Ar=  7 Br=  9 Ar*Br=  1 A*B= 10
-    test_mont_prod( 1, {32'h7, 8160'h0}, {32'h9, 8160'h0}, {32'h13,8160'h0}, {32'h1,8160'h0} ); 
+    test_mont_prod( 1, {32'h7, 8160'h0}, {32'h9, 8160'h0}, {32'h13,8160'h0}, {32'h1,8160'h0} );
 //* A= 11 B= 13 M=  b A*B=  4 Ar=  2 Br=  a Ar*Br=  5 A*B=  4
-    test_mont_prod( 1, {32'h2, 8160'h0}, {32'ha, 8160'h0}, {32'h13,8160'h0}, {32'h5,8160'h0} ); 
+    test_mont_prod( 1, {32'h2, 8160'h0}, {32'ha, 8160'h0}, {32'h13,8160'h0}, {32'h5,8160'h0} );
 //* A= 13 B=  b M= 11 A*B=  5 Ar=  2 Br=  b Ar*Br=  5 A*B=  5
 //* A= 13 B= 11 M=  b A*B=  4 Ar=  a Br=  2 Ar*Br=  5 A*B=  4
 //* A=10001 B= 11 M= 13 A*B=  7 Ar= 11 Br=  7 Ar*Br=  4 A*B=  7
