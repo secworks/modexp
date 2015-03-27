@@ -227,11 +227,11 @@ initial
 //* A=  b B= 11 M= 13 A*B= 10 Ar=  9 Br=  7 Ar*Br=  1 A*B= 10
     test_mont_prod( 1, {32'h9, 8160'h0}, {32'h7, 8160'h0}, {32'h13,8160'h0}, {32'h1,8160'h0} );
 //* A=  b B= 13 M= 11 A*B=  5 Ar=  b Br=  2 Ar*Br=  5 A*B=  5
-    test_mont_prod( 1, {32'hb, 8160'h0}, {32'h2, 8160'h0}, {32'h13,8160'h0}, {32'h5,8160'h0} );
+    test_mont_prod( 1, {32'hb, 8160'h0}, {32'h2, 8160'h0}, {32'h11,8160'h0}, {32'h5,8160'h0} );
 //* A= 11 B=  b M= 13 A*B= 10 Ar=  7 Br=  9 Ar*Br=  1 A*B= 10
     test_mont_prod( 1, {32'h7, 8160'h0}, {32'h9, 8160'h0}, {32'h13,8160'h0}, {32'h1,8160'h0} );
 //* A= 11 B= 13 M=  b A*B=  4 Ar=  2 Br=  a Ar*Br=  5 A*B=  4
-    test_mont_prod( 1, {32'h2, 8160'h0}, {32'ha, 8160'h0}, {32'h13,8160'h0}, {32'h5,8160'h0} );
+    test_mont_prod( 1, {32'h2, 8160'h0}, {32'ha, 8160'h0}, {32'h0b,8160'h0}, {32'h5,8160'h0} );
 //* A= 13 B=  b M= 11 A*B=  5 Ar=  2 Br=  b Ar*Br=  5 A*B=  5
 //* A= 13 B= 11 M=  b A*B=  4 Ar=  a Br=  2 Ar*Br=  5 A*B=  4
 //* A=10001 B= 11 M= 13 A*B=  7 Ar= 11 Br=  7 Ar*Br=  4 A*B=  7
