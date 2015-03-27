@@ -9,6 +9,9 @@ all: testmotprod.sim
 testmotprod.sim: $(TB_SRC) $(RTL_SRC)
 	iverilog -Wall -o testmotprod.sim $(TB_SRC) $(RTL_SRC)
 
+lint:  $(RTL_SRC)
+	verilator --lint-only $(RTL_SRC)
+
 test: testmotprod.sim
 	./testmotprod.sim
 
