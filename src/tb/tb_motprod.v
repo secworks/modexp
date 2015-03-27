@@ -126,9 +126,10 @@ always
 
 //----------------------------------------------------------------
 //----------------------------------------------------------------
-  always @*
+  always @ (posedge tb_clk)
     begin : bq_debug
-      $display("====================> B: %x Q: %x <=====================", dut.b_reg, dut.q_reg);
+      if (dut.montprod_ctrl_reg == dut.CTRL_LOOP_BQ)
+        $display("====================> B: %x Q: %x B_bit_index: %x <=====================", dut.b_reg, dut.q_reg, dut.B_bit_index);
     end
 
       //case (montprod_ctrl_reg)
