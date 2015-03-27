@@ -20,6 +20,9 @@ module blockmem(
   // Regs and memories.
   //----------------------------------------------------------------
   reg [31 : 0] mem [0 : 255];
+  reg [31 : 0] tmp_read_data;
+
+  assign read_data = tmp_read_data;
 
 
   //----------------------------------------------------------------
@@ -30,7 +33,7 @@ module blockmem(
       if (wr)
         mem[write_addr] <= write_data;
 
-      read_data <= mem[read_addr];
+      tmp_read_data <= mem[read_addr];
     end
 endmodule // mem
 

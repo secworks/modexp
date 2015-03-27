@@ -104,13 +104,13 @@ module montprod(
   reg  [1 : 0] s_mux_new;
   reg  [1 : 0] s_mux_reg;
 
-  reg [31 : 0] s_mem [0 : 255];
+//  reg [31 : 0] s_mem [0 : 255];
   reg [31 : 0] s_mem_new;
   reg          s_mem_we;
   reg          s_mem_we_new;
   reg [07 : 0] s_mem_addr;
   reg [07 : 0] s_mem_wr_addr;
-  reg [31 : 0] s_mem_read_data;
+  wire [31 : 0] s_mem_read_data;
 
   reg          q; //q = (s - b * A) & 1
   reg          q_reg;
@@ -165,6 +165,21 @@ module montprod(
 
   assign ready       = ready_reg;
 
+
+  //----------------------------------------------------------------
+  // Instantions
+  //----------------------------------------------------------------
+
+  blockmem s_mem(
+                 .clk(clk),
+                 .read_addr(s_mem_addr),
+                 .read_data(s_mem_read_data),
+                 .wr(s_mem_we),
+                 .write_addr(s_mem_wr_addr),
+                 .write_data(s_mem_new)
+                );
+
+
   adder32 s_adder_sa(
     .a(s_mem_read_data),
     .b(opa_data),
@@ -193,12 +208,12 @@ module montprod(
       $display("====================> B: %x Q: %x <=====================", b_reg, q_reg);
     end
 
-  always @*
-    begin : s_debug
-      $display("S[ 0 ]: %x", s_mem[0] );
-    end
+//  always @*
+//    begin : s_debug
+//      $display("S[ 0 ]: %x", s_mem[0] );
+//    end
 
-  always @ (posedge clk) 
+  always @ (posedge clk)
     begin : fsm_debug
       if (montprod_ctrl_we)
         case (montprod_ctrl_new)
@@ -240,7 +255,7 @@ module montprod(
           s_mem_new = add_result_sm;
         SMUX_SHR:
           s_mem_new = shr_adiv2;
-      endcase 
+      endcase
       $display("SMUX%x: %x", s_mux_reg, s_mem_new);
     end
 
@@ -266,7 +281,7 @@ module montprod(
           q_reg             <= 1'b0;
           s_mux_reg         <= SMUX_0;
           s_mem_we          <= 1'b0;
-          s_mem_wr_addr     <= 7'h0;
+          s_mem_wr_addr     <= 8'h0;
           B_bit_index_reg   <= 5'h0;
         end
       else
@@ -283,13 +298,14 @@ module montprod(
 
           s_mem_we <= s_mem_we_new;
 
-          if (s_mem_we)
-            begin
-              //$display("write to S[ %x ]", s_mem_wr_addr );
-              s_mem[s_mem_wr_addr] <= s_mem_new;
-            end
-
-          s_mem_read_data <= s_mem[ s_mem_addr ];
+//
+//          if (s_mem_we)
+//            begin
+//              //$display("write to S[ %x ]", s_mem_wr_addr );
+//              s_mem[s_mem_wr_addr] <= s_mem_new;
+//            end
+//
+//          s_mem_read_data <= s_mem[ s_mem_addr ];
 
           word_index <= word_index_new;
           loop_counter <= loop_counter_new;
@@ -315,16 +331,16 @@ module montprod(
            //opa_addr will point to length-1 to get A LSB.
            //s_read_addr will point to length-1
            q = s_mem_read_data[0] ^ (opa_data[0] & b);
-        end     
+        end
       //case (montprod_ctrl_reg)
       //  CTRL_LOOP_BQ:
       //     $display("DEBUG: b: %d q: %d opa_data %x opb_data %x s_mem_read_data %x", b, q, opa_addr_reg, opa_data, opb_data, s_mem_read_data);
       //  default:
       //    begin end
-      //endcase 
-   end  
-  
-  
+      //endcase
+   end
+
+
   //----------------------------------------------------------------
   // Process for iterating the loop counter and setting related B indexes
   //----------------------------------------------------------------
@@ -340,7 +356,7 @@ module montprod(
 
         CTRL_LOOP_ITER:
           begin
-            $display("loop counter", loop_counter_new);
+//            $display("loop counter", loop_counter_new);
             loop_counter_new = loop_counter_dec;
           end
 
@@ -348,14 +364,14 @@ module montprod(
           loop_counter_new = loop_counter;
       endcase
     end
-  
+
 
   //----------------------------------------------------------------
   // prodcalc
   //----------------------------------------------------------------
   always @*
     begin : prodcalc
-      
+
       case (montprod_ctrl_reg)
         CTRL_LOOP_ITER:
           //q = (s[length-1] ^ A[length-1]) & 1;
@@ -370,7 +386,7 @@ module montprod(
 
       case (montprod_ctrl_reg)
         CTRL_LOOP_ITER:
-          s_mem_addr = length-1;
+          s_mem_addr = length - 1'b1;
         default:
           s_mem_addr = word_index;
       endcase
@@ -438,13 +454,20 @@ module montprod(
 
       add_carry_new_sa = 1'b0;
       add_carry_new_sm = 1'b0;
+
       case (s_mux_reg)
         SMUX_ADD_SM:
           add_carry_new_sm = add_carry_out_sm;
+
         SMUX_ADD_SA:
           add_carry_new_sa = add_carry_out_sa;
+
         SMUX_SHR:
           shr_carry_new = shr_carry_out;
+
+        default:
+          begin
+          end
       endcase
 
     end // prodcalc
