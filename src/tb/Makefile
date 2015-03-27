@@ -4,11 +4,13 @@ TB_SRC = tb_motprod.v
 RTL_SRC = ../rtl/montprod.v ../rtl/adder32.v ../rtl/shr32.v ../rtl/blockmem.v
 
 
-test: testmotprod.sim
-	./testmotprod.sim
+all: testmotprod.sim
 
 testmotprod.sim: $(TB_SRC) $(RTL_SRC)
 	iverilog -Wall -o testmotprod.sim $(TB_SRC) $(RTL_SRC)
+
+test: testmotprod.sim
+	./testmotprod.sim
 
 clean:
 	rm testmotprod.sim
