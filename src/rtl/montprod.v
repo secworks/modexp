@@ -104,7 +104,6 @@ module montprod(
   reg  [1 : 0] s_mux_new;
   reg  [1 : 0] s_mux_reg;
 
-//  reg [31 : 0] s_mem [0 : 255];
   reg [31 : 0] s_mem_new;
   reg          s_mem_we;
   reg          s_mem_we_new;
@@ -204,47 +203,6 @@ module montprod(
   );
 
   always @*
-    begin : bq_debug
-      $display("====================> B: %x Q: %x <=====================", b_reg, q_reg);
-    end
-
-//  always @*
-//    begin : s_debug
-//      $display("S[ 0 ]: %x", s_mem[0] );
-//    end
-
-  always @ (posedge clk)
-    begin : fsm_debug
-      if (montprod_ctrl_we)
-        case (montprod_ctrl_new)
-          CTRL_IDLE:
-            $display("FSM: IDLE");
-          CTRL_INIT_S:
-            $display("FSM: INIT_S");
-          CTRL_LOOP_INIT:
-            $display("FSM: LOOP_INIT");
-          CTRL_LOOP_ITER:
-            $display("FSM: LOOP_ITER");
-          CTRL_LOOP_BQ:
-            $display("FSM: LOOP_BQ");
-          CTRL_L_CALC_SM:
-            $display("FSM: LOOP_CALC_SM");
-          CTRL_L_CALC_SA:
-            $display("FSM: LOOP_CALC_SA");
-          CTRL_L_STALLPIPE_SA:
-            $display("FSM: STALL_PIPE");
-          CTRL_L_CALC_SDIV2:
-            $display("FSM: LOOP_CALC_SDIV2");
-          CTRL_EMIT_S:
-            $display("FSM: LOOP_EMIT_S");
-          CTRL_DONE:
-            $display("FSM: DONE");
-          default:
-            $display("FSM: %x", montprod_ctrl_new);
-        endcase
-    end
-
-  always @*
     begin : s_mux
       case (s_mux_reg)
         SMUX_0:
@@ -298,15 +256,6 @@ module montprod(
 
           s_mem_we <= s_mem_we_new;
 
-//
-//          if (s_mem_we)
-//            begin
-//              //$display("write to S[ %x ]", s_mem_wr_addr );
-//              s_mem[s_mem_wr_addr] <= s_mem_new;
-//            end
-//
-//          s_mem_read_data <= s_mem[ s_mem_addr ];
-
           word_index <= word_index_new;
           loop_counter <= loop_counter_new;
           shr_carry_in <= shr_carry_new;
@@ -332,12 +281,6 @@ module montprod(
            //s_read_addr will point to length-1
            q = s_mem_read_data[0] ^ (opa_data[0] & b);
         end
-      //case (montprod_ctrl_reg)
-      //  CTRL_LOOP_BQ:
-      //     $display("DEBUG: b: %d q: %d opa_data %x opb_data %x s_mem_read_data %x", b, q, opa_addr_reg, opa_data, opb_data, s_mem_read_data);
-      //  default:
-      //    begin end
-      //endcase
    end
 
 
