@@ -7,7 +7,6 @@
 module blockmem(
                 input wire           clk,
 
-                input wire           rd,
                 input wire  [07 : 0] read_addr,
                 output wire [31 : 0] read_data,
 
@@ -28,11 +27,10 @@ module blockmem(
   //----------------------------------------------------------------
   always @ (posedge clk)
     begin : reg_mem
-      if (we)
-        mem[wr_addr] <= write_data;
+      if (wr)
+        mem[write_addr] <= write_data;
 
-      if (rd)
-        read_data <= mem[read_addr];
+      read_data <= mem[read_addr];
     end
 endmodule // mem
 
