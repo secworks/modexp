@@ -74,8 +74,9 @@ module montprod(
   localparam CTRL_L_STALLPIPE_SA = 4'h8;
   localparam CTRL_L_CALC_SDIV2   = 4'h9;
   localparam CTRL_L_STALLPIPE_D2 = 4'hA;
-  localparam CTRL_EMIT_S         = 4'hB;
-  localparam CTRL_DONE           = 4'hC;
+  localparam CTRL_L_STALLPIPE_ES = 4'hB;
+  localparam CTRL_EMIT_S         = 4'hC;
+  localparam CTRL_DONE           = 4'hD;
 
   localparam SMUX_0            = 2'h0;
   localparam SMUX_ADD_SM       = 2'h1;
@@ -526,6 +527,7 @@ module montprod(
               begin
                 montprod_ctrl_new = CTRL_L_STALLPIPE_D2;
                 montprod_ctrl_we = 1'b1;
+                reset_word_index = 1'b1;
               end
           end
 
@@ -536,10 +538,17 @@ module montprod(
             reset_word_index = 1'b1;
             if (loop_counter == 0)
               begin
-                montprod_ctrl_new = CTRL_EMIT_S;
+                montprod_ctrl_new = CTRL_L_STALLPIPE_ES;
                 montprod_ctrl_we = 1'b1;
               end
           end
+
+        CTRL_L_STALLPIPE_ES:
+          begin
+            montprod_ctrl_new = CTRL_EMIT_S;
+            montprod_ctrl_we = 1'b1;
+            reset_word_index = 1'b1;
+           end
 
         CTRL_EMIT_S:
            begin
