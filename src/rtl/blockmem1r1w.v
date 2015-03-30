@@ -39,7 +39,7 @@
 //
 //======================================================================
 
-module blockmem2r1w(
+module blockmem1r1w(
                     input wire           clk,
 
                     input wire  [07 : 0] read_addr,
@@ -63,8 +63,8 @@ module blockmem2r1w(
       tmp_read_data <= mem[read_addr];
     end
 
-endmodule // blockmem2rw1
+endmodule // blockmem1r1w
 
 //======================================================================
-// EOF blockmem2rw1.v
+// EOF blockmem1r1w.v
 //======================================================================

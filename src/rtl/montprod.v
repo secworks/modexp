@@ -169,14 +169,14 @@ module montprod(
   // Instantions
   //----------------------------------------------------------------
 
-  blockmem s_mem(
-                 .clk(clk),
-                 .read_addr(s_mem_addr),
-                 .read_data(s_mem_read_data),
-                 .wr(s_mem_we),
-                 .write_addr(s_mem_wr_addr),
-                 .write_data(s_mem_new)
-                );
+  blockmem1r1w s_mem(
+                     .clk(clk),
+                     .read_addr(s_mem_addr),
+                     .read_data(s_mem_read_data),
+                     .wr(s_mem_we),
+                     .write_addr(s_mem_wr_addr),
+                     .write_data(s_mem_new)
+                    );
 
 
   adder32 s_adder_sa(
