@@ -1,7 +1,7 @@
 # Makefile for building and running motprod simulation.
 
 TB_SRC = tb_motprod.v
-RTL_SRC = ../rtl/montprod.v ../rtl/adder32.v ../rtl/shr32.v ../rtl/blockmem.v
+RTL_SRC = ../rtl/montprod.v ../rtl/adder32.v ../rtl/shr32.v ../rtl/blockmem1r1w.v
 
 
 all: testmotprod.sim
