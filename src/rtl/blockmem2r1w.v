@@ -1,8 +1,8 @@
 //======================================================================
 //
-// blockmem1rw1.v
+// blockmem2r1w.v
 // --------------
-// Synchronous block memory with one read and one write port.
+// Synchronous block memory with two read ports and one write port.
 // The data size is the same for both read and write operations.
 //
 // The memory is used in the modexp core.
@@ -42,8 +42,11 @@
 module blockmem2r1w(
                     input wire           clk,
 
-                    input wire  [07 : 0] read_addr,
-                    output wire [31 : 0] read_data,
+                    input wire  [07 : 0] read_addr0,
+                    output wire [31 : 0] read_data0,
+
+                    input wire  [07 : 0] read_addr1,
+                    output wire [31 : 0] read_data1,
 
                     input wire           wr,
                     input wire  [07 : 0] write_addr,
@@ -51,20 +54,23 @@ module blockmem2r1w(
                    );
 
   reg [31 : 0] mem [0 : 255];
-  reg [31 : 0] tmp_read_data;
+  reg [31 : 0] tmp_read_data0;
+  reg [31 : 0] tmp_read_data1;
 
-  assign read_data = tmp_read_data;
+  assign read_data0 = tmp_read_data0;
+  assign read_data1 = tmp_read_data1;
 
   always @ (posedge clk)
     begin : reg_mem
       if (wr)
         mem[write_addr] <= write_data;
 
-      tmp_read_data <= mem[read_addr];
+      tmp_read_data0 <= mem[read_addr0];
+      tmp_read_data1 <= mem[read_addr1];
     end
 
-endmodule // blockmem2rw1
+endmodule // blockmem2r1w
 
 //======================================================================
-// EOF blockmem2rw1.v
+// EOF blockmem2r1w.v
 //======================================================================
