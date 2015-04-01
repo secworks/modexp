@@ -232,21 +232,6 @@ module tb_modexp();
 
 
   //----------------------------------------------------------------
-  // write_block()
-  //
-  // Write the given block to the dut.
-  //----------------------------------------------------------------
-  task write_block(input [127 : 0] block);
-    begin
-      write_word(ADDR_BLOCK0, block[127  :  96]);
-      write_word(ADDR_BLOCK1, block[95   :  64]);
-      write_word(ADDR_BLOCK2, block[63   :  32]);
-      write_word(ADDR_BLOCK3, block[31   :   0]);
-    end
-  endtask // write_block
-
-
-  //----------------------------------------------------------------
   // read_word()
   //
   // Read a data word from the given address in the DUT.

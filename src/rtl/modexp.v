@@ -60,9 +60,7 @@ module modexp(
 
               input wire  [11 : 0] address,
               input wire  [31 : 0] write_data,
-              output wire [31 : 0] read_data,
-
-              output wire          ready
+              output wire [31 : 0] read_data
              );
 
 
@@ -219,7 +217,6 @@ module modexp(
   // Concurrent connectivity for ports etc.
   //----------------------------------------------------------------
   assign read_data = tmp_read_data;
-  assign ready     = ready_reg;
 
 
   //----------------------------------------------------------------
