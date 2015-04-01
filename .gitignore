@@ -21,3 +21,7 @@ src/model/c/Debug/rsa
 *.swp
 
 *.vvp
+
+src/tb/testmotprod.sim
+
+toolruns/testmotprod.sim

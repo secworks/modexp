@@ -73,8 +73,10 @@ module montprod(
   localparam CTRL_L_CALC_SA      = 4'h7;
   localparam CTRL_L_STALLPIPE_SA = 4'h8;
   localparam CTRL_L_CALC_SDIV2   = 4'h9;
-  localparam CTRL_EMIT_S         = 4'hA;
-  localparam CTRL_DONE           = 4'hB;
+  localparam CTRL_L_STALLPIPE_D2 = 4'hA;
+  localparam CTRL_L_STALLPIPE_ES = 4'hB;
+  localparam CTRL_EMIT_S         = 4'hC;
+  localparam CTRL_DONE           = 4'hD;
 
   localparam SMUX_0            = 2'h0;
   localparam SMUX_ADD_SM       = 2'h1;
@@ -280,6 +282,7 @@ module montprod(
            //opa_addr will point to length-1 to get A LSB.
            //s_read_addr will point to length-1
            q = s_mem_read_data[0] ^ (opa_data[0] & b);
+           $display("s_mem_read_data: %x opa_data %x b %x q %x B_bit_index_reg %x", s_mem_read_data, opa_data, b, q, B_bit_index_reg);
         end
    end
 
@@ -291,17 +294,22 @@ module montprod(
    begin : loop_counter_process
       loop_counter_dec = loop_counter - 1'b1;
       B_word_index     = loop_counter[12:5];
-      B_bit_index      = 5'h1f - loop_counter[4:0];
+      //B_word_index     = B_word_index_reg;
+      B_bit_index      = B_bit_index_reg;
 
       case (montprod_ctrl_reg)
         CTRL_LOOP_INIT:
-          loop_counter_new = {length, 5'b00000} - 1'b1;
+          loop_counter_new = {length, 5'b00000}-1;
 
         CTRL_LOOP_ITER:
           begin
 //            $display("loop counter", loop_counter_new);
-            loop_counter_new = loop_counter_dec;
+            B_word_index     = loop_counter[12:5];
+            B_bit_index      = 5'h1f - loop_counter[4:0];
           end
+
+        CTRL_L_STALLPIPE_D2:
+            loop_counter_new = loop_counter_dec;
 
         default:
           loop_counter_new = loop_counter;
@@ -468,16 +476,8 @@ module montprod(
         CTRL_LOOP_ITER:
           begin
             reset_word_index  = 1'b1;
-            if (loop_counter == 0)
-              begin
-                montprod_ctrl_new = CTRL_EMIT_S;
-                montprod_ctrl_we = 1'b1;
-              end
-            else
-              begin
-                montprod_ctrl_new = CTRL_LOOP_BQ;
-                montprod_ctrl_we  = 1'b1;
-              end
+            montprod_ctrl_new = CTRL_LOOP_BQ;
+            montprod_ctrl_we  = 1'b1;
           end
 
         CTRL_LOOP_BQ:
@@ -525,10 +525,30 @@ module montprod(
           begin
             if (word_index == 8'h0)
               begin
-                montprod_ctrl_new = CTRL_LOOP_ITER; //loop
+                montprod_ctrl_new = CTRL_L_STALLPIPE_D2;
+                montprod_ctrl_we = 1'b1;
+                reset_word_index = 1'b1;
+              end
+          end
+
+        CTRL_L_STALLPIPE_D2:
+          begin
+            montprod_ctrl_new = CTRL_LOOP_ITER; //loop
+            montprod_ctrl_we = 1'b1;
+            reset_word_index = 1'b1;
+            if (loop_counter == 0)
+              begin
+                montprod_ctrl_new = CTRL_L_STALLPIPE_ES;
                 montprod_ctrl_we = 1'b1;
               end
           end
+
+        CTRL_L_STALLPIPE_ES:
+          begin
+            montprod_ctrl_new = CTRL_EMIT_S;
+            montprod_ctrl_we = 1'b1;
+            reset_word_index = 1'b1;
+           end
 
         CTRL_EMIT_S:
            begin
