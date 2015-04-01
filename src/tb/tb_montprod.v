@@ -381,6 +381,12 @@ initial
 //* A=7fffffff B=10001 M= 11 A*B= 10 Ar=  8 Br=  2 Ar*Br= 10 A*B= 10
 //* A=7fffffff B= 11 M=10001 A*B=7ff8 Ar=8000 Br= 11 Ar*Br=7ff8 A*B=7ff8
 
+    //debug A =>        0        0        1 
+    //debug B =>        0        0     4000 
+    //debug M =>  1ffffff ffffffff ffffffff 
+    //debug s =>        0        0       80 
+    test_mont_prod( 3, {96'h1, 8096'h0}, {96'h4000, 8096'h0}, {96'h1ffffffffffffffffffffff,8096'h0}, {96'h80,8096'h0} );
+
     $display("   -- Testbench for montprod done. --");
     $display(" tests success: %d", test_mont_prod_success);
     $display(" tests failed:  %d", test_mont_prod_fail);
