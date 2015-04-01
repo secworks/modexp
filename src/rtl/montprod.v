@@ -161,7 +161,7 @@ module montprod(
 
   assign result_addr = result_addr_reg;
   assign result_data = result_data_reg;
-  assign result_we   = result_we_reg;
+  assign result_we   = tmp_result_we;
 
   assign ready       = ready_reg;
 
