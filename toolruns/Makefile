@@ -2,8 +2,8 @@
 #
 # Makefile
 # --------
-# Makefile for building the modular exponentiation core and
-# top simulations.
+# Makefile for building the modular exponentiation submodules, core
+# and top simulations.
 #
 #
 # Author: Joachim Strombergson
@@ -37,23 +37,53 @@
 #
 #===================================================================
 
-TOP_SRC=../src/rtl/modexp.v
+# tools
+CC = iverilog
+CCFLAGS = -wall
+LINT = verilator
+LINTFLAGS = --lint-only -Wall
 
-CC=iverilog
+# sources
+MONTPROD_TB = ../src/tb/tb_motprod.v
+MONTPROD_SRC = ../src/rtl/montprod.v ../src/rtl/adder32.v ../src/rtl/shr32.v ../src/rtl/blockmem1r1w.v
+
+TOP_SRC=../src/rtl/modexp.v $(MONTPROD_SRC)
+TOP_TB=../src/rtl/tb_modexp.v
 
 
-all: top.sim
+# rules
+all: top.sim montprod.sim
+
 
 top.sim: $(TOP_SRC)
 	$(CC) -o top.sim $(TOP_SRC)
+
+
+montprod.sim: $(MONTPROD_TB_SRC) $(MONTPROD_SRC)
+	iverilog -Wall -o montprod.sim $(MONTPROD_TB_SRC) $(MONTPROD_SRC)
 
 
 sim-top: top.sim
 	./top.sim
 
 
+sim-montprod: montprod.sim
+	./montprod.sim
+
+
+lint:
+	@echo "Linting of montprod:"
+	$(LINT) $(LINTFLAGS) $(MONTPROD_SRC)
+	@echo ""
+
+	@echo "Linting of modexp:"
+	$(LINT) $(LINTFLAGS) $(TOP_SRC)
+	@echo ""
+
+
 clean:
 	rm -f top.sim
+	rm -f montprod.sim
 
 
 help:
@@ -62,8 +92,11 @@ help:
 	@echo "Supported targets:"
 	@echo "------------------"
 	@echo "all:          Build all simulation targets."
+	@echo "lint:         Lint all modules and hierarchies."
 	@echo "top.sim:      Build top level simulation target."
 	@echo "sim-top:      Run top level simulation."
+	@echo "montprod.sim: Build montprod simulation target."
+	@echo "sim-montprod: Run montprod simulation."
 	@echo "clean:        Delete all built files."
 
 #===================================================================
