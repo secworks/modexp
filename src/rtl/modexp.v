@@ -119,29 +119,25 @@ module modexp(
   //----------------------------------------------------------------
   // Registers including update variables and write enable.
   //----------------------------------------------------------------
-  reg [31 : 0] modulus_mem [0 : 255];
-  reg [07 : 0] modulus_mem_int_rd_addr;
-  reg [31 : 0] modulus_mem_int_rd_data;
-  reg [31 : 0] modulus_mem_api_rd_data;
-  reg          modulus_mem_api_we;
+  reg [07 : 0]  modulus_mem_int_rd_addr;
+  wire [31 : 0] modulus_mem_int_rd_data;
+  wire [31 : 0] modulus_mem_api_rd_data;
+  reg           modulus_mem_api_we;
 
-  reg [31 : 0] message_mem [0 : 255];
-  reg [07 : 0] message_mem_int_rd_addr;
-  reg [31 : 0] message_mem_int_rd_data;
-  reg [31 : 0] message_mem_api_rd_data;
-  reg          message_mem_api_we;
+  reg [07 : 0]  message_mem_int_rd_addr;
+  wire [31 : 0] message_mem_int_rd_data;
+  wire [31 : 0] message_mem_api_rd_data;
+  reg           message_mem_api_we;
 
-  reg [31 : 0] exponent_mem [0 : 255];
-  reg [07 : 0] exponent_mem_int_rd_addr;
-  reg [31 : 0] exponent_mem_int_rd_data;
-  reg [31 : 0] exponent_mem_api_rd_data;
-  reg          exponent_mem_api_we;
+  reg [07 : 0]  exponent_mem_int_rd_addr;
+  wire [31 : 0] exponent_mem_int_rd_data;
+  wire [31 : 0] exponent_mem_api_rd_data;
+  reg           exponent_mem_api_we;
 
-  reg [31 : 0] result_mem [0 : 255];
-  reg [31 : 0] result_mem_api_rd_data;
-  reg [07 : 0] result_mem_int_wr_addr;
-  reg [31 : 0] result_mem_int_wr_data;
-  reg          result_mem_int_we;
+  wire [31 : 0] result_mem_api_rd_data;
+  reg [07 : 0]  result_mem_int_wr_addr;
+  wire [31 : 0] result_mem_int_wr_data;
+  reg           result_mem_int_we;
 
   reg [31 : 0] residue_mem [0 : 255];
   reg [07 : 0] residue_mem_rd_addr;
@@ -220,7 +216,7 @@ module modexp(
 
 
   //----------------------------------------------------------------
-  // core instantiation.
+  // core instantiations.
   //----------------------------------------------------------------
   montprod montprod_inst(
                          .clk(clk),
@@ -246,6 +242,52 @@ module modexp(
                         );
 
 
+  blockmem2r1w modulus_mem(
+                           .clk(clk),
+                           .read_addr0(modulus_mem_int_rd_addr),
+                           .read_data0(modulus_mem_int_rd_data),
+                           .read_addr1(address[7 : 0]),
+                           .read_data1(modulus_mem_api_rd_data),
+                           .wr(modulus_mem_api_we),
+                           .write_addr(address[7 : 0]),
+                           .write_data(write_data)
+                          );
+
+
+  blockmem2r1w message_mem(
+                           .clk(clk),
+                           .read_addr0(message_mem_int_rd_addr),
+                           .read_data0(message_mem_int_rd_data),
+                           .read_addr1(address[7 : 0]),
+                           .read_data1(message_mem_api_rd_data),
+                           .wr(message_mem_api_we),
+                           .write_addr(address[7 : 0]),
+                           .write_data(write_data)
+                          );
+
+
+  blockmem2r1w exponent_mem(
+                           .clk(clk),
+                           .read_addr0(exponent_mem_int_rd_addr),
+                           .read_data0(exponent_mem_int_rd_data),
+                           .read_addr1(address[7 : 0]),
+                           .read_data1(exponent_mem_api_rd_data),
+                           .wr(exponent_mem_api_we),
+                           .write_addr(address[7 : 0]),
+                           .write_data(write_data)
+                           );
+
+
+  blockmem1r1w result_mem(
+                          .clk(clk),
+                          .read_addr(address[7 : 0]),
+                          .read_data(result_mem_api_rd_data),
+                          .wr(result_mem_int_we),
+                          .write_addr(result_mem_int_wr_addr),
+                          .write_data(result_mem_int_wr_data)
+                         );
+
+
   //----------------------------------------------------------------
   // reg_update
   //
@@ -263,25 +305,6 @@ module modexp(
         end
       else
         begin
-          modulus_mem_int_rd_data <= modulus_mem[modulus_mem_int_rd_addr];
-          modulus_mem_api_rd_data <= modulus_mem[address[7 : 0]];
-          if (modulus_mem_api_we)
-              modulus_mem[address[7 : 0]] <= write_data;
-
-          exponent_mem_int_rd_data <= exponent_mem[exponent_mem_int_rd_addr];
-          exponent_mem_api_rd_data <= exponent_mem[address[7 : 0]];
-          if (exponent_mem_api_we)
-              exponent_mem[address[7 : 0]] <= write_data;
-
-          message_mem_int_rd_data <= message_mem[montprod_opm_addr];
-          message_mem_api_rd_data <= message_mem[address[7 : 0]];
-          if (message_mem_api_we)
-              message_mem[address[7 : 0]] <= write_data;
-
-          result_mem_api_rd_data <= result_mem [address[7 : 0]];
-          if (montprod_result_we)
-              result_mem[montprod_result_addr] <= montprod_result_data;
-
           if (ready_we)
             ready_reg <= ready_new;
 

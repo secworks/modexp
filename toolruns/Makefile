@@ -47,7 +47,7 @@ LINTFLAGS = --lint-only -Wall
 MONTPROD_TB = ../src/tb/tb_montprod.v
 MONTPROD_SRC = ../src/rtl/montprod.v ../src/rtl/adder32.v ../src/rtl/shr32.v ../src/rtl/blockmem1r1w.v
 
-TOP_SRC=../src/rtl/modexp.v $(MONTPROD_SRC)
+TOP_SRC=../src/rtl/modexp.v  ../src/rtl/blockmem2r1w.v $(MONTPROD_SRC)
 TOP_TB=../src/tb/tb_modexp.v
 
 
