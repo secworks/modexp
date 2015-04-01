@@ -127,8 +127,7 @@ module montprod(
 
   reg [07 : 0] word_index;
   reg [07 : 0] word_index_new;
-  reg [07 : 0] word_index_dec;
-
+//  reg [07 : 0] word_index_dec;
 
   reg          add_carry_in_sa;
   reg          add_carry_new_sa;
@@ -162,7 +161,7 @@ module montprod(
 
   assign result_addr = result_addr_reg;
   assign result_data = result_data_reg;
-  assign result_we   = tmp_result_we;
+  assign result_we   = result_we_reg;
 
   assign ready       = ready_reg;
 
@@ -243,6 +242,7 @@ module montprod(
           s_mem_we          <= 1'b0;
           s_mem_wr_addr     <= 8'h0;
           B_bit_index_reg   <= 5'h0;
+          result_we_reg     <= 1'b0;
         end
       else
         begin
@@ -269,6 +269,8 @@ module montprod(
           b_reg <= b;
 
           s_mux_reg <= s_mux_new;
+
+          result_we_reg <= tmp_result_we;
       end
     end // reg_update
 
