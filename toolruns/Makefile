@@ -39,12 +39,12 @@
 
 # tools
 CC = iverilog
-CCFLAGS = -wall
+CCFLAGS = -Wall
 LINT = verilator
 LINTFLAGS = --lint-only -Wall
 
 # sources
-MONTPROD_TB = ../src/tb/tb_motprod.v
+MONTPROD_TB = ../src/tb/tb_montprod.v
 MONTPROD_SRC = ../src/rtl/montprod.v ../src/rtl/adder32.v ../src/rtl/shr32.v ../src/rtl/blockmem1r1w.v
 
 TOP_SRC=../src/rtl/modexp.v $(MONTPROD_SRC)
@@ -56,11 +56,11 @@ all: top.sim montprod.sim
 
 
 top.sim: $(TOP_TB) $(TOP_SRC)
-	$(CC) -o top.sim $(TOP_TB) $(TOP_SRC)
+	$(CC) $(CCFLAGS) -o top.sim $(TOP_TB) $(TOP_SRC)
 
 
-montprod.sim: $(MONTPROD_TB_SRC) $(MONTPROD_SRC)
-	iverilog -Wall -o montprod.sim $(MONTPROD_TB_SRC) $(MONTPROD_SRC)
+montprod.sim: $(MONTPROD_TB) $(MONTPROD_SRC)
+	$(CC) $(CCFLAGS) -o montprod.sim $(MONTPROD_TB) $(MONTPROD_SRC)
 
 
 sim-top: top.sim

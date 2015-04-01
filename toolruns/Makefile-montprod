@@ -1,19 +1,19 @@
 # Makefile for building and running motprod simulation.
 
-TB_SRC = ../src/tb/tb_motprod.v
+TB_SRC = ../src/tb/tb_montprod.v
 RTL_SRC = ../src/rtl/montprod.v ../src/rtl/adder32.v ../src/rtl/shr32.v ../src/rtl/blockmem1r1w.v
 
 
-all: testmotprod.sim
+all: testmontprod.sim
 
-testmotprod.sim: $(TB_SRC) $(RTL_SRC)
-	iverilog -Wall -o testmotprod.sim $(TB_SRC) $(RTL_SRC)
+testmontprod.sim: $(TB_SRC) $(RTL_SRC)
+	iverilog -Wall -o testmontprod.sim $(TB_SRC) $(RTL_SRC)
 
 lint:  $(RTL_SRC)
 	verilator --lint-only $(RTL_SRC)
 
-test: testmotprod.sim
-	./testmotprod.sim
+test: testmontprod.sim
+	./testmontprod.sim
 
 clean:
-	rm testmotprod.sim
+	rm testmontprod.sim
