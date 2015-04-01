@@ -48,15 +48,15 @@ MONTPROD_TB = ../src/tb/tb_motprod.v
 MONTPROD_SRC = ../src/rtl/montprod.v ../src/rtl/adder32.v ../src/rtl/shr32.v ../src/rtl/blockmem1r1w.v
 
 TOP_SRC=../src/rtl/modexp.v $(MONTPROD_SRC)
-TOP_TB=../src/rtl/tb_modexp.v
+TOP_TB=../src/tb/tb_modexp.v
 
 
 # rules
 all: top.sim montprod.sim
 
 
-top.sim: $(TOP_SRC)
-	$(CC) -o top.sim $(TOP_SRC)
+top.sim: $(TOP_TB) $(TOP_SRC)
+	$(CC) -o top.sim $(TOP_TB) $(TOP_SRC)
 
 
 montprod.sim: $(MONTPROD_TB_SRC) $(MONTPROD_SRC)
