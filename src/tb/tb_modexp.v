@@ -79,7 +79,7 @@ module tb_modexp();
   reg           tb_reset_n;
   reg           tb_cs;
   reg           tb_we;
-  reg [7  : 0]  tb_address;
+  reg [11  : 0]  tb_address;
   reg [31 : 0]  tb_write_data;
   wire [31 : 0] tb_read_data;
   wire          tb_error;
