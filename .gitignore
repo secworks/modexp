@@ -25,3 +25,5 @@ src/model/c/Debug/rsa
 src/tb/testmotprod.sim
 
 toolruns/testmotprod.sim
+
+toolruns/montprod.sim

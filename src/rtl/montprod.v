@@ -125,9 +125,10 @@ module montprod(
   reg [04 : 0] B_bit_index; //loop counter as a bit index
   reg [04 : 0] B_bit_index_reg; //loop counter as a bit index
 
-  reg [07 : 0] word_index;
-  reg [07 : 0] word_index_new;
-//  reg [07 : 0] word_index_dec;
+  reg [07 : 0] word_index; //register of what word is being read
+  reg [07 : 0] word_index_new; //calculation of what word to be read
+  reg [07 : 0] word_index_prev; //register of what word was read previously (result address to emit)
+  reg [07 : 0] length_m1;
 
   reg          add_carry_in_sa;
   reg          add_carry_new_sa;
@@ -137,7 +138,9 @@ module montprod(
   reg          shr_carry_in;
   reg          shr_carry_new;
 
-  reg          reset_word_index;
+  reg          reset_word_index_LSW;
+  reg          reset_word_index_MSW;
+
 
   //----------------------------------------------------------------
   // Wires.
@@ -232,6 +235,7 @@ module montprod(
           ready_reg         <= 1'b0;
           loop_counter      <= 13'h0;
           word_index        <= 8'h0;
+          word_index_prev   <= 8'h0;
           add_carry_in_sa   <= 1'b0;
           add_carry_in_sm   <= 1'b0;
           shr_carry_in      <= 1'b0;
@@ -259,6 +263,8 @@ module montprod(
           s_mem_we <= s_mem_we_new;
 
           word_index <= word_index_new;
+          word_index_prev <= word_index;
+
           loop_counter <= loop_counter_new;
           shr_carry_in <= shr_carry_new;
           add_carry_in_sa <= add_carry_new_sa;
@@ -294,9 +300,9 @@ module montprod(
   //----------------------------------------------------------------
   always @*
    begin : loop_counter_process
+      length_m1        = length - 1'b1;
       loop_counter_dec = loop_counter - 1'b1;
       B_word_index     = loop_counter[12:5];
-      //B_word_index     = B_word_index_reg;
       B_bit_index      = B_bit_index_reg;
 
       case (montprod_ctrl_reg)
@@ -305,7 +311,6 @@ module montprod(
 
         CTRL_LOOP_ITER:
           begin
-//            $display("loop counter", loop_counter_new);
             B_word_index     = loop_counter[12:5];
             B_bit_index      = 5'h1f - loop_counter[4:0];
           end
@@ -328,7 +333,7 @@ module montprod(
       case (montprod_ctrl_reg)
         CTRL_LOOP_ITER:
           //q = (s[length-1] ^ A[length-1]) & 1;
-          opa_addr_reg = length - 1'b1;
+          opa_addr_reg = length_m1;
 
         default:
           opa_addr_reg = word_index;
@@ -339,7 +344,7 @@ module montprod(
 
       case (montprod_ctrl_reg)
         CTRL_LOOP_ITER:
-          s_mem_addr = length - 1'b1;
+          s_mem_addr = length_m1;
         default:
           s_mem_addr = word_index;
       endcase
@@ -347,7 +352,7 @@ module montprod(
 
 
 
-      result_addr_reg  = word_index;
+      result_addr_reg  = word_index_prev;
       result_data_reg  = s_mem_read_data;
 
       case (montprod_ctrl_reg)
@@ -358,11 +363,14 @@ module montprod(
       endcase
 
 
-      //FIXME this order is invalid for CTRL_L_DIV2. Fix fix fix
-      if (reset_word_index == 1'b1)
-          word_index_new = length - 1'b1;
-      else
-          word_index_new = word_index - 1'b1;
+      if (reset_word_index_LSW == 1'b1)
+        word_index_new = length_m1;
+      else if (reset_word_index_MSW == 1'b1)
+        word_index_new = 8'h0;
+      else if (montprod_ctrl_reg == CTRL_L_CALC_SDIV2)
+        word_index_new = word_index + 1'b1;
+      else   
+        word_index_new = word_index - 1'b1;
     end // prodcalc
 
 
@@ -435,9 +443,11 @@ module montprod(
     begin : montprod_ctrl
       ready_new         = 1'b0;
       ready_we          = 1'b0;
-      reset_word_index  = 1'b0;
       montprod_ctrl_new = CTRL_IDLE;
       montprod_ctrl_we  = 1'b0;
+
+      reset_word_index_LSW = 1'b0;
+      reset_word_index_MSW = 1'b0;
 
       case (montprod_ctrl_reg)
         CTRL_IDLE:
@@ -448,7 +458,7 @@ module montprod(
                 ready_we  = 1'b1;
                 montprod_ctrl_new = CTRL_INIT_S;
                 montprod_ctrl_we = 1'b1;
-                reset_word_index = 1'b1;
+                reset_word_index_LSW = 1'b1;
               end
             else
               begin
@@ -459,7 +469,7 @@ module montprod(
 
         CTRL_INIT_S:
           begin
-            if (word_index == 0)
+            if (word_index == 8'h0)
               begin
                  montprod_ctrl_new = CTRL_LOOP_INIT;
                  montprod_ctrl_we = 1'b1;
@@ -477,23 +487,23 @@ module montprod(
         // Also abort loop if done.
         CTRL_LOOP_ITER:
           begin
-            reset_word_index  = 1'b1;
+            reset_word_index_LSW = 1'b1;
             montprod_ctrl_new = CTRL_LOOP_BQ;
             montprod_ctrl_we  = 1'b1;
           end
 
         CTRL_LOOP_BQ:
           begin
-            reset_word_index  = 1'b1;
+            reset_word_index_LSW = 1'b1;
             montprod_ctrl_new = CTRL_L_CALC_SM;
             montprod_ctrl_we  = 1'b1;
           end
 
         CTRL_L_CALC_SM:
           begin
-            if (word_index == 0)
+            if (word_index == 8'h0)
               begin
-                reset_word_index  = 1'b1;
+                reset_word_index_LSW  = 1'b1;
                 montprod_ctrl_we  = 1'b1;
                 montprod_ctrl_new = CTRL_L_STALLPIPE_SM;
               end
@@ -503,14 +513,14 @@ module montprod(
           begin
             montprod_ctrl_new = CTRL_L_CALC_SA;
             montprod_ctrl_we = 1'b1;
-            reset_word_index = 1'b1;
+            reset_word_index_LSW = 1'b1;
           end
 
         CTRL_L_CALC_SA:
           begin
-            if (word_index == 0)
+            if (word_index == 8'h0)
               begin
-                reset_word_index  = 1'b1;
+                reset_word_index_LSW  = 1'b1;
                 montprod_ctrl_new = CTRL_L_STALLPIPE_SA;
                 montprod_ctrl_we = 1'b1;
               end
@@ -520,16 +530,16 @@ module montprod(
           begin
             montprod_ctrl_new = CTRL_L_CALC_SDIV2;
             montprod_ctrl_we = 1'b1;
-            reset_word_index = 1'b1; //TODO word counter should go in oppositre direction for DIV2 (SHR)
+            reset_word_index_MSW = 1'b1;
           end
 
         CTRL_L_CALC_SDIV2:
           begin
-            if (word_index == 8'h0)
+            if (word_index == length_m1)
               begin
                 montprod_ctrl_new = CTRL_L_STALLPIPE_D2;
                 montprod_ctrl_we = 1'b1;
-                reset_word_index = 1'b1;
+                //reset_word_index = 1'b1;
               end
           end
 
@@ -537,7 +547,7 @@ module montprod(
           begin
             montprod_ctrl_new = CTRL_LOOP_ITER; //loop
             montprod_ctrl_we = 1'b1;
-            reset_word_index = 1'b1;
+            reset_word_index_LSW = 1'b1;
             if (loop_counter == 0)
               begin
                 montprod_ctrl_new = CTRL_L_STALLPIPE_ES;
@@ -549,14 +559,17 @@ module montprod(
           begin
             montprod_ctrl_new = CTRL_EMIT_S;
             montprod_ctrl_we = 1'b1;
-            reset_word_index = 1'b1;
-           end
+            //reset_word_index_LSW = 1'b1;
+          end
 
         CTRL_EMIT_S:
            begin
-            if (word_index == 8'h0)
-                montprod_ctrl_new = CTRL_DONE;
-                montprod_ctrl_we  = 1'b1;
+             $display("EMIT_S word_index: %d", word_index);
+             if (word_index_prev == 8'h0)
+               begin
+                 montprod_ctrl_new = CTRL_DONE;
+                 montprod_ctrl_we  = 1'b1;
+               end
            end
 
         CTRL_DONE:
