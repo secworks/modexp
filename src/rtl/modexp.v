@@ -142,7 +142,7 @@ module modexp(
   reg  [07 : 0] result_mem_int_rd_addr;
   wire [31 : 0] result_mem_int_rd_data;
   reg  [07 : 0] result_mem_int_wr_addr;
-  wire [31 : 0] result_mem_int_wr_data;
+  reg  [31 : 0] result_mem_int_wr_data;
   reg           result_mem_int_we;
 
   reg          residue_calculator_start; //TODO not implemented yet
@@ -536,6 +536,31 @@ module modexp(
       endcase // case (montprod_selcect_reg)
     end
 
+  //----------------------------------------------------------------
+  // memory write mux
+  //
+  // direct memory write signals to correct memory
+  //----------------------------------------------------------------
+  always @*
+    begin : memory_write_process
+      result_mem_int_wr_addr = montprod_result_addr;
+      result_mem_int_wr_data = montprod_result_data;
+      result_mem_int_we      = 1'b0;
+
+      p_mem_wr_addr = montprod_result_addr;
+      p_mem_wr_data = montprod_result_data;
+      p_mem_we      = 1'b0;
+
+      case (montprod_dest_reg)
+        MONTPROD_DEST_Z:
+          result_mem_int_we = montprod_result_we;
+        MONTPROD_DEST_P:
+          p_mem_we = montprod_result_we;
+        default:
+          begin
+          end
+      endcase
+    end
 
   //----------------------------------------------------------------
   // modexp_ctrl
