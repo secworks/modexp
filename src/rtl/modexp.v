@@ -91,6 +91,8 @@ module modexp(
   localparam RESULT_START        = 8'h00;
   localparam RESULT_END          = 8'hff;
 
+  localparam LENGTH_PREFIX       = 4'h5;
+
   localparam DEFAULT_MODLENGTH   = 8'h80;
   localparam DEFAULT_EXPLENGTH   = 8'h80;
 
@@ -164,8 +166,11 @@ module modexp(
   reg  [31 : 0] p_mem_wr_data;
   reg           p_mem_we;
 
-  reg [07 : 0] length_reg; //TODO not implemented yet
-  reg [07 : 0] length_m1;  //TODO not implemented yet
+  reg [07 : 0] length_reg;
+  reg [07 : 0] length_m1_reg;
+  reg [07 : 0] length_new;
+  reg [07 : 0] length_m1_new;
+  reg          length_we;
 
   reg          start_reg;
   reg          start_new;
@@ -324,6 +329,8 @@ module modexp(
           montprod_dest_reg   <= MONTPROD_DEST_NOWHERE;
           modexp_ctrl_reg     <= CTRL_IDLE;
           one                 <= 32'h0;
+          length_reg          <= 8'h0;
+          length_m1_reg       <= 8'h0;
         end
       else
         begin
@@ -338,6 +345,12 @@ module modexp(
 
           if (modexp_ctrl_we)
             modexp_ctrl_reg <= modexp_ctrl_new;
+
+          if (length_we)
+            begin
+              length_reg <= length_new;
+              length_m1_reg <= length_m1_new;
+            end
 
           one <= one_new;
         end
@@ -355,6 +368,10 @@ module modexp(
       exponent_mem_api_we = 1'b0;
       message_mem_api_we  = 1'b0;
       tmp_read_data       = 32'h00000000;
+
+      length_new = write_data[7 : 0];
+      length_m1_new = write_data[7 : 0] - 8'h1;
+      length_we = 1'b0;
 
       if (cs)
         begin
@@ -454,6 +471,12 @@ module modexp(
                 tmp_read_data = result_mem_api_rd_data;
               end
 
+            LENGTH_PREFIX:
+              begin
+                if (we)
+                  length_we = 1'b1;
+              end
+
 //            RESULT_PREFIX:
 //              begin
 //                if (we)
@@ -494,7 +517,7 @@ module modexp(
       montprod_opa_data        = 32'h00000000;
       montprod_opb_data        = 32'h00000000;
 
-      if (montprod_opa_addr == length_m1) 
+      if (montprod_opa_addr == length_m1_reg) 
         one_new = 32'h00000001;
       else
         one_new = 32'h00000000;
