@@ -135,31 +135,28 @@ module modexp(
   reg           exponent_mem_api_we;
 
   wire [31 : 0] result_mem_api_rd_data;
-  reg [07 : 0]  result_mem_int_wr_addr;
+  reg  [07 : 0] result_mem_int_rd_addr;
+  wire [31 : 0] result_mem_int_rd_data;
+  reg  [07 : 0] result_mem_int_wr_addr;
   wire [31 : 0] result_mem_int_wr_data;
   reg           result_mem_int_we;
 
   reg          residue_calculator_start; //TODO not implemented yet
   reg          residue_calculator_ready; //TODO not implemented yet
 
-  reg [31 : 0] residue_mem [0 : 255];
-  reg [07 : 0] residue_mem_rd_addr;
-  reg [31 : 0] residue_mem_rd_data;
-  reg [07 : 0] residue_mem_wr_addr;
-  reg [31 : 0] residue_mem_wr_data;
-  reg          residue_mem_we;
+  reg  [31 : 0] residue_mem [0 : 255];
+  reg  [07 : 0] residue_mem_rd_addr;
+  wire [31 : 0] residue_mem_rd_data;
+  reg  [07 : 0] residue_mem_wr_addr;
+  reg  [31 : 0] residue_mem_wr_data;
+  reg           residue_mem_we;
 
-  reg [31 : 0] p_mem [0 : 255];
-  reg [31 : 0] p_mem_rd_data;
+  
+  reg [07 : 0] p_mem_rd_addr;
+  wire [31 : 0] p_mem_rd_data;
   reg [07 : 0] p_mem_wr_addr;
   reg [31 : 0] p_mem_wr_data;
   reg          p_mem_we;
-
-  reg [31 : 0] tmp2_mem [0 : 255];
-  reg [31 : 0] tmp2_mem_rd_data;
-  reg [07 : 0] tmp2_mem_wr_addr;
-  reg [31 : 0] tmp2_mem_wr_data;
-  reg          tmp2_mem_we;
 
   reg [07 : 0] length_reg; //TODO not implemented yet
   reg [07 : 0] length_m1;  //TODO not implemented yet
@@ -279,14 +276,25 @@ module modexp(
                            );
 
 
-  blockmem1r1w result_mem(
+  blockmem2r1w result_mem(
                           .clk(clk),
-                          .read_addr(address[7 : 0]),
-                          .read_data(result_mem_api_rd_data),
+                          .read_addr0(result_mem_int_rd_addr[7 : 0]),
+                          .read_data0(result_mem_int_rd_data),
+                          .read_addr1(address[7 : 0]),
+                          .read_data1(result_mem_api_rd_data),
                           .wr(result_mem_int_we),
                           .write_addr(result_mem_int_wr_addr),
                           .write_data(result_mem_int_wr_data)
                          );
+
+  blockmem1r1w p_mem(
+                           .clk(clk),
+                           .read_addr(p_mem_rd_addr),
+                           .read_data(p_mem_rd_data),
+                           .wr(p_mem_we),
+                           .write_addr(p_mem_wr_addr),
+                           .write_data(p_mem_wr_data)
+                           );
 
 
   //----------------------------------------------------------------
@@ -488,7 +496,24 @@ module modexp(
             montprod_opb_data       = residue_mem_rd_data;
           end
 
-          //TODO more states
+        MONTPROD_SELECT_Z_P:
+          begin
+            montprod_opa_data       = result_mem_int_rd_data;
+            montprod_opb_data       = p_mem_rd_data;
+          end
+
+        MONTPROD_SELECT_P_P:
+          begin
+            montprod_opa_data       = p_mem_rd_data;
+            montprod_opb_data       = p_mem_rd_data;
+          end
+
+        MONTPROD_SELECT_ONE_Z:
+          begin
+            montprod_opa_data       = one;
+            montprod_opb_data       = result_mem_int_rd_data;
+          end
+
         default:
           begin
           end
