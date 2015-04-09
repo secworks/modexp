@@ -732,7 +732,6 @@ module modexp(
             montprod_dest_new   = MONTPROD_DEST_Z;
             montprod_dest_we    = 1;
             montprod_calc       = 1;
-            ei_new              = 1; //TODO: int ei_ = E[length - 1 - (i / 32)]; int ei = (ei_ >> (i % 32)) & 1;
             modexp_ctrl_new = CTRL_ITERATE_Z_P;
             modexp_ctrl_we  = 1;
           end
