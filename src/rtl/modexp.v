@@ -194,8 +194,15 @@ module modexp(
   reg [31 : 0] one;
   reg [31 : 0] one_new;
 
-  reg          last_iteration; //TODO iteration counter, eval
-  reg          ei_new;         //TODO ei_ = E[length - 1 - (i / 32)]; ei = (ei_ >> (i % 32)) & 1; 
+  reg [12 : 0] loop_counter_reg;
+  reg [12 : 0] loop_counter_new;
+  reg [12 : 0] loop_counter_we;
+  reg [07 : 0] E_word_index;
+  reg [04 : 0] E_bit_index;
+  reg          last_iteration;
+  reg          ei_reg;
+  reg          ei_new;
+  reg          ei_we;
 
   //----------------------------------------------------------------
   // Wires.
@@ -331,6 +338,8 @@ module modexp(
           one                 <= 32'h0;
           length_reg          <= 8'h0;
           length_m1_reg       <= 8'h0;
+          loop_counter_reg    <= 13'b0;
+          ei_reg              <= 1'b0;
         end
       else
         begin
@@ -351,6 +360,12 @@ module modexp(
               length_reg <= length_new;
               length_m1_reg <= length_m1_new;
             end
+
+          if (loop_counter_we)
+            loop_counter_reg <= loop_counter_new;
+
+          if (ei_we)
+            ei_reg <= ei_new;
 
           one <= one_new;
         end
@@ -586,6 +601,62 @@ module modexp(
     end
 
   //----------------------------------------------------------------
+  // loop_counter
+  //
+  // Calculate the loop counter and related variables
+  //----------------------------------------------------------------
+  always @*
+    begin : loop_counters_process
+      E_bit_index      = loop_counter_reg[ 04 : 0 ];
+
+      if (loop_counter_reg == { length_m1_reg, 5'b11111 })
+        last_iteration = 1'b1;
+      else
+        last_iteration = 1'b0;
+
+      case (modexp_ctrl_reg)
+        CTRL_CALCULATE_P0:
+          begin
+            loop_counter_new = 13'b0;
+            loop_counter_we  = 1'b1;
+          end
+
+        CTRL_ITERATE_END:
+          begin
+            loop_counter_new = loop_counter_reg + 1'b1;
+            loop_counter_we  = 1'b1;
+          end
+
+        default:
+          begin
+            loop_counter_new = 13'b0;
+            loop_counter_we  = 1'b0;
+          end
+
+      endcase
+    end
+
+  //----------------------------------------------------------------
+  // exponent
+  //
+  // reads the exponent
+  //----------------------------------------------------------------
+  always @*
+    begin : exponent_process
+      // accessing new instead of reg - pick up update at CTRL_ITERATE_NEW to remove a pipeline stall
+      E_word_index  = loop_counter_new[ 12 : 5 ];
+
+      exponent_mem_int_rd_addr = E_word_index;
+
+      ei_new = exponent_mem_int_rd_data[ E_bit_index ];
+
+      if (modexp_ctrl_reg == CTRL_ITERATE)
+        ei_we = 1'b1;
+      else
+        ei_we = 1'b0;
+    end
+
+  //----------------------------------------------------------------
   // modexp_ctrl
   //
   // Control FSM logic needed to perform the modexp operation.
@@ -687,7 +758,6 @@ module modexp(
 
         CTRL_ITERATE_END:
           begin
-            last_iteration = 1; //TODO eval iteration counter
             if (last_iteration == 1'b0)
               begin
                 modexp_ctrl_new = CTRL_ITERATE;
