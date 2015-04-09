@@ -598,6 +598,10 @@ module modexp(
           begin
           end
       endcase
+
+      // inhibit Z=Z*P when ei = 0
+      if (modexp_ctrl_reg == CTRL_ITERATE_Z_P)
+        result_mem_int_we = result_mem_int_we & ei_reg;
     end
 
   //----------------------------------------------------------------
