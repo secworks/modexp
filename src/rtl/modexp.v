@@ -91,25 +91,31 @@ module modexp(
   localparam RESULT_START        = 8'h00;
   localparam RESULT_END          = 8'hff;
 
+  localparam LENGTH_PREFIX       = 4'h5;
+
   localparam DEFAULT_MODLENGTH   = 8'h80;
   localparam DEFAULT_EXPLENGTH   = 8'h80;
 
-  localparam DECIPHER_MODE       = 1'b0;
-  localparam ENCIPHER_MODE       = 1'b1;
+  localparam MONTPROD_SELECT_ONE_NR = 3'h0;
+  localparam MONTPROD_SELECT_X_NR   = 3'h1;
+  localparam MONTPROD_SELECT_Z_P    = 3'h2;
+  localparam MONTPROD_SELECT_P_P    = 3'h3;
+  localparam MONTPROD_SELECT_ONE_Z  = 3'h4;
 
-  localparam MONTPROD_SELECT0    = 3'h0;
-  localparam MONTPROD_SELECT1    = 3'h1;
-  localparam MONTPROD_SELECT2    = 3'h2;
-  localparam MONTPROD_SELECT3    = 3'h3;
-  localparam MONTPROD_SELECT4    = 3'h4;
+  localparam MONTPROD_DEST_Z        = 2'b00;
+  localparam MONTPROD_DEST_P        = 2'b01;
+  localparam MONTPROD_DEST_NOWHERE  = 2'b10;
 
-  localparam CTRL_IDLE           = 3'h0;
-  localparam CTRL_START          = 3'h1;
-  localparam CTRL_INIT           = 3'h2;
-  localparam CTRL_RESIDUE0       = 3'h3;
-  localparam CTRL_ITERATE        = 3'h4;
-  localparam CTRL_RESIDUE        = 3'h5;
-  localparam CTRL_DONE           = 3'h6;
+  localparam CTRL_IDLE           = 4'h0;
+  localparam CTRL_RESIDUE        = 4'h1;
+  localparam CTRL_CALCULATE_Z0   = 4'h2;
+  localparam CTRL_CALCULATE_P0   = 4'h3;
+  localparam CTRL_ITERATE        = 4'h4;
+  localparam CTRL_ITERATE_Z_P    = 4'h5;
+  localparam CTRL_ITERATE_P_P    = 4'h6;
+  localparam CTRL_ITERATE_END    = 4'h7;
+  localparam CTRL_CALCULATE_ZN   = 4'h8;
+  localparam CTRL_DONE           = 4'h9;
 
   localparam CORE_NAME0          = 32'h72736120; // "rsa "
   localparam CORE_NAME1          = 32'h38313932; // "8192"
@@ -135,38 +141,36 @@ module modexp(
   reg           exponent_mem_api_we;
 
   wire [31 : 0] result_mem_api_rd_data;
-  reg [07 : 0]  result_mem_int_wr_addr;
-  wire [31 : 0] result_mem_int_wr_data;
+  reg  [07 : 0] result_mem_int_rd_addr;
+  wire [31 : 0] result_mem_int_rd_data;
+  reg  [07 : 0] result_mem_int_wr_addr;
+  reg  [31 : 0] result_mem_int_wr_data;
   reg           result_mem_int_we;
 
-  reg [31 : 0] residue_mem [0 : 255];
-  reg [07 : 0] residue_mem_rd_addr;
-  reg [31 : 0] residue_mem_rd_data;
-  reg [07 : 0] residue_mem_wr_addr;
-  reg [31 : 0] residue_mem_wr_data;
-  reg          residue_mem_we;
+  reg          residue_calculator_start; //TODO not implemented yet
+  reg          residue_calculator_ready; //TODO not implemented yet
 
-  reg [31 : 0] p_mem [0 : 255];
-  reg [31 : 0] p_mem_rd_data;
-  reg [07 : 0] p_mem_wr_addr;
-  reg [31 : 0] p_mem_wr_data;
-  reg          p_mem_we;
+  reg  [31 : 0] residue_mem [0 : 255];
+  reg  [07 : 0] residue_mem_rd_addr;
+  wire [31 : 0] residue_mem_rd_data;
+  reg  [07 : 0] residue_mem_wr_addr;
+  reg  [31 : 0] residue_mem_wr_data;
+  reg           residue_mem_we;
 
-  reg [31 : 0] tmp2_mem [0 : 255];
-  reg [31 : 0] tmp2_mem_rd_data;
-  reg [07 : 0] tmp2_mem_wr_addr;
-  reg [31 : 0] tmp2_mem_wr_data;
-  reg          tmp2_mem_we;
+  
+  reg  [07 : 0] p_mem_rd0_addr;
+  wire [31 : 0] p_mem_rd0_data;
+  reg  [07 : 0] p_mem_rd1_addr;
+  wire [31 : 0] p_mem_rd1_data;
+  reg  [07 : 0] p_mem_wr_addr;
+  reg  [31 : 0] p_mem_wr_data;
+  reg           p_mem_we;
 
-  reg [7 : 0]  modlen_reg;
-  reg          modlen_we;
-
-  reg [7 : 0]  explen_reg;
-  reg          explen_we;
-
-  reg          encdec_reg;
-  reg          encdec_new;
-  reg          encdec_we;
+  reg [07 : 0] length_reg;
+  reg [07 : 0] length_m1_reg;
+  reg [07 : 0] length_new;
+  reg [07 : 0] length_m1_new;
+  reg          length_we;
 
   reg          start_reg;
   reg          start_new;
@@ -179,11 +183,26 @@ module modexp(
   reg [2 : 0]  montprod_select_reg;
   reg [2 : 0]  montprod_select_new;
   reg          montprod_select_we;
+  reg [1 : 0]  montprod_dest_reg;
+  reg [1 : 0]  montprod_dest_new;
+  reg [1 : 0]  montprod_dest_we;
 
-  reg [2 : 0]  modexp_ctrl_reg;
-  reg [2 : 0]  modexp_ctrl_new;
+  reg [3 : 0]  modexp_ctrl_reg;
+  reg [3 : 0]  modexp_ctrl_new;
   reg          modexp_ctrl_we;
 
+  reg [31 : 0] one;
+  reg [31 : 0] one_new;
+
+  reg [12 : 0] loop_counter_reg;
+  reg [12 : 0] loop_counter_new;
+  reg [12 : 0] loop_counter_we;
+  reg [07 : 0] E_word_index;
+  reg [04 : 0] E_bit_index;
+  reg          last_iteration;
+  reg          ei_reg;
+  reg          ei_new;
+  reg          ei_we;
 
   //----------------------------------------------------------------
   // Wires.
@@ -278,14 +297,27 @@ module modexp(
                            );
 
 
-  blockmem1r1w result_mem(
+  blockmem2r1w result_mem(
                           .clk(clk),
-                          .read_addr(address[7 : 0]),
-                          .read_data(result_mem_api_rd_data),
+                          .read_addr0(result_mem_int_rd_addr[7 : 0]),
+                          .read_data0(result_mem_int_rd_data),
+                          .read_addr1(address[7 : 0]),
+                          .read_data1(result_mem_api_rd_data),
                           .wr(result_mem_int_we),
                           .write_addr(result_mem_int_wr_addr),
                           .write_data(result_mem_int_wr_data)
                          );
+
+  blockmem2r1w p_mem(
+                           .clk(clk),
+                           .read_addr0(p_mem_rd0_addr),
+                           .read_data0(p_mem_rd0_data),
+                           .read_addr1(p_mem_rd1_addr),
+                           .read_data1(p_mem_rd1_data),
+                           .wr(p_mem_we),
+                           .write_addr(p_mem_wr_addr),
+                           .write_data(p_mem_wr_data)
+                           );
 
 
   //----------------------------------------------------------------
@@ -300,8 +332,14 @@ module modexp(
       if (!reset_n)
         begin
           ready_reg           <= 1'b1;
-          montprod_select_reg <= MONTPROD_SELECT0;
+          montprod_select_reg <= MONTPROD_SELECT_ONE_NR;
+          montprod_dest_reg   <= MONTPROD_DEST_NOWHERE;
           modexp_ctrl_reg     <= CTRL_IDLE;
+          one                 <= 32'h0;
+          length_reg          <= 8'h0;
+          length_m1_reg       <= 8'h0;
+          loop_counter_reg    <= 13'b0;
+          ei_reg              <= 1'b0;
         end
       else
         begin
@@ -311,8 +349,25 @@ module modexp(
           if (montprod_select_we)
             montprod_select_reg <= montprod_select_new;
 
+          if (montprod_dest_we)
+            montprod_dest_reg <= montprod_dest_new;
+
           if (modexp_ctrl_we)
             modexp_ctrl_reg <= modexp_ctrl_new;
+
+          if (length_we)
+            begin
+              length_reg <= length_new;
+              length_m1_reg <= length_m1_new;
+            end
+
+          if (loop_counter_we)
+            loop_counter_reg <= loop_counter_new;
+
+          if (ei_we)
+            ei_reg <= ei_new;
+
+          one <= one_new;
         end
     end // reg_update
 
@@ -328,6 +383,10 @@ module modexp(
       exponent_mem_api_we = 1'b0;
       message_mem_api_we  = 1'b0;
       tmp_read_data       = 32'h00000000;
+
+      length_new = write_data[7 : 0];
+      length_m1_new = write_data[7 : 0] - 8'h1;
+      length_we = 1'b0;
 
       if (cs)
         begin
@@ -427,6 +486,12 @@ module modexp(
                 tmp_read_data = result_mem_api_rd_data;
               end
 
+            LENGTH_PREFIX:
+              begin
+                if (we)
+                  length_we = 1'b1;
+              end
+
 //            RESULT_PREFIX:
 //              begin
 //                if (we)
@@ -456,30 +521,51 @@ module modexp(
   //----------------------------------------------------------------
   always @*
     begin : montprod_op_select
-      modulus_mem_int_rd_addr  = 8'h00;
-      message_mem_int_rd_addr  = 8'h00;
-      exponent_mem_int_rd_addr = 8'h00;
-      residue_mem_rd_addr      = 8'h00;
+      message_mem_int_rd_addr  = montprod_opa_addr;
+      p_mem_rd0_addr           = montprod_opa_addr;
+
+      residue_mem_rd_addr      = montprod_opb_addr;
+      p_mem_rd1_addr           = montprod_opb_addr;
+
+      modulus_mem_int_rd_addr  = montprod_opm_addr;
+
       montprod_opa_data        = 32'h00000000;
       montprod_opb_data        = 32'h00000000;
 
-      case (montprod_select_reg)
-        MONTPROD_SELECT0:
-          begin
-            modulus_mem_int_rd_addr = montprod_opa_addr;
-            montprod_opa_data       = modulus_mem_int_rd_data;
+      if (montprod_opa_addr == length_m1_reg) 
+        one_new = 32'h00000001;
+      else
+        one_new = 32'h00000000;
 
-            message_mem_int_rd_addr = montprod_opb_addr;
-            montprod_opb_data       = message_mem_int_rd_data;
+      case (montprod_select_reg)
+        MONTPROD_SELECT_ONE_NR:
+          begin
+            montprod_opa_data       = one;
+            montprod_opb_data       = residue_mem_rd_data;
           end
 
-        MONTPROD_SELECT1:
+        MONTPROD_SELECT_X_NR:
           begin
-            modulus_mem_int_rd_addr = montprod_opa_addr;
-            montprod_opa_data       = modulus_mem_int_rd_data;
+            montprod_opa_data       = message_mem_int_rd_data;
+            montprod_opb_data       = residue_mem_rd_data;
+          end
 
-            message_mem_int_rd_addr = montprod_opb_addr;
-            montprod_opb_data       = message_mem_int_rd_data;
+        MONTPROD_SELECT_Z_P:
+          begin
+            montprod_opa_data       = result_mem_int_rd_data;
+            montprod_opb_data       = p_mem_rd1_data;
+          end
+
+        MONTPROD_SELECT_P_P:
+          begin
+            montprod_opa_data       = p_mem_rd0_data;
+            montprod_opb_data       = p_mem_rd1_data;
+          end
+
+        MONTPROD_SELECT_ONE_Z:
+          begin
+            montprod_opa_data       = one;
+            montprod_opb_data       = result_mem_int_rd_data;
           end
 
         default:
@@ -488,6 +574,91 @@ module modexp(
       endcase // case (montprod_selcect_reg)
     end
 
+  //----------------------------------------------------------------
+  // memory write mux
+  //
+  // direct memory write signals to correct memory
+  //----------------------------------------------------------------
+  always @*
+    begin : memory_write_process
+      result_mem_int_wr_addr = montprod_result_addr;
+      result_mem_int_wr_data = montprod_result_data;
+      result_mem_int_we      = 1'b0;
+
+      p_mem_wr_addr = montprod_result_addr;
+      p_mem_wr_data = montprod_result_data;
+      p_mem_we      = 1'b0;
+
+      case (montprod_dest_reg)
+        MONTPROD_DEST_Z:
+          result_mem_int_we = montprod_result_we;
+        MONTPROD_DEST_P:
+          p_mem_we = montprod_result_we;
+        default:
+          begin
+          end
+      endcase
+
+      // inhibit Z=Z*P when ei = 0
+      if (modexp_ctrl_reg == CTRL_ITERATE_Z_P)
+        result_mem_int_we = result_mem_int_we & ei_reg;
+    end
+
+  //----------------------------------------------------------------
+  // loop_counter
+  //
+  // Calculate the loop counter and related variables
+  //----------------------------------------------------------------
+  always @*
+    begin : loop_counters_process
+      E_bit_index      = loop_counter_reg[ 04 : 0 ];
+
+      if (loop_counter_reg == { length_m1_reg, 5'b11111 })
+        last_iteration = 1'b1;
+      else
+        last_iteration = 1'b0;
+
+      case (modexp_ctrl_reg)
+        CTRL_CALCULATE_P0:
+          begin
+            loop_counter_new = 13'b0;
+            loop_counter_we  = 1'b1;
+          end
+
+        CTRL_ITERATE_END:
+          begin
+            loop_counter_new = loop_counter_reg + 1'b1;
+            loop_counter_we  = 1'b1;
+          end
+
+        default:
+          begin
+            loop_counter_new = 13'b0;
+            loop_counter_we  = 1'b0;
+          end
+
+      endcase
+    end
+
+  //----------------------------------------------------------------
+  // exponent
+  //
+  // reads the exponent
+  //----------------------------------------------------------------
+  always @*
+    begin : exponent_process
+      // accessing new instead of reg - pick up update at CTRL_ITERATE_NEW to remove a pipeline stall
+      E_word_index  = loop_counter_new[ 12 : 5 ];
+
+      exponent_mem_int_rd_addr = E_word_index;
+
+      ei_new = exponent_mem_int_rd_data[ E_bit_index ];
+
+      if (modexp_ctrl_reg == CTRL_ITERATE)
+        ei_we = 1'b1;
+      else
+        ei_we = 1'b0;
+    end
 
   //----------------------------------------------------------------
   // modexp_ctrl
@@ -498,53 +669,126 @@ module modexp(
     begin
       ready_new           = 0;
       ready_we            = 0;
-      montprod_select_new = MONTPROD_SELECT0;
+      montprod_select_new = MONTPROD_SELECT_ONE_NR;
       montprod_select_we  = 0;
+      montprod_dest_new   = MONTPROD_DEST_NOWHERE;
+      montprod_dest_we    = 0;
+      montprod_calc       = 0;
       modexp_ctrl_new     = CTRL_IDLE;
       modexp_ctrl_we      = 0;
+
+      residue_calculator_start = 1'b0;
 
       case (modexp_ctrl_reg)
         CTRL_IDLE:
           begin
             ready_new           = 0;
             ready_we            = 1;
-            montprod_select_new = MONTPROD_SELECT1;
-            montprod_select_we  = 0;
-            modexp_ctrl_new     = CTRL_DONE;
-            modexp_ctrl_we      = 1;
-          end
-
-        CTRL_START:
-          begin
-
-          end
-
-          CTRL_INIT:
-          begin
-
-          end
-
-          CTRL_RESIDUE0:
-          begin
-
-          end
-
-        CTRL_ITERATE:
-          begin
-
+            if (start_reg == 1'b1)
+              begin
+                modexp_ctrl_new = CTRL_RESIDUE;
+                modexp_ctrl_we  = 1;
+                residue_calculator_start = 1'b1;
+              end
           end
 
         CTRL_RESIDUE:
           begin
+            if (residue_calculator_ready == 1'b1)
+              begin
+                montprod_select_new = MONTPROD_SELECT_ONE_NR;
+                montprod_select_we  = 1;
+                montprod_dest_new   = MONTPROD_DEST_Z;
+                montprod_dest_we    = 1;
+                montprod_calc       = 1;
+                modexp_ctrl_new = CTRL_CALCULATE_Z0;
+                modexp_ctrl_we  = 1;
+              end
+          end
 
+        CTRL_CALCULATE_Z0:
+          begin
+            if (montprod_ready == 1'b1)
+              begin
+                montprod_select_new = MONTPROD_SELECT_X_NR;
+                montprod_select_we  = 1;
+                montprod_dest_new   = MONTPROD_DEST_P;
+                montprod_dest_we    = 1;
+                montprod_calc       = 1;
+                modexp_ctrl_new = CTRL_CALCULATE_P0;
+                modexp_ctrl_we  = 1;
+              end
+          end
+
+        CTRL_CALCULATE_P0:
+          begin
+            if (montprod_ready == 1'b1)
+              begin
+                modexp_ctrl_new = CTRL_ITERATE;
+                modexp_ctrl_we  = 1;
+              end
+          end
+
+        CTRL_ITERATE:
+          begin
+            montprod_select_new = MONTPROD_SELECT_Z_P;
+            montprod_select_we  = 1;
+            montprod_dest_new   = MONTPROD_DEST_Z;
+            montprod_dest_we    = 1;
+            montprod_calc       = 1;
+            modexp_ctrl_new = CTRL_ITERATE_Z_P;
+            modexp_ctrl_we  = 1;
+          end
+
+        CTRL_ITERATE_Z_P:
+            if (montprod_ready == 1'b1)
+              begin
+                montprod_select_new = MONTPROD_SELECT_P_P;
+                montprod_select_we  = 1;
+                montprod_dest_new   = MONTPROD_DEST_P;
+                montprod_dest_we    = 1;
+                montprod_calc       = 1;
+                modexp_ctrl_new = CTRL_ITERATE_P_P;
+                modexp_ctrl_we  = 1;
+              end
+
+        CTRL_ITERATE_P_P:
+            if (montprod_ready == 1'b1)
+              begin
+                modexp_ctrl_new = CTRL_ITERATE_END;
+                modexp_ctrl_we  = 1;
+              end
+
+        CTRL_ITERATE_END:
+          begin
+            if (last_iteration == 1'b0)
+              begin
+                modexp_ctrl_new = CTRL_ITERATE;
+                modexp_ctrl_we  = 1;
+              end
+            else
+              begin
+                montprod_select_new = MONTPROD_SELECT_ONE_Z;
+                montprod_select_we  = 1;
+                montprod_calc       = 1;
+                modexp_ctrl_new = CTRL_CALCULATE_ZN;
+                modexp_ctrl_we  = 1;
+              end
+          end
+
+        CTRL_CALCULATE_ZN:
+          begin
+            if (montprod_ready == 1'b1)
+              begin
+                modexp_ctrl_new = CTRL_DONE;
+                modexp_ctrl_we  = 1;
+              end
           end
 
         CTRL_DONE:
           begin
             ready_new           = 1;
             ready_we            = 1;
-            montprod_select_new = MONTPROD_SELECT0;
-            montprod_select_we  = 0;
             modexp_ctrl_new     = CTRL_IDLE;
             modexp_ctrl_we      = 1;
           end

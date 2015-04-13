@@ -44,6 +44,9 @@ LINT = verilator
 LINTFLAGS = --lint-only -Wall
 
 # sources
+#RESIDUE_TB = ../src/tb/tb_montprod.v
+RESIDUE_SRC = ../src/rtl/residue.v
+
 MONTPROD_TB = ../src/tb/tb_montprod.v
 MONTPROD_SRC = ../src/rtl/montprod.v ../src/rtl/adder32.v ../src/rtl/shr32.v ../src/rtl/blockmem1r1w.v
 
@@ -76,10 +79,13 @@ lint:
 	$(LINT) $(LINTFLAGS) $(MONTPROD_SRC)
 	@echo ""
 
+	@echo "Linting of residue:"
+	$(LINT) $(LINTFLAGS) $(RESIDUE_SRC)
+	@echo ""
+
 	@echo "Linting of modexp:"
 	$(LINT) $(LINTFLAGS) $(TOP_SRC)
 	@echo ""
-
 
 clean:
 	rm -f top.sim

@@ -93,7 +93,6 @@ module montprod(
 
   reg [07 : 0] result_addr_reg;
   reg [31 : 0] result_data_reg;
-  reg          result_we_reg;
 
   reg          ready_reg;
   reg          ready_new;
@@ -246,7 +245,6 @@ module montprod(
           s_mem_we          <= 1'b0;
           s_mem_wr_addr     <= 8'h0;
           B_bit_index_reg   <= 5'h0;
-          result_we_reg     <= 1'b0;
         end
       else
         begin
@@ -275,8 +273,6 @@ module montprod(
           b_reg <= b;
 
           s_mux_reg <= s_mux_new;
-
-          result_we_reg <= tmp_result_we;
       end
     end // reg_update
 

@@ -27,3 +27,5 @@ src/tb/testmotprod.sim
 toolruns/testmotprod.sim
 
 toolruns/montprod.sim
+
+toolruns/top.sim
