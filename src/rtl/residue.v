@@ -5,7 +5,7 @@
 // Modulus 2**2N residue calculator for montgomery calculations.
 //
 // m_residue_2_2N_array( N, M, Nr)
-//   Nr = 00...01 ; Nr = 1 == 2**(2N-2N) 
+//   Nr = 00...01 ; Nr = 1 == 2**(2N-2N)
 //   for (int i = 0; i < 2 * N; i++)
 //     Nr = Nr shift left 1
 //     if (Nr less than M) continue;
@@ -71,16 +71,16 @@ module residue(
 //----------------------------------------------------------------
 
 
-localparam CTRL_IDLE          = 3'h0;
-localparam CTRL_INIT          = 3'h1;
-localparam CTRL_INIT_STALL    = 3'h2;
-localparam CTRL_SHL           = 3'h3;
-localparam CTRL_SHL_STALL     = 3'h4;
-localparam CTRL_COMPARE       = 3'h5;
-localparam CTRL_COMPARE_STALL = 3'h6;
-localparam CTRL_SUB           = 3'h7;
-localparam CTRL_SUB_STALL     = 3'h8;
-localparam CTRL_LOOP          = 3'h9;
+localparam CTRL_IDLE          = 4'h0;
+localparam CTRL_INIT          = 4'h1;
+localparam CTRL_INIT_STALL    = 4'h2;
+localparam CTRL_SHL           = 4'h3;
+localparam CTRL_SHL_STALL     = 4'h4;
+localparam CTRL_COMPARE       = 4'h5;
+localparam CTRL_COMPARE_STALL = 4'h6;
+localparam CTRL_SUB           = 4'h7;
+localparam CTRL_SUB_STALL     = 4'h8;
+localparam CTRL_LOOP          = 4'h9;
 
 //----------------------------------------------------------------
 // Registers including update variables and write enable.
@@ -94,8 +94,8 @@ reg [07 : 0] opm_addr_reg;
 reg          ready_reg;
 reg          ready_new;
 reg          ready_we;
-reg [02 : 0] residue_ctrl_reg;
-reg [02 : 0] residue_ctrl_new;
+reg [03 : 0] residue_ctrl_reg;
+reg [03 : 0] residue_ctrl_new;
 reg          residue_ctrl_we;
 reg          reset_word_index;
 reg          reset_n_counter;
@@ -110,16 +110,40 @@ assign opa_wr_data = opa_wr_data_reg;
 assign opm_addr    = opm_addr_reg;
 assign ready       = ready_reg;
 
-always @*
-  begin : process_1_to_2n
-  end
 
-always @*
-  begin : word_index_process
-  end
+
+
+  //----------------------------------------------------------------
+  // reg_update
+  //----------------------------------------------------------------
+  always @ (posedge clk or negedge reset_n)
+    begin
+      if (!reset_n)
+        begin
+          residue_ctrl_reg <= CTRL_IDLE;
+        end
+      else
+        begin
+          if (residue_ctrl_we)
+            residue_ctrl_reg <= residue_ctrl_new;
+        end
+    end // reg_update
+
+
+  //----------------------------------------------------------------
+  //----------------------------------------------------------------
+  always @*
+    begin : process_1_to_2n
+    end
+
+  //----------------------------------------------------------------
+  //----------------------------------------------------------------
+  always @*
+    begin : word_index_process
+    end
 
 //----------------------------------------------------------------
-// residue
+// residue_ctrl
 //
 // Control FSM for residue
 //----------------------------------------------------------------
@@ -186,9 +210,15 @@ always @*
         begin
         end
 
+      default:
+        begin
+        end
+
     endcase
   end
 
-endmodule
+endmodule // residue
 
-
+//======================================================================
+// EOF residue.v
+//======================================================================
