@@ -52,7 +52,7 @@ module residue(
   input wire  calculate,
   output wire ready,
 
-  input wire  [07 : 0] nn,
+  input wire  [14 : 0] nn, //MAX(2*N)=8192*2 (14 bit) 
   input wire  [07 : 0] length,
 
   output wire [07 : 0] opa_rd_addr,
@@ -99,7 +99,17 @@ reg [03 : 0] residue_ctrl_new;
 reg          residue_ctrl_we;
 reg          reset_word_index;
 reg          reset_n_counter;
-reg [07 : 0] word_index;
+reg [14 : 0] loop_counter_1_to_nn_reg; //for i = 1 to nn (2*N)
+reg [14 : 0] loop_counter_1_to_nn_new;
+reg          loop_counter_1_to_nn_we;
+reg [14 : 0] nn_reg;
+reg          nn_we;
+reg [07 : 0] length_m1_reg;
+reg [07 : 0] length_m1_new;
+reg          length_m1_we;
+reg [07 : 0] word_index_reg;
+reg [07 : 0] word_index_new;
+reg          word_index_we;
 
 //----------------------------------------------------------------
 // Concurrent connectivity for ports etc.
@@ -121,11 +131,27 @@ assign ready       = ready_reg;
       if (!reset_n)
         begin
           residue_ctrl_reg <= CTRL_IDLE;
+          word_index_reg   <= 8'h0;
+          length_m1_reg    <= 8'h0;
+          nn_reg           <= 15'h0;
+          loop_counter_1_to_nn_reg <= 15'h0;
         end
       else
         begin
           if (residue_ctrl_we)
             residue_ctrl_reg <= residue_ctrl_new;
+
+          if (word_index_we)
+            word_index_reg <= word_index_new;
+
+          if (length_m1_we)
+            length_m1_reg <= length_m1_new;
+
+          if (nn_we)
+            nn_reg <= nn;
+
+          if (loop_counter_1_to_nn_we)
+            loop_counter_1_to_nn_reg <= loop_counter_1_to_nn_new;
         end
     end // reg_update
 
@@ -134,12 +160,32 @@ assign ready       = ready_reg;
   //----------------------------------------------------------------
   always @*
     begin : process_1_to_2n
+      loop_counter_1_to_nn_new = loop_counter_1_to_nn_reg + 15'h1;
+      loop_counter_1_to_nn_we  = 1'b0;
+
+      if (reset_n_counter)
+        begin
+         loop_counter_1_to_nn_new = 15'h1;
+         loop_counter_1_to_nn_we  = 1'b1;
+        end
+
+      if (residue_ctrl_reg == CTRL_LOOP)
+        loop_counter_1_to_nn_we  = 1'b1;
     end
 
   //----------------------------------------------------------------
   //----------------------------------------------------------------
   always @*
     begin : word_index_process
+      word_index_new = word_index_reg - 8'h1;
+      word_index_we  = 1'b1;
+
+      if (reset_word_index)
+        word_index_new = length_m1_reg;
+
+      if (residue_ctrl_reg == CTRL_IDLE)
+        word_index_new = length_m1_new; //reduce a pipeline stage with early read
+
     end
 
 //----------------------------------------------------------------
@@ -151,10 +197,17 @@ always @*
   begin : residue_ctrl
     ready_new = 1'b0;
     ready_we  = 1'b0;
+
     residue_ctrl_new = CTRL_IDLE;
     residue_ctrl_we  = 1'b0;
+
     reset_word_index = 1'b0;
     reset_n_counter  = 1'b0;
+
+    length_m1_new  = length - 8'h1;
+    length_m1_we   = 1'b0;
+
+    nn_we = 1'b0;
 
     case (residue_ctrl_reg)
       CTRL_IDLE:
@@ -165,10 +218,12 @@ always @*
             residue_ctrl_new = CTRL_INIT;
             residue_ctrl_we  = 1'b1;
             reset_word_index = 1'b1;
+            length_m1_we     = 1'b1;
+            nn_we            = 1'b1;
           end
 
       CTRL_INIT:
-        if (word_index == 8'h0)
+        if (word_index_reg == 8'h0)
           begin
             residue_ctrl_new = CTRL_INIT_STALL;
             residue_ctrl_we  = 1'b1;
@@ -208,6 +263,13 @@ always @*
 
       CTRL_LOOP:
         begin
+          if (loop_counter_1_to_nn_reg == nn_reg)
+           begin
+            ready_new = 1'b1;
+            ready_we  = 1'b1;
+            residue_ctrl_new = CTRL_IDLE;
+            residue_ctrl_we  = 1'b1;
+           end
         end
 
       default:
