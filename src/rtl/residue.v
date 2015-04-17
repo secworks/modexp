@@ -110,6 +110,9 @@ reg          length_m1_we;
 reg [07 : 0] word_index_reg;
 reg [07 : 0] word_index_new;
 reg          word_index_we;
+reg [31 : 0] one_data;
+reg [31 : 0] sub_data;
+reg [31 : 0] shl_data;
 
 //----------------------------------------------------------------
 // Concurrent connectivity for ports etc.
@@ -152,11 +155,24 @@ assign ready       = ready_reg;
 
           if (loop_counter_1_to_nn_we)
             loop_counter_1_to_nn_reg <= loop_counter_1_to_nn_new;
+
+          if (ready_we)
+            ready_reg <= ready_new;
         end
     end // reg_update
 
 
   //----------------------------------------------------------------
+  // loop counter process. implements for (int i = 0; i < 2 * N; i++) 
+  //
+  // m_residue_2_2N_array( N, M, Nr)
+  //   Nr = 00...01 ; Nr = 1 == 2**(2N-2N)
+  //   for (int i = 0; i < 2 * N; i++)
+  //     Nr = Nr shift left 1
+  //     if (Nr less than M) continue;
+  //     Nr = Nr - M
+  // return Nr
+  //
   //----------------------------------------------------------------
   always @*
     begin : process_1_to_2n
@@ -174,6 +190,7 @@ assign ready       = ready_reg;
     end
 
   //----------------------------------------------------------------
+  // implements looping over words in a multiword operation
   //----------------------------------------------------------------
   always @*
     begin : word_index_process
@@ -186,6 +203,67 @@ assign ready       = ready_reg;
       if (residue_ctrl_reg == CTRL_IDLE)
         word_index_new = length_m1_new; //reduce a pipeline stage with early read
 
+    end
+
+  //----------------------------------------------------------------
+  // writer process. implements:
+  //   Nr = 00...01 ; Nr = 1 == 2**(2N-2N)
+  //   Nr = Nr shift left 1
+  //   Nr = Nr - M
+  //
+  // m_residue_2_2N_array( N, M, Nr)
+  //   Nr = 00...01 ; Nr = 1 == 2**(2N-2N)
+  //   for (int i = 0; i < 2 * N; i++)
+  //     Nr = Nr shift left 1
+  //     if (Nr less than M) continue;
+  //     Nr = Nr - M
+  // return Nr
+  //----------------------------------------------------------------
+  always @*
+    begin : writer_process
+      opa_wr_addr_reg = word_index_reg;
+      case (residue_ctrl_reg)
+        CTRL_INIT:
+          begin
+            opa_wr_data_reg = one_data;
+            opa_wr_we       = 1'b1;
+          end
+
+        CTRL_SUB:
+          begin
+            opa_wr_data_reg = sub_data;
+            opa_wr_we       = 1'b1;
+          end
+
+        CTRL_SHL:
+          begin
+            opa_wr_data_reg = shl_data;
+            opa_wr_we       = 1'b1;
+          end
+
+        default:
+          begin
+            opa_wr_data_reg = 32'h0;
+            opa_wr_we       = 1'b0;
+          end
+      endcase
+    end
+
+  always @*
+    begin : reader_process
+      opa_rd_addr_reg = word_index_new;
+      opm_addr_reg    = word_index_new;
+    end
+
+  //----------------------------------------------------------------
+  // Nr = 00...01 ; Nr = 1 == 2**(2N-2N)
+  //----------------------------------------------------------------
+  always @*
+    begin : one_process
+      one_data = 32'h0; 
+      if (residue_ctrl_reg == CTRL_INIT)
+        if (word_index_reg == length_m1_reg)
+          one_data = 32'h1; 
     end
 
 //----------------------------------------------------------------
