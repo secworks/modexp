@@ -72,8 +72,17 @@ module modexp(
   localparam ADDR_NAME1          = 8'h01;
   localparam ADDR_VERSION        = 8'h02;
 
-  localparam ADDR_MODSIZE        = 8'h10;
-  localparam ADDR_EXPONENT       = 8'h20;
+  localparam ADD_CTRL            = 8'h00
+  localparam CTRL_INIT_BIT       = 0;
+  localparam CTRL_NEXT_BIT       = 1;
+
+  localparam ADDR_CONFIG         = 8'h09;
+  localparam CTRL_ENCDEC_BIT     = 0;
+  localparam CTRL_KEYLEN_BIT     = 1;
+
+  localparam ADDR_MODSIZE        = 8'h20;
+  localparam ADDR_LENGTH         = 8'h21;
+  localparam ADDR_EXPONENT       = 8'h22;
 
   localparam MODULUS_PREFIX      = 4'h1;
   localparam ADDR_MODULUS_START  = 8'h00;
@@ -157,7 +166,7 @@ module modexp(
   reg  [31 : 0] residue_mem_wr_data;
   reg           residue_mem_we;
 
-  
+
   reg  [07 : 0] p_mem_rd0_addr;
   wire [31 : 0] p_mem_rd0_data;
   reg  [07 : 0] p_mem_rd1_addr;
@@ -309,15 +318,15 @@ module modexp(
                          );
 
   blockmem2r1w p_mem(
-                           .clk(clk),
-                           .read_addr0(p_mem_rd0_addr),
-                           .read_data0(p_mem_rd0_data),
-                           .read_addr1(p_mem_rd1_addr),
-                           .read_data1(p_mem_rd1_data),
-                           .wr(p_mem_we),
-                           .write_addr(p_mem_wr_addr),
-                           .write_data(p_mem_wr_data)
-                           );
+                     .clk(clk),
+                     .read_addr0(p_mem_rd0_addr),
+                     .read_data0(p_mem_rd0_data),
+                     .read_addr1(p_mem_rd1_addr),
+                     .read_data1(p_mem_rd1_data),
+                     .wr(p_mem_we),
+                     .write_addr(p_mem_wr_addr),
+                     .write_data(p_mem_wr_data)
+                    );
 
 
   //----------------------------------------------------------------
@@ -357,8 +366,8 @@ module modexp(
 
           if (length_we)
             begin
-              length_reg <= length_new;
-              length_m1_reg <= length_m1_new;
+              length_reg    <= write_data[7 : 0];
+              length_m1_reg <= write_data[7 : 0] - 8'h1;
             end
 
           if (loop_counter_we)
@@ -382,67 +391,30 @@ module modexp(
       modulus_mem_api_we  = 1'b0;
       exponent_mem_api_we = 1'b0;
       message_mem_api_we  = 1'b0;
+      length_we           = 1'b0;
       tmp_read_data       = 32'h00000000;
-
-      length_new = write_data[7 : 0];
-      length_m1_new = write_data[7 : 0] - 8'h1;
-      length_we = 1'b0;
 
       if (cs)
         begin
           case (address[11 : 8])
             GENERAL_PREFIX:
               begin
-//                if (we)
-//                  begin
-//                    case (address)
-//                      // Write operations.
-//                      ADDR_MODSIZE:
-//                        begin
-//                          modsize_we  = 1;
-//                        end
-//
-//                      ADDR_EXPONENT:
-//                        begin
-//                          exponent_we = 1;
-//                        end
-//
-//                      default:
-//                        begin
-//                          tmp_error = 1;
-//                        end
-//                    endcase // case (addr)
-//                  end // if (write_read)
-//                else
-//                  begin
-//                    case (address)
-//                      // Read operations.
-//                      ADDR_NAME0:
-//                        begin
-//                          tmp_read_data = CORE_NAME0;
-//                        end
-//
-//                      ADDR_NAME1:
-//                        begin
-//                          tmp_read_data = CORE_NAME1;
-//                        end
-//
-//                      ADDR_VERSION:
-//                        begin
-//                          tmp_read_data = CORE_VERSION;
-//                        end
-//
-//                      ADDR_MODSIZE:
-//                        begin
-//                          tmp_read_data = {28'h0000000, modsize_reg};
-//                        end
-//
-//                      default:
-//                        begin
-//                          tmp_error = 1;
-//                        end
-//                    endcase // case (addr)
-//                  end
+                if (we)
+                  begin
+                    ADDR_LENGTH:
+                      length_we = 1'b1;
+                  end
+                else
+                  begin
+                    ADDR_CTRL:
+                      tmp_read_data = 32'h00000000;
+
+                    ADDR_STATUS:
+                      tmp_read_data = 32'h00000000;
+
+                    ADDR_LENGTH:
+                      tmp_read_data = {24'h000000, length_reg};
+                  end
               end
 
             MODULUS_PREFIX:
@@ -486,24 +458,6 @@ module modexp(
                 tmp_read_data = result_mem_api_rd_data;
               end
 
-            LENGTH_PREFIX:
-              begin
-                if (we)
-                  length_we = 1'b1;
-              end
-
-//            RESULT_PREFIX:
-//              begin
-//                if (we)
-//                  begin
-//                    modulus_mem_api_we = 1'b1;
-//                  end
-//                else
-//                  begin
-//                    tmp_read_data = modulus_mem_int_rd_data;
-//                  end
-//              end
-
             default:
               begin
 
@@ -532,7 +486,7 @@ module modexp(
       montprod_opa_data        = 32'h00000000;
       montprod_opb_data        = 32'h00000000;
 
-      if (montprod_opa_addr == length_m1_reg) 
+      if (montprod_opa_addr == length_m1_reg)
         one_new = 32'h00000001;
       else
         one_new = 32'h00000000;
@@ -574,6 +528,7 @@ module modexp(
       endcase // case (montprod_selcect_reg)
     end
 
+
   //----------------------------------------------------------------
   // memory write mux
   //
@@ -603,6 +558,7 @@ module modexp(
       if (modexp_ctrl_reg == CTRL_ITERATE_Z_P)
         result_mem_int_we = result_mem_int_we & ei_reg;
     end
+
 
   //----------------------------------------------------------------
   // loop_counter
@@ -640,6 +596,7 @@ module modexp(
       endcase
     end
 
+
   //----------------------------------------------------------------
   // exponent
   //
@@ -659,6 +616,7 @@ module modexp(
       else
         ei_we = 1'b0;
     end
+
 
   //----------------------------------------------------------------
   // modexp_ctrl
