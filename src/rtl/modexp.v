@@ -72,13 +72,11 @@ module modexp(
   localparam ADDR_NAME1          = 8'h01;
   localparam ADDR_VERSION        = 8'h02;
 
-  localparam ADD_CTRL            = 8'h00
+  localparam ADDR_CTRL           = 8'h00;
   localparam CTRL_INIT_BIT       = 0;
   localparam CTRL_NEXT_BIT       = 1;
 
-  localparam ADDR_CONFIG         = 8'h09;
-  localparam CTRL_ENCDEC_BIT     = 0;
-  localparam CTRL_KEYLEN_BIT     = 1;
+  localparam ADDR_STATUS         = 8'h09;
 
   localparam ADDR_MODSIZE        = 8'h20;
   localparam ADDR_LENGTH         = 8'h21;
@@ -126,8 +124,8 @@ module modexp(
   localparam CTRL_CALCULATE_ZN   = 4'h8;
   localparam CTRL_DONE           = 4'h9;
 
-  localparam CORE_NAME0          = 32'h72736120; // "rsa "
-  localparam CORE_NAME1          = 32'h38313932; // "8192"
+  localparam CORE_NAME0          = 32'h6d6f6465; // "mode"
+  localparam CORE_NAME1          = 32'h78702020; // "xp  "
   localparam CORE_VERSION        = 32'h302e3031; // "0.01"
 
 
@@ -401,19 +399,40 @@ module modexp(
               begin
                 if (we)
                   begin
-                    ADDR_LENGTH:
-                      length_we = 1'b1;
+                    case (address[7 : 0])
+                      ADDR_LENGTH:
+                        length_we = 1'b1;
+
+                      default:
+                        begin
+                        end
+                    endcase // case (address[7 : 0])
                   end
                 else
                   begin
-                    ADDR_CTRL:
-                      tmp_read_data = 32'h00000000;
+                    case (address[7 : 0])
+                      ADDR_NAME0:
+                        tmp_read_data = CORE_NAME0;
 
-                    ADDR_STATUS:
-                      tmp_read_data = 32'h00000000;
+                      ADDR_NAME1:
+                        tmp_read_data = CORE_NAME1;
 
-                    ADDR_LENGTH:
-                      tmp_read_data = {24'h000000, length_reg};
+                      ADDR_VERSION:
+                        tmp_read_data = CORE_VERSION;
+
+                      ADDR_CTRL:
+                        tmp_read_data = 32'h00000000;
+
+                      ADDR_STATUS:
+                        tmp_read_data = 32'h00000000;
+
+                      ADDR_LENGTH:
+                        tmp_read_data = {24'h000000, length_reg};
+
+                      default:
+                        begin
+                        end
+                    endcase // case (address[7 : 0])
                   end
               end
 
