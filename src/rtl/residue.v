@@ -71,16 +71,24 @@ module residue(
 //----------------------------------------------------------------
 
 
+// m_residue_2_2N_array( N, M, Nr)
+//   Nr = 00...01 ; Nr = 1 == 2**(2N-2N)
+//   for (int i = 0; i < 2 * N; i++)
+//     Nr = Nr shift left 1
+//     if (Nr less than M) continue;
+//     Nr = Nr - M
+// return Nr
+//
 localparam CTRL_IDLE          = 4'h0;
-localparam CTRL_INIT          = 4'h1;
+localparam CTRL_INIT          = 4'h1; // Nr = 00...01 ; Nr = 1 == 2**(2N-2N)
 localparam CTRL_INIT_STALL    = 4'h2;
-localparam CTRL_SHL           = 4'h3;
+localparam CTRL_SHL           = 4'h3; // Nr = Nr shift left 1
 localparam CTRL_SHL_STALL     = 4'h4;
-localparam CTRL_COMPARE       = 4'h5;
+localparam CTRL_COMPARE       = 4'h5; //if (Nr less than M) continue;
 localparam CTRL_COMPARE_STALL = 4'h6;
-localparam CTRL_SUB           = 4'h7;
+localparam CTRL_SUB           = 4'h7; //Nr = Nr - M
 localparam CTRL_SUB_STALL     = 4'h8;
-localparam CTRL_LOOP          = 4'h9;
+localparam CTRL_LOOP          = 4'h9; //for (int i = 0; i < 2 * N; i++)
 
 //----------------------------------------------------------------
 // Registers including update variables and write enable.
@@ -365,32 +373,53 @@ always @*
         begin
           reset_word_index = 1'b1;
           reset_n_counter  = 1'b1;
+          residue_ctrl_new = CTRL_SHL;
+          residue_ctrl_we  = 1'b1;
+        end
+
+      CTRL_SHL:
+        begin
+        if (word_index_reg == 8'h0)
+          begin
+            residue_ctrl_new = CTRL_SHL_STALL;
+            residue_ctrl_we  = 1'b1;
+          end
+        end
+
+      CTRL_SHL_STALL:
+        begin
           residue_ctrl_new = CTRL_COMPARE;
           residue_ctrl_we  = 1'b1;
         end
 
       CTRL_COMPARE:
-        begin
-        end
+        if (word_index_reg == 8'h0)
+          begin
+            residue_ctrl_new = CTRL_COMPARE_STALL;
+            residue_ctrl_we  = 1'b1;
+          end
 
       CTRL_COMPARE_STALL:
         begin
+          reset_word_index = 1'b1;
+          residue_ctrl_we  = 1'b1;
+          if (sub_carry_in_reg == 1'b1)
+            residue_ctrl_new = CTRL_SUB;
+          else
+            residue_ctrl_new = CTRL_LOOP;
         end
 
       CTRL_SUB:
-        begin
-        end
+        if (word_index_reg == 8'h0)
+          begin
+            residue_ctrl_new = CTRL_SUB_STALL;
+            residue_ctrl_we  = 1'b1;
+          end
 
       CTRL_SUB_STALL:
         begin
-        end
-
-      CTRL_SHL:
-        begin
-        end
-
-      CTRL_SHL_STALL:
-        begin
+          residue_ctrl_new = CTRL_LOOP;
+          residue_ctrl_we  = 1'b1;
         end
 
       CTRL_LOOP:
