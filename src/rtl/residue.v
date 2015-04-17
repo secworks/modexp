@@ -120,6 +120,7 @@ reg [31 : 0] shl_data;
 assign opa_rd_addr = opa_rd_addr_reg;
 assign opa_wr_addr = opa_wr_addr_reg;
 assign opa_wr_data = opa_wr_data_reg;
+assign opa_wr_we   = opa_wr_we_reg;
 assign opm_addr    = opm_addr_reg;
 assign ready       = ready_reg;
 
@@ -226,29 +227,33 @@ assign ready       = ready_reg;
         CTRL_INIT:
           begin
             opa_wr_data_reg = one_data;
-            opa_wr_we       = 1'b1;
+            opa_wr_we_reg   = 1'b1;
           end
 
         CTRL_SUB:
           begin
             opa_wr_data_reg = sub_data;
-            opa_wr_we       = 1'b1;
+            opa_wr_we_reg   = 1'b1;
           end
 
         CTRL_SHL:
           begin
             opa_wr_data_reg = shl_data;
-            opa_wr_we       = 1'b1;
+            opa_wr_we_reg   = 1'b1;
           end
 
         default:
           begin
             opa_wr_data_reg = 32'h0;
-            opa_wr_we       = 1'b0;
+            opa_wr_we_reg   = 1'b0;
           end
       endcase
     end
 
+  //----------------------------------------------------------------
+  // reader process. reads from new value because it occurs one 
+  // cycle earlier than the writer.
+  //----------------------------------------------------------------
   always @*
     begin : reader_process
       opa_rd_addr_reg = word_index_new;
