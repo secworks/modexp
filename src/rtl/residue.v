@@ -113,6 +113,12 @@ reg          word_index_we;
 reg [31 : 0] one_data;
 reg [31 : 0] sub_data;
 reg [31 : 0] shl_data;
+reg          sub_carry_in_new;
+reg          sub_carry_in_reg;
+reg          sub_carry_out;
+reg          shl_carry_in_new;
+reg          shl_carry_in_reg;
+reg          shl_carry_out;
 
 //----------------------------------------------------------------
 // Concurrent connectivity for ports etc.
@@ -124,6 +130,24 @@ assign opa_wr_we   = opa_wr_we_reg;
 assign opm_addr    = opm_addr_reg;
 assign ready       = ready_reg;
 
+
+  //----------------------------------------------------------------
+  // Instantions
+  //----------------------------------------------------------------
+  adder32 subcmp(
+    .a(opa_rd_data),
+    .b( ~ opm_data),
+    .carry_in(sub_carry_in_reg),
+    .sum(sub_data),
+    .carry_out(sub_carry_out)
+  );
+
+  shl32 shl(
+    .a(opa_rd_data),
+    .carry_in(shl_carry_in_reg),
+    .amul2(shl_data),
+    .carry_out(shl_carry_out)
+  );
 
 
 
@@ -159,6 +183,9 @@ assign ready       = ready_reg;
 
           if (ready_we)
             ready_reg <= ready_new;
+
+          sub_carry_in_reg <= sub_carry_in_new;
+          shl_carry_in_reg <= shl_carry_in_new;
         end
     end // reg_update
 
@@ -258,6 +285,28 @@ assign ready       = ready_reg;
     begin : reader_process
       opa_rd_addr_reg = word_index_new;
       opm_addr_reg    = word_index_new;
+    end
+
+  //----------------------------------------------------------------
+  // carry process. "Ripple carry awesomeness!"
+  //----------------------------------------------------------------
+  always @*
+    begin : carry_process
+      case (residue_ctrl_reg)
+        CTRL_COMPARE:
+          sub_carry_in_new = sub_carry_out;
+        CTRL_SUB:
+          sub_carry_in_new = sub_carry_out;
+        default:
+          sub_carry_in_new = 1;
+      endcase
+
+      case (residue_ctrl_reg)
+        CTRL_SHL:
+          shl_carry_in_new = shl_carry_out;
+        default:
+          shl_carry_in_new = 0;
+      endcase
     end
 
   //----------------------------------------------------------------
