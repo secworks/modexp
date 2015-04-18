@@ -71,16 +71,24 @@ module residue(
 //----------------------------------------------------------------
 
 
+// m_residue_2_2N_array( N, M, Nr)
+//   Nr = 00...01 ; Nr = 1 == 2**(2N-2N)
+//   for (int i = 0; i < 2 * N; i++)
+//     Nr = Nr shift left 1
+//     if (Nr less than M) continue;
+//     Nr = Nr - M
+// return Nr
+//
 localparam CTRL_IDLE          = 4'h0;
-localparam CTRL_INIT          = 4'h1;
+localparam CTRL_INIT          = 4'h1; // Nr = 00...01 ; Nr = 1 == 2**(2N-2N)
 localparam CTRL_INIT_STALL    = 4'h2;
-localparam CTRL_SHL           = 4'h3;
+localparam CTRL_SHL           = 4'h3; // Nr = Nr shift left 1
 localparam CTRL_SHL_STALL     = 4'h4;
-localparam CTRL_COMPARE       = 4'h5;
+localparam CTRL_COMPARE       = 4'h5; //if (Nr less than M) continue;
 localparam CTRL_COMPARE_STALL = 4'h6;
-localparam CTRL_SUB           = 4'h7;
+localparam CTRL_SUB           = 4'h7; //Nr = Nr - M
 localparam CTRL_SUB_STALL     = 4'h8;
-localparam CTRL_LOOP          = 4'h9;
+localparam CTRL_LOOP          = 4'h9; //for (int i = 0; i < 2 * N; i++)
 
 //----------------------------------------------------------------
 // Registers including update variables and write enable.
@@ -110,6 +118,15 @@ reg          length_m1_we;
 reg [07 : 0] word_index_reg;
 reg [07 : 0] word_index_new;
 reg          word_index_we;
+reg [31 : 0] one_data;
+reg [31 : 0] sub_data;
+reg [31 : 0] shl_data;
+reg          sub_carry_in_new;
+reg          sub_carry_in_reg;
+reg          sub_carry_out;
+reg          shl_carry_in_new;
+reg          shl_carry_in_reg;
+reg          shl_carry_out;
 
 //----------------------------------------------------------------
 // Concurrent connectivity for ports etc.
@@ -117,9 +134,28 @@ reg          word_index_we;
 assign opa_rd_addr = opa_rd_addr_reg;
 assign opa_wr_addr = opa_wr_addr_reg;
 assign opa_wr_data = opa_wr_data_reg;
+assign opa_wr_we   = opa_wr_we_reg;
 assign opm_addr    = opm_addr_reg;
 assign ready       = ready_reg;
 
+
+  //----------------------------------------------------------------
+  // Instantions
+  //----------------------------------------------------------------
+  adder32 subcmp(
+    .a(opa_rd_data),
+    .b( ~ opm_data),
+    .carry_in(sub_carry_in_reg),
+    .sum(sub_data),
+    .carry_out(sub_carry_out)
+  );
+
+  shl32 shl(
+    .a(opa_rd_data),
+    .carry_in(shl_carry_in_reg),
+    .amul2(shl_data),
+    .carry_out(shl_carry_out)
+  );
 
 
 
@@ -152,11 +188,27 @@ assign ready       = ready_reg;
 
           if (loop_counter_1_to_nn_we)
             loop_counter_1_to_nn_reg <= loop_counter_1_to_nn_new;
+
+          if (ready_we)
+            ready_reg <= ready_new;
+
+          sub_carry_in_reg <= sub_carry_in_new;
+          shl_carry_in_reg <= shl_carry_in_new;
         end
     end // reg_update
 
 
   //----------------------------------------------------------------
+  // loop counter process. implements for (int i = 0; i < 2 * N; i++) 
+  //
+  // m_residue_2_2N_array( N, M, Nr)
+  //   Nr = 00...01 ; Nr = 1 == 2**(2N-2N)
+  //   for (int i = 0; i < 2 * N; i++)
+  //     Nr = Nr shift left 1
+  //     if (Nr less than M) continue;
+  //     Nr = Nr - M
+  // return Nr
+  //
   //----------------------------------------------------------------
   always @*
     begin : process_1_to_2n
@@ -174,6 +226,7 @@ assign ready       = ready_reg;
     end
 
   //----------------------------------------------------------------
+  // implements looping over words in a multiword operation
   //----------------------------------------------------------------
   always @*
     begin : word_index_process
@@ -186,6 +239,93 @@ assign ready       = ready_reg;
       if (residue_ctrl_reg == CTRL_IDLE)
         word_index_new = length_m1_new; //reduce a pipeline stage with early read
 
+    end
+
+  //----------------------------------------------------------------
+  // writer process. implements:
+  //   Nr = 00...01 ; Nr = 1 == 2**(2N-2N)
+  //   Nr = Nr shift left 1
+  //   Nr = Nr - M
+  //
+  // m_residue_2_2N_array( N, M, Nr)
+  //   Nr = 00...01 ; Nr = 1 == 2**(2N-2N)
+  //   for (int i = 0; i < 2 * N; i++)
+  //     Nr = Nr shift left 1
+  //     if (Nr less than M) continue;
+  //     Nr = Nr - M
+  // return Nr
+  //----------------------------------------------------------------
+  always @*
+    begin : writer_process
+      opa_wr_addr_reg = word_index_reg;
+      case (residue_ctrl_reg)
+        CTRL_INIT:
+          begin
+            opa_wr_data_reg = one_data;
+            opa_wr_we_reg   = 1'b1;
+          end
+
+        CTRL_SUB:
+          begin
+            opa_wr_data_reg = sub_data;
+            opa_wr_we_reg   = 1'b1;
+          end
+
+        CTRL_SHL:
+          begin
+            opa_wr_data_reg = shl_data;
+            opa_wr_we_reg   = 1'b1;
+          end
+
+        default:
+          begin
+            opa_wr_data_reg = 32'h0;
+            opa_wr_we_reg   = 1'b0;
+          end
+      endcase
+    end
+
+  //----------------------------------------------------------------
+  // reader process. reads from new value because it occurs one 
+  // cycle earlier than the writer.
+  //----------------------------------------------------------------
+  always @*
+    begin : reader_process
+      opa_rd_addr_reg = word_index_new;
+      opm_addr_reg    = word_index_new;
+    end
+
+  //----------------------------------------------------------------
+  // carry process. "Ripple carry awesomeness!"
+  //----------------------------------------------------------------
+  always @*
+    begin : carry_process
+      case (residue_ctrl_reg)
+        CTRL_COMPARE:
+          sub_carry_in_new = sub_carry_out;
+        CTRL_SUB:
+          sub_carry_in_new = sub_carry_out;
+        default:
+          sub_carry_in_new = 1;
+      endcase
+
+      case (residue_ctrl_reg)
+        CTRL_SHL:
+          shl_carry_in_new = shl_carry_out;
+        default:
+          shl_carry_in_new = 0;
+      endcase
+    end
+
+  //----------------------------------------------------------------
+  // Nr = 00...01 ; Nr = 1 == 2**(2N-2N)
+  //----------------------------------------------------------------
+  always @*
+    begin : one_process
+      one_data = 32'h0; 
+      if (residue_ctrl_reg == CTRL_INIT)
+        if (word_index_reg == length_m1_reg)
+          one_data = 32'h1; 
     end
 
 //----------------------------------------------------------------
@@ -233,32 +373,53 @@ always @*
         begin
           reset_word_index = 1'b1;
           reset_n_counter  = 1'b1;
+          residue_ctrl_new = CTRL_SHL;
+          residue_ctrl_we  = 1'b1;
+        end
+
+      CTRL_SHL:
+        begin
+        if (word_index_reg == 8'h0)
+          begin
+            residue_ctrl_new = CTRL_SHL_STALL;
+            residue_ctrl_we  = 1'b1;
+          end
+        end
+
+      CTRL_SHL_STALL:
+        begin
           residue_ctrl_new = CTRL_COMPARE;
           residue_ctrl_we  = 1'b1;
         end
 
       CTRL_COMPARE:
-        begin
-        end
+        if (word_index_reg == 8'h0)
+          begin
+            residue_ctrl_new = CTRL_COMPARE_STALL;
+            residue_ctrl_we  = 1'b1;
+          end
 
       CTRL_COMPARE_STALL:
         begin
+          reset_word_index = 1'b1;
+          residue_ctrl_we  = 1'b1;
+          if (sub_carry_in_reg == 1'b1)
+            residue_ctrl_new = CTRL_SUB;
+          else
+            residue_ctrl_new = CTRL_LOOP;
         end
 
       CTRL_SUB:
-        begin
-        end
+        if (word_index_reg == 8'h0)
+          begin
+            residue_ctrl_new = CTRL_SUB_STALL;
+            residue_ctrl_we  = 1'b1;
+          end
 
       CTRL_SUB_STALL:
         begin
-        end
-
-      CTRL_SHL:
-        begin
-        end
-
-      CTRL_SHL_STALL:
-        begin
+          residue_ctrl_new = CTRL_LOOP;
+          residue_ctrl_we  = 1'b1;
         end
 
       CTRL_LOOP:
