@@ -427,12 +427,18 @@ always @*
       CTRL_LOOP:
         begin
           if (loop_counter_1_to_nn_reg == nn_reg)
-           begin
-            ready_new = 1'b1;
-            ready_we  = 1'b1;
-            residue_ctrl_new = CTRL_IDLE;
-            residue_ctrl_we  = 1'b1;
-           end
+            begin
+              ready_new = 1'b1;
+              ready_we  = 1'b1;
+              residue_ctrl_new = CTRL_IDLE;
+              residue_ctrl_we  = 1'b1;
+            end
+          else
+            begin
+              reset_word_index = 1'b1;
+              residue_ctrl_new = CTRL_SHL;
+              residue_ctrl_we  = 1'b1;
+            end
         end
 
       default:
