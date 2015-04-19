@@ -121,7 +121,7 @@ residue dut(
 blockmem1r1w mem_a( //Memory to be loaded with 2**N modulus N
   .clk(tb_clk),
   .read_addr(tb_opa_rd_addr),
-  .read_data(tb_opa_wr_data),
+  .read_data(tb_opa_rd_data),
   .wr(tb_opa_wr_we),
   .write_addr(tb_opa_wr_addr),
   .write_data(tb_opa_wr_data)
@@ -129,8 +129,8 @@ blockmem1r1w mem_a( //Memory to be loaded with 2**N modulus N
 
 blockmem1r1w mem_m( // Modulus M memory
   .clk(tb_clk),
-  .read_addr(tb_opa_rd_addr),
-  .read_data(tb_opa_wr_data),
+  .read_addr(tb_opm_addr),
+  .read_data(tb_opm_data),
   .wr(1'b0),
   .write_addr(8'h0),
   .write_data(32'h0)
@@ -172,6 +172,12 @@ always @*
 always @*
   if (tb_opa_wr_we === 1'b1)
     $display("*** write mem[%x] = [%x] ", tb_opa_wr_addr, tb_opa_wr_data);
+
+//----------------------------------------------------------------
+// Debug monitor one
+//----------------------------------------------------------------
+always @*
+  $display("*** one = [%x] ", dut.one_data);
 
 
 //----------------------------------------------------------------
