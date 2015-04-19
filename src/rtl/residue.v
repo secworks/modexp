@@ -404,6 +404,7 @@ always @*
           reset_word_index = 1'b1;
           residue_ctrl_we  = 1'b1;
           if (sub_carry_in_reg == 1'b1)
+            //TODO: Bug! detect CF to detect less than, but no detect ZF to detect equal to.
             residue_ctrl_new = CTRL_SUB;
           else
             residue_ctrl_new = CTRL_LOOP;
