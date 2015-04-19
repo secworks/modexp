@@ -118,15 +118,16 @@ reg          length_m1_we;
 reg [07 : 0] word_index_reg;
 reg [07 : 0] word_index_new;
 reg          word_index_we;
-reg [31 : 0] one_data;
-reg [31 : 0] sub_data;
-reg [31 : 0] shl_data;
-reg          sub_carry_in_new;
-reg          sub_carry_in_reg;
-reg          sub_carry_out;
-reg          shl_carry_in_new;
-reg          shl_carry_in_reg;
-reg          shl_carry_out;
+
+reg  [31 : 0] one_data;
+wire [31 : 0] sub_data;
+wire [31 : 0] shl_data;
+reg           sub_carry_in_new;
+reg           sub_carry_in_reg;
+wire          sub_carry_out;
+reg           shl_carry_in_new;
+reg           shl_carry_in_reg;
+wire          shl_carry_out;
 
 //----------------------------------------------------------------
 // Concurrent connectivity for ports etc.
