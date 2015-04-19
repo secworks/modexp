@@ -149,16 +149,22 @@ always
 //----------------------------------------------------------------
 // Debug monitor the FSM
 //----------------------------------------------------------------
-  always @ (posedge tb_clk)
-    begin : fsm_debug
-      if (dut.residue_ctrl_we)
-        case (dut.residue_ctrl_new)
-          dut.CTRL_IDLE:
-            $display("FSM: IDLE");
-          default:
-            $display("FSM: %x", dut.residue_ctrl_new);
-        endcase
-    end
+always @ (posedge tb_clk)
+  begin : fsm_debug
+    if (dut.residue_ctrl_we)
+      case (dut.residue_ctrl_new)
+        dut.CTRL_IDLE:
+          $display("FSM: IDLE");
+        default:
+          $display("FSM: %x", dut.residue_ctrl_new);
+      endcase
+  end
+
+//----------------------------------------------------------------
+// Debug monitor the loop counter
+//----------------------------------------------------------------
+always @*
+  $display("*** loop counter: %x, nn: %x ", dut.loop_counter_1_to_nn_reg, dut.nn_reg);
 
 //----------------------------------------------------------------
 // reset_dut()
