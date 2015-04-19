@@ -236,7 +236,6 @@ endtask // signal_calculate
 task test_residue(
     input [7 : 0]      length,
     input [14 : 0]     nn,
-    input [0 : 8192-1] a,
     input [0 : 8192-1] m,
     input [0 : 8192-1] expected
   );
@@ -252,18 +251,17 @@ task test_residue(
       for (i=32'h0; i<256; i=i+1)
         begin
           j = {i, 5'h0};
-          aa = a[j +: 32];
           mm = m[j +: 32];
-          mem_a.mem[i] = aa;
           mem_m.mem[i] = mm;
           if (SHOW_INIT)
-            $display("*** init %0x: a: %x b: %x m: %x r: %x", i, aa, mm);
+            $display("*** init %0x: m: %x", i, mm);
         end
     end
 
     $display("*** Test vector copied");
     wait_ready();
     tb_length = length;
+    tb_nn = nn;
     signal_calculate();
     wait_ready();
     begin: verify_test_vectors
@@ -277,7 +275,7 @@ task test_residue(
         begin
           j = i * 32;
           $display("offset: %02d expected 0x%08x actual 0x%08x", i, expected[j +: 32], mem_a.mem[i]);
-          if (expected[j +: 32] != mem_a.mem[i])
+          if (expected[j +: 32] !== mem_a.mem[i])
             begin
               success = 0;
               fail = 1;
@@ -304,8 +302,7 @@ initial
 //m_residue_2_2N_array M:    1ffffff ffffffff ffffffff 
 //m_residue_2_2N_array Nr:         0        0     4000 
 
-
-
+    test_residue( 3, 96+96, { 96'h1ffffffffffffffffffffff, 8096'h0 }, { 96'h4000, 8096'h0 } );
 
 //test_modExp_4096bit_e65537
 //m_residue_2_2N_array N:  4128
