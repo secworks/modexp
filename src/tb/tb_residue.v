@@ -185,6 +185,14 @@ always @*
 always @*
   if (dut.residue_ctrl_reg == dut.CTRL_COMPARE_STALL)
     $display("*** CF = [%x] ", dut.sub_carry_in_reg);
+always @*
+  $display("*** CFnew = [%x] ", dut.sub_carry_in_new);
+always @*
+  $display("*** CFreg = [%x] ", dut.sub_carry_in_reg);
+always @*
+  if (dut.residue_ctrl_reg == dut.CTRL_COMPARE)
+    $display("*** COMPARE (CFin=%x) A-M: %x - %x = %x (CFout=%x) addr: %x %x", dut.sub_carry_in_reg, dut.opa_rd_data, dut.opm_data, dut.sub_data, dut.sub_carry_out, dut.opa_rd_addr, dut.opm_addr);
+    
 
 //----------------------------------------------------------------
 // reset_dut()

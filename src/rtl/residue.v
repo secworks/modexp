@@ -172,6 +172,9 @@ assign ready       = ready_reg;
           length_m1_reg    <= 8'h0;
           nn_reg           <= 15'h0;
           loop_counter_1_to_nn_reg <= 15'h0;
+          ready_reg        <= 1'b1;
+          sub_carry_in_reg <= 1'b0;
+          shl_carry_in_reg <= 1'b0;
         end
       else
         begin
@@ -307,14 +310,14 @@ assign ready       = ready_reg;
         CTRL_SUB:
           sub_carry_in_new = sub_carry_out;
         default:
-          sub_carry_in_new = 1;
+          sub_carry_in_new = 1'b1;
       endcase
 
       case (residue_ctrl_reg)
         CTRL_SHL:
           shl_carry_in_new = shl_carry_out;
         default:
-          shl_carry_in_new = 0;
+          shl_carry_in_new = 1'b0;
       endcase
     end
 
@@ -389,6 +392,7 @@ always @*
 
       CTRL_SHL_STALL:
         begin
+          reset_word_index = 1'b1;
           residue_ctrl_new = CTRL_COMPARE;
           residue_ctrl_we  = 1'b1;
         end
