@@ -167,6 +167,14 @@ always @*
   $display("*** loop counter: %x, nn: %x ", dut.loop_counter_1_to_nn_reg, dut.nn_reg);
 
 //----------------------------------------------------------------
+// Debug monitor writes
+//----------------------------------------------------------------
+always @*
+  if (tb_opa_wr_we === 1'b1)
+    $display("*** write mem[%x] = [%x] ", tb_opa_wr_addr, tb_opa_wr_data);
+
+
+//----------------------------------------------------------------
 // reset_dut()
 //
 // Toggles reset to force the DUT into a well defined state.
