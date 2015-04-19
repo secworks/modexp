@@ -149,29 +149,29 @@ always
 //----------------------------------------------------------------
 // Debug monitor the FSM
 //----------------------------------------------------------------
-always @ (posedge tb_clk)
-  begin : fsm_debug
-    if (dut.residue_ctrl_we)
-      case (dut.residue_ctrl_new)
-        dut.CTRL_IDLE:
-          $display("FSM: IDLE");
-        default:
-          $display("FSM: %x", dut.residue_ctrl_new);
-      endcase
-  end
+//always @ (posedge tb_clk)
+//  begin : fsm_debug
+//    if (dut.residue_ctrl_we)
+//      case (dut.residue_ctrl_new)
+//        dut.CTRL_IDLE:
+//          $display("FSM: IDLE");
+//        default:
+//          $display("FSM: %x", dut.residue_ctrl_new);
+//      endcase
+//  end
 
 //----------------------------------------------------------------
 // Debug monitor the loop counter
 //----------------------------------------------------------------
-always @*
-  $display("*** loop counter: %x, nn: %x ", dut.loop_counter_1_to_nn_reg, dut.nn_reg);
+//always @*
+//  $display("*** loop counter: %x, nn: %x ", dut.loop_counter_1_to_nn_reg, dut.nn_reg);
 
 //----------------------------------------------------------------
 // Debug monitor writes
 //----------------------------------------------------------------
-always @*
-  if (tb_opa_wr_we === 1'b1)
-    $display("*** write mem[%x] = [%x] ", tb_opa_wr_addr, tb_opa_wr_data);
+//always @*
+//  if (tb_opa_wr_we === 1'b1)
+//    $display("*** write mem[%x] = [%x] ", tb_opa_wr_addr, tb_opa_wr_data);
 
 //----------------------------------------------------------------
 // Debug monitor one
@@ -243,12 +243,16 @@ task wait_ready();
       for (i=0; i<100000000; i=i+1)
         if (tb_ready == 0)
           #(2 * CLK_HALF_PERIOD);
+        else if (tb_ready === 1)
+          i = 100000000000000000000;
     end
     if (tb_ready == 0)
        begin
          $display("*** wait_ready failed, never became ready!");
          $finish;
        end
+    else
+    $display("*** wait_ready: done");
   end
 endtask // wait_ready
 
@@ -331,6 +335,10 @@ initial
     $display("   -- Testbench for residue started --");
     init_sim();
     reset_dut();
+
+
+    //Verify that 1**(2*32) mod 8 == 0; i.e. does the compare pick up 8==8 => SUB work? 
+    test_residue( 1, 32, { 32'h08, 8160'h0 }, { 32'h0, 8160'h0 } );
 
 //m_residue_2_2N_array N:  96
 //m_residue_2_2N_array M:    1ffffff ffffffff ffffffff 
