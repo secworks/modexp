@@ -179,6 +179,12 @@ always @*
 always @*
   $display("*** one = [%x] ", dut.one_data);
 
+//----------------------------------------------------------------
+// Debug monitor comparision
+//----------------------------------------------------------------
+always @*
+  if (dut.residue_ctrl_reg == dut.CTRL_COMPARE_STALL)
+    $display("*** CF = [%x] ", dut.sub_carry_in_reg);
 
 //----------------------------------------------------------------
 // reset_dut()
