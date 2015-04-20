@@ -1,8 +1,8 @@
 //======================================================================
 //
-// shr32.v
-// ---------
-// 32bit shifter with carry in / carry out
+// shl32.v
+// -------
+// 32bit left shift with carry in / carry out
 //
 //
 // Author: Peter Magnusson
@@ -36,20 +36,18 @@
 //
 //======================================================================
 
-
 module shl32(
-   input       [31 : 0] a,
-   input                carry_in,
-   output wire [31 : 0] amul2,
-   output wire          carry_out);
+             input  wire [31 : 0] a,
+             input  wire          carry_in,
+             output wire [31 : 0] amul2,
+             output wire          carry_out
+            );
 
-   reg [32 : 0] shl_result;
+   assign amul2     = {a[30 : 0], carry_in};
+   assign carry_out = a[31];
 
-   assign amul2     = shl_result[31:0];
-   assign carry_out = shl_result[32];
+endmodule // shl32
 
-   always @(a, carry_in)
-     shl_result = { a, carry_in }; 
-endmodule
-
-
+//======================================================================
+// EOF shl32.v
+//======================================================================

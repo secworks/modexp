@@ -1,8 +1,8 @@
 //======================================================================
 //
 // shr32.v
-// ---------
-// 32bit shifter with carry in / carry out
+// -------
+// 32bit right shift with carry in / carry out.
 //
 //
 // Author: Peter Magnusson
@@ -36,20 +36,18 @@
 //
 //======================================================================
 
-
 module shr32(
-   input       [31 : 0] a,
-   input                carry_in,
-   output wire [31 : 0] adiv2,
-   output wire          carry_out);
+             input wire  [31 : 0] a,
+             input wire           carry_in,
+             output wire [31 : 0] adiv2,
+             output wire          carry_out
+            );
 
-   reg [32 : 0] shr_result;
+  assign adiv2      = {carry_in, a[31 : 1]};
+  assign carry_out = a[0];
 
-   assign adiv2     = shr_result[32:1];
-   assign carry_out = shr_result[0];
+endmodule // shr32
 
-   always @(a, carry_in)
-     shr_result = { carry_in, a }; 
-endmodule
-
-
+//======================================================================
+// EOF shr32.v
+//======================================================================
