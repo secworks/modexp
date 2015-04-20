@@ -118,15 +118,16 @@ reg          length_m1_we;
 reg [07 : 0] word_index_reg;
 reg [07 : 0] word_index_new;
 reg          word_index_we;
-reg [31 : 0] one_data;
-reg [31 : 0] sub_data;
-reg [31 : 0] shl_data;
-reg          sub_carry_in_new;
-reg          sub_carry_in_reg;
-reg          sub_carry_out;
-reg          shl_carry_in_new;
-reg          shl_carry_in_reg;
-reg          shl_carry_out;
+
+reg  [31 : 0] one_data;
+wire [31 : 0] sub_data;
+wire [31 : 0] shl_data;
+reg           sub_carry_in_new;
+reg           sub_carry_in_reg;
+wire          sub_carry_out;
+reg           shl_carry_in_new;
+reg           shl_carry_in_reg;
+wire          shl_carry_out;
 
 //----------------------------------------------------------------
 // Concurrent connectivity for ports etc.
@@ -171,6 +172,9 @@ assign ready       = ready_reg;
           length_m1_reg    <= 8'h0;
           nn_reg           <= 15'h0;
           loop_counter_1_to_nn_reg <= 15'h0;
+          ready_reg        <= 1'b1;
+          sub_carry_in_reg <= 1'b0;
+          shl_carry_in_reg <= 1'b0;
         end
       else
         begin
@@ -306,14 +310,14 @@ assign ready       = ready_reg;
         CTRL_SUB:
           sub_carry_in_new = sub_carry_out;
         default:
-          sub_carry_in_new = 1;
+          sub_carry_in_new = 1'b1;
       endcase
 
       case (residue_ctrl_reg)
         CTRL_SHL:
           shl_carry_in_new = shl_carry_out;
         default:
-          shl_carry_in_new = 0;
+          shl_carry_in_new = 1'b0;
       endcase
     end
 
@@ -388,6 +392,7 @@ always @*
 
       CTRL_SHL_STALL:
         begin
+          reset_word_index = 1'b1;
           residue_ctrl_new = CTRL_COMPARE;
           residue_ctrl_we  = 1'b1;
         end
@@ -404,6 +409,7 @@ always @*
           reset_word_index = 1'b1;
           residue_ctrl_we  = 1'b1;
           if (sub_carry_in_reg == 1'b1)
+            //TODO: Bug! detect CF to detect less than, but no detect ZF to detect equal to.
             residue_ctrl_new = CTRL_SUB;
           else
             residue_ctrl_new = CTRL_LOOP;
@@ -425,12 +431,18 @@ always @*
       CTRL_LOOP:
         begin
           if (loop_counter_1_to_nn_reg == nn_reg)
-           begin
-            ready_new = 1'b1;
-            ready_we  = 1'b1;
-            residue_ctrl_new = CTRL_IDLE;
-            residue_ctrl_we  = 1'b1;
-           end
+            begin
+              ready_new = 1'b1;
+              ready_we  = 1'b1;
+              residue_ctrl_new = CTRL_IDLE;
+              residue_ctrl_we  = 1'b1;
+            end
+          else
+            begin
+              reset_word_index = 1'b1;
+              residue_ctrl_new = CTRL_SHL;
+              residue_ctrl_we  = 1'b1;
+            end
         end
 
       default:
