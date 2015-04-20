@@ -44,7 +44,8 @@ LINT = verilator
 LINTFLAGS = --lint-only -Wall
 
 # Sources.
-COMMON_SRC = ../src/rtl/adder32.v ../src/rtl/shl32.v ../src/rtl/shr32.v ../src/rtl/blockmem1r1w.v ../src/rtl/blockmem2r1w.v
+COMMON_SRC = ../src/rtl/adder32.v ../src/rtl/shl32.v ../src/rtl/shr32.v \
+	../src/rtl/blockmem1r1w.v ../src/rtl/blockmem2r1w.v
 
 RESIDUE_TB = ../src/tb/tb_residue.v
 RESIDUE_SRC = ../src/rtl/residue.v
