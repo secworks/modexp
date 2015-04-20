@@ -234,7 +234,8 @@ module modexp(
   wire [31 : 0] montprod_result_data;
   wire          montprod_result_we;
 
-  reg            residue_calculate;
+  reg            redidue_calculate;
+  wire           residue_ready;
   wire           residue_wire;
   reg [14 : 0]   residue_nn;
   wire  [07 : 0] residue_length;
