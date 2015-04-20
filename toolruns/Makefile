@@ -37,24 +37,26 @@
 #
 #===================================================================
 
-# tools
+# Tools.
 CC = iverilog
 CCFLAGS = -Wall
 LINT = verilator
 LINTFLAGS = --lint-only -Wall
 
-# sources
-RESIDUE_TB = ../src/tb/tb_residue.v ../src/rtl/blockmem1r1w.v
-RESIDUE_SRC = ../src/rtl/residue.v ../src/rtl/adder32.v ../src/rtl/shl32.v
+# Sources.
+COMMON_SRC = ../src/rtl/adder32.v ../src/rtl/shl32.v ../src/rtl/shr32.v ../src/rtl/blockmem1r1w.v ../src/rtl/blockmem2r1w.v
+
+RESIDUE_TB = ../src/tb/tb_residue.v
+RESIDUE_SRC = ../src/rtl/residue.v
 
 MONTPROD_TB = ../src/tb/tb_montprod.v
-MONTPROD_SRC = ../src/rtl/montprod.v ../src/rtl/adder32.v ../src/rtl/shr32.v ../src/rtl/blockmem1r1w.v
+MONTPROD_SRC = ../src/rtl/montprod.v
 
-TOP_SRC=../src/rtl/modexp.v  ../src/rtl/blockmem2r1w.v $(MONTPROD_SRC) $(RESIDUE_SRC)
+TOP_SRC=../src/rtl/modexp.v $(MONTPROD_SRC) $(RESIDUE_SRC) $(COMMON_SRC)
 TOP_TB=../src/tb/tb_modexp.v
 
 
-# rules
+# Rules.
 all: top.sim montprod.sim residue.sim
 
 
@@ -62,11 +64,12 @@ top.sim: $(TOP_TB) $(TOP_SRC)
 	$(CC) $(CCFLAGS) -o top.sim $(TOP_TB) $(TOP_SRC)
 
 
-montprod.sim: $(MONTPROD_TB) $(MONTPROD_SRC)
-	$(CC) $(CCFLAGS) -o montprod.sim $(MONTPROD_TB) $(MONTPROD_SRC)
+montprod.sim: $(MONTPROD_TB) $(MONTPROD_SRC) $(COMMON_SRC)
+	$(CC) $(CCFLAGS) -o montprod.sim $(MONTPROD_TB) $(MONTPROD_SRC) $(COMMON_SRC)
 
-residue.sim: $(RESIDUE_TB) $(RESIDUE_SRC)
-	$(CC) $(CCFLAGS) -o residue.sim $(RESIDUE_TB) $(RESIDUE_SRC)
+
+residue.sim: $(RESIDUE_TB) $(RESIDUE_SRC) $(COMMON_SRC)
+	$(CC) $(CCFLAGS) -o residue.sim $(RESIDUE_TB) $(RESIDUE_SRC) $(COMMON_SRC)
 
 
 sim-top: top.sim
@@ -76,25 +79,29 @@ sim-top: top.sim
 sim-montprod: montprod.sim
 	./montprod.sim
 
+
 sim-residue: residue.sim
 	./residue.sim
 
+
 lint:
 	@echo "Linting of montprod:"
-	$(LINT) $(LINTFLAGS) $(MONTPROD_SRC)
+	$(LINT) $(LINTFLAGS) --top-module montprod $(MONTPROD_SRC) $(COMMON_SRC)
 	@echo ""
 
 	@echo "Linting of residue:"
-	$(LINT) $(LINTFLAGS) $(RESIDUE_SRC)
+	$(LINT) $(LINTFLAGS) --top-module residue $(RESIDUE_SRC) $(COMMON_SRC)
 	@echo ""
 
 	@echo "Linting of modexp:"
-	$(LINT) $(LINTFLAGS) $(TOP_SRC)
+	$(LINT) $(LINTFLAGS) --top-module modexp $(TOP_SRC)
 	@echo ""
+
 
 clean:
 	rm -f top.sim
 	rm -f montprod.sim
+	rm -f residue.sim
 
 
 help:
@@ -105,9 +112,11 @@ help:
 	@echo "all:          Build all simulation targets."
 	@echo "lint:         Lint all modules and hierarchies."
 	@echo "top.sim:      Build top level simulation target."
+	@echo "montprod.sim: Build Montgomery product simulation target."
+	@echo "residue.sim:  Build Residue calculation simulation target."
 	@echo "sim-top:      Run top level simulation."
-	@echo "montprod.sim: Build montprod simulation target."
 	@echo "sim-montprod: Run montprod simulation."
+	@echo "sim-residue:  Run residue simulation."
 	@echo "clean:        Delete all built files."
 
 #===================================================================
