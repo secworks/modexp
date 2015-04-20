@@ -71,8 +71,8 @@ module modexp(
   localparam ADDR_NAME0          = 8'h00;
   localparam ADDR_NAME1          = 8'h01;
   localparam ADDR_VERSION        = 8'h02;
+  localparam ADDR_CTRL           = 8'h03;
 
-  localparam ADDR_CTRL           = 8'h00;
   localparam CTRL_INIT_BIT       = 0;
   localparam CTRL_NEXT_BIT       = 1;
 
@@ -154,17 +154,6 @@ module modexp(
   reg  [31 : 0] result_mem_int_wr_data;
   reg           result_mem_int_we;
 
-  reg          residue_calculator_start; //TODO not implemented yet
-  reg          residue_calculator_ready; //TODO not implemented yet
-
-  reg  [31 : 0] residue_mem [0 : 255];
-  reg  [07 : 0] residue_mem_rd_addr;
-  wire [31 : 0] residue_mem_rd_data;
-  reg  [07 : 0] residue_mem_wr_addr;
-  reg  [31 : 0] residue_mem_wr_data;
-  reg           residue_mem_we;
-
-
   reg  [07 : 0] p_mem_rd0_addr;
   wire [31 : 0] p_mem_rd0_data;
   reg  [07 : 0] p_mem_rd1_addr;
@@ -175,13 +164,13 @@ module modexp(
 
   reg [07 : 0] length_reg;
   reg [07 : 0] length_m1_reg;
-  reg [07 : 0] length_new;
-  reg [07 : 0] length_m1_new;
-  reg          length_we;
+  reg [07 : 0] length_new;    //TODO: API should write length!!!
+  reg [07 : 0] length_m1_new; //TODO: API should write length-1 when writing length!!!
+  reg          length_we;     //TODO: API should enable length_we!!!
 
   reg          start_reg;
-  reg          start_new;
-  reg          start_we;
+  reg          start_new; //TODO: API should start operations!!!
+  reg          start_we;  //TODO: API should start operations!!!
 
   reg          ready_reg;
   reg          ready_new;
@@ -192,7 +181,7 @@ module modexp(
   reg          montprod_select_we;
   reg [1 : 0]  montprod_dest_reg;
   reg [1 : 0]  montprod_dest_new;
-  reg [1 : 0]  montprod_dest_we;
+  reg          montprod_dest_we;
 
   reg [3 : 0]  modexp_ctrl_reg;
   reg [3 : 0]  modexp_ctrl_new;
@@ -203,7 +192,7 @@ module modexp(
 
   reg [12 : 0] loop_counter_reg;
   reg [12 : 0] loop_counter_new;
-  reg [12 : 0] loop_counter_we;
+  reg          loop_counter_we;
   reg [07 : 0] E_word_index;
   reg [04 : 0] E_bit_index;
   reg          last_iteration;
@@ -215,7 +204,7 @@ module modexp(
   // Wires.
   //----------------------------------------------------------------
   reg [31 : 0]  tmp_read_data;
-  reg           tmp_error;
+  //reg           tmp_error;
 
   reg           montprod_calc;
   wire          montprod_ready;
@@ -234,9 +223,9 @@ module modexp(
   wire [31 : 0] montprod_result_data;
   wire          montprod_result_we;
 
-  reg            redidue_calculate;
+  reg            residue_calculate;
   wire           residue_ready;
-  wire           residue_wire;
+  //wire           residue_wire; ?
   reg [14 : 0]   residue_nn;
   wire  [07 : 0] residue_length;
   wire [07 : 0]  residue_opa_rd_addr;
@@ -247,6 +236,8 @@ module modexp(
   wire [07 : 0]  residue_opm_addr;
   reg [31 : 0]   residue_opm_data;
 
+  reg  [07 : 0] residue_mem_montprod_read_addr;
+  wire [31 : 0] residue_mem_montprod_read_data;
 
   //----------------------------------------------------------------
   // Concurrent connectivity for ports etc.
@@ -273,7 +264,7 @@ module modexp(
                          .opb_data(montprod_opb_data),
 
                          .opm_addr(montprod_opm_addr),
-                         .opm_data(message_mem_int_rd_data),
+                         .opm_data(montprod_opm_data),
 
                          .result_addr(montprod_result_addr),
                          .result_data(montprod_result_data),
@@ -281,10 +272,10 @@ module modexp(
                         );
 
 
-residue residue_inst(
+  residue residue_inst(
                      .clk(clk),
                      .reset_n(reset_n),
-                     .calculate(redidue_calculate),
+                     .calculate(residue_calculate),
                      .ready(residue_ready),
                      .nn(residue_nn),
                      .length(residue_length),
@@ -297,6 +288,16 @@ residue residue_inst(
                      .opm_data(residue_opm_data)
                     );
 
+  blockmem2r1w residue_mem(
+                           .clk(clk),
+                           .read_addr0(residue_opa_rd_addr),
+                           .read_data0(residue_opa_rd_data),
+                           .read_addr1(residue_mem_montprod_read_addr),
+                           .read_data1(residue_mem_montprod_read_data),
+                           .wr(residue_opa_wr_we),
+                           .write_addr(residue_opa_wr_addr),
+                           .write_data(residue_opa_wr_data)
+                          );
 
   blockmem2r1w modulus_mem(
                            .clk(clk),
@@ -517,6 +518,40 @@ residue residue_inst(
 
 
   //----------------------------------------------------------------
+  // one
+  //
+  // generates the big integer one ( 00... 01 )
+  //----------------------------------------------------------------
+  always @*
+    begin : one_process;
+      if (montprod_opa_addr == length_m1_reg)
+        one_new = 32'h00000001;
+      else
+        one_new = 32'h00000000;
+    end
+
+  //----------------------------------------------------------------
+  // read mux for modulus, since it is being addressed by two sources
+  //----------------------------------------------------------------
+  always @*
+    begin : modulus_mem_reader_process
+      if (modexp_ctrl_reg == CTRL_RESIDUE)
+        modulus_mem_int_rd_addr = residue_opm_addr;
+      else
+        modulus_mem_int_rd_addr = montprod_opm_addr;
+    end
+
+  //----------------------------------------------------------------
+  // feeds residue calculator
+  //----------------------------------------------------------------
+  always @*
+    begin : residue_process;
+      residue_nn = { 1'b0, length_reg, 6'h0 }; //N*2, N=length*32, *32 = shl5, *64 = shl6
+      residue_length = length_reg;
+      residue_opm_data = modulus_mem_int_rd_data;
+    end
+
+  //----------------------------------------------------------------
   // montprod_op_select
   //
   // Select operands used during montprod calculations depending
@@ -524,33 +559,28 @@ residue residue_inst(
   //----------------------------------------------------------------
   always @*
     begin : montprod_op_select
+
+      montprod_length          = length_reg;
+
+      result_mem_int_rd_addr   = montprod_opa_addr;
       message_mem_int_rd_addr  = montprod_opa_addr;
       p_mem_rd0_addr           = montprod_opa_addr;
 
-      residue_mem_rd_addr      = montprod_opb_addr;
-      p_mem_rd1_addr           = montprod_opb_addr;
+      residue_mem_montprod_read_addr = montprod_opb_addr;
+      p_mem_rd1_addr                 = montprod_opb_addr;
 
-      modulus_mem_int_rd_addr  = montprod_opm_addr;
-
-      montprod_opa_data        = 32'h00000000;
-      montprod_opb_data        = 32'h00000000;
-
-      if (montprod_opa_addr == length_m1_reg)
-        one_new = 32'h00000001;
-      else
-        one_new = 32'h00000000;
-
+      montprod_opm_data = modulus_mem_int_rd_data;
       case (montprod_select_reg)
         MONTPROD_SELECT_ONE_NR:
           begin
             montprod_opa_data       = one;
-            montprod_opb_data       = residue_mem_rd_data;
+            montprod_opb_data       = residue_mem_montprod_read_data;
           end
 
         MONTPROD_SELECT_X_NR:
           begin
             montprod_opa_data       = message_mem_int_rd_data;
-            montprod_opb_data       = residue_mem_rd_data;
+            montprod_opb_data       = residue_mem_montprod_read_data;
           end
 
         MONTPROD_SELECT_Z_P:
@@ -573,6 +603,8 @@ residue residue_inst(
 
         default:
           begin
+            montprod_opa_data       = 32'h00000000;
+            montprod_opb_data       = 32'h00000000;
           end
       endcase // case (montprod_selcect_reg)
     end
@@ -684,7 +716,7 @@ residue residue_inst(
       modexp_ctrl_new     = CTRL_IDLE;
       modexp_ctrl_we      = 0;
 
-      residue_calculator_start = 1'b0;
+      residue_calculate = 1'b0;
 
       case (modexp_ctrl_reg)
         CTRL_IDLE:
@@ -695,13 +727,13 @@ residue residue_inst(
               begin
                 modexp_ctrl_new = CTRL_RESIDUE;
                 modexp_ctrl_we  = 1;
-                residue_calculator_start = 1'b1;
+                residue_calculate = 1'b1;
               end
           end
 
         CTRL_RESIDUE:
           begin
-            if (residue_calculator_ready == 1'b1)
+            if (residue_ready == 1'b1)
               begin
                 montprod_select_new = MONTPROD_SELECT_ONE_NR;
                 montprod_select_we  = 1;
