@@ -52,7 +52,7 @@ module residue(
   input wire  calculate,
   output wire ready,
 
-  input wire  [14 : 0] nn, //MAX(2*N)=8192*2 (14 bit) 
+  input wire  [14 : 0] nn, //MAX(2*N)=8192*2 (14 bit)
   input wire  [07 : 0] length,
 
   output wire [07 : 0] opa_rd_addr,
@@ -65,6 +65,7 @@ module residue(
   input wire  [31 : 0] opm_data
 
 );
+
 
 //----------------------------------------------------------------
 // Internal constant and parameter definitions.
@@ -203,7 +204,7 @@ assign ready       = ready_reg;
 
 
   //----------------------------------------------------------------
-  // loop counter process. implements for (int i = 0; i < 2 * N; i++) 
+  // loop counter process. implements for (int i = 0; i < 2 * N; i++)
   //
   // m_residue_2_2N_array( N, M, Nr)
   //   Nr = 00...01 ; Nr = 1 == 2**(2N-2N)
@@ -290,7 +291,7 @@ assign ready       = ready_reg;
     end
 
   //----------------------------------------------------------------
-  // reader process. reads from new value because it occurs one 
+  // reader process. reads from new value because it occurs one
   // cycle earlier than the writer.
   //----------------------------------------------------------------
   always @*
@@ -326,10 +327,10 @@ assign ready       = ready_reg;
   //----------------------------------------------------------------
   always @*
     begin : one_process
-      one_data = 32'h0; 
+      one_data = 32'h0;
       if (residue_ctrl_reg == CTRL_INIT)
         if (word_index_reg == length_m1_reg)
-          one_data = 32'h1; 
+          one_data = 32'h1;
     end
 
 //----------------------------------------------------------------
