@@ -234,6 +234,18 @@ module modexp(
   wire [31 : 0] montprod_result_data;
   wire          montprod_result_we;
 
+  reg            residue_calculate;
+  wire           residue_wire;
+  reg [14 : 0]   residue_nn;
+  wire  [07 : 0] residue_length;
+  wire [07 : 0]  residue_opa_rd_addr;
+  reg  [31 : 0]  residue_opa_rd_data;
+  wire [07 : 0]  residue_opa_wr_addr;
+  wire [31 : 0]  residue_opa_wr_data;
+  wire           residue_opa_wr_we;
+  wire [07 : 0]  residue_opm_addr;
+  reg [31 : 0]   residue_opm_data;
+
 
   //----------------------------------------------------------------
   // Concurrent connectivity for ports etc.
@@ -266,6 +278,23 @@ module modexp(
                          .result_data(montprod_result_data),
                          .result_we(montprod_result_we)
                         );
+
+
+residue residue_inst(
+                     .clk(clk),
+                     .reset_n(reset_n),
+                     .calculate(redidue_calculate),
+                     .ready(residue_ready),
+                     .nn(residue_nn),
+                     .length(residue_length),
+                     .opa_rd_addr(residue_opa_rd_addr),
+                     .opa_rd_data(residue_opa_rd_data),
+                     .opa_wr_addr(residue_opa_wr_addr),
+                     .opa_wr_data(residue_opa_wr_data),
+                     .opa_wr_we(residue_opa_wr_we),
+                     .opm_addr(residue_opm_addr),
+                     .opm_data(residue_opm_data)
+                    );
 
 
   blockmem2r1w modulus_mem(
