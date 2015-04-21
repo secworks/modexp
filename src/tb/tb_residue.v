@@ -244,7 +244,7 @@ task wait_ready();
         if (tb_ready == 0)
           #(2 * CLK_HALF_PERIOD);
         else if (tb_ready === 1)
-          i = 100000000000000000000;
+          i = 1661992960;
     end
     if (tb_ready == 0)
        begin
