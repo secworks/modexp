@@ -238,6 +238,11 @@ module modexp(
   reg  [07 : 0] residue_mem_montprod_read_addr;
   wire [31 : 0] residue_mem_montprod_read_data;
 
+  reg           residue_valid_reg;
+  reg           residue_valid_new;
+  reg           residue_valid_api_invalidate;
+  reg           residue_valid_int_validated;
+
   //----------------------------------------------------------------
   // Concurrent connectivity for ports etc.
   //----------------------------------------------------------------
@@ -377,6 +382,7 @@ module modexp(
           length_m1_reg       <= 8'h0;
           loop_counter_reg    <= 13'b0;
           ei_reg              <= 1'b0;
+          residue_valid_reg   <= 1'b0;
         end
       else
         begin
@@ -405,6 +411,8 @@ module modexp(
             ei_reg <= ei_new;
 
           one <= one_new;
+
+          residue_valid_reg <= residue_valid_new;
         end
     end // reg_update
 
@@ -421,6 +429,7 @@ module modexp(
       message_mem_api_we  = 1'b0;
       length_we           = 1'b0;
       tmp_read_data       = 32'h00000000;
+      residue_valid_api_invalidate = 1'b0;
 
       if (cs)
         begin
@@ -471,6 +480,7 @@ module modexp(
                 if (we)
                   begin
                     modulus_mem_api_we = 1'b1;
+                    residue_valid_api_invalidate = 1'b1;
                   end
                 else
                   begin
@@ -549,6 +559,21 @@ module modexp(
       residue_length = length_reg;
       residue_opm_data = modulus_mem_int_rd_data;
     end
+
+  //----------------------------------------------------------------
+  // sets the register that dedides if residue is valid or not
+  //----------------------------------------------------------------
+  always @*
+    begin : residue_valid_process;
+      if ( residue_valid_api_invalidate == 1'b1)
+        residue_valid_new = 1'b0;
+      else if ( residue_valid_int_validated == 1'b1)
+        residue_valid_new = 1'b1;
+     else 
+        residue_valid_new = residue_valid_reg;
+    end
+
+
 
   //----------------------------------------------------------------
   // montprod_op_select
@@ -717,6 +742,8 @@ module modexp(
 
       residue_calculate = 1'b0;
 
+      residue_valid_int_validated = 1'b0;
+
       case (modexp_ctrl_reg)
         CTRL_IDLE:
           begin
@@ -724,9 +751,24 @@ module modexp(
             ready_we            = 1;
             if (start_reg == 1'b1)
               begin
-                modexp_ctrl_new = CTRL_RESIDUE;
-                modexp_ctrl_we  = 1;
-                residue_calculate = 1'b1;
+                if (residue_valid_reg == 1'b1)
+                  begin
+                    //residue has alrady been calculated, start with MONTPROD( 1, Nr, MODULUS )
+                    montprod_select_new = MONTPROD_SELECT_ONE_NR;
+                    montprod_select_we  = 1;
+                    montprod_dest_new   = MONTPROD_DEST_Z;
+                    montprod_dest_we    = 1;
+                    montprod_calc       = 1;
+                    modexp_ctrl_new     = CTRL_CALCULATE_Z0;
+                    modexp_ctrl_we      = 1;
+                  end
+                else
+                  begin
+                    //modulus has been written and residue (Nr) must be calculated
+                    modexp_ctrl_new = CTRL_RESIDUE;
+                    modexp_ctrl_we  = 1;
+                    residue_calculate = 1'b1;
+                  end
               end
           end
 
@@ -739,8 +781,9 @@ module modexp(
                 montprod_dest_new   = MONTPROD_DEST_Z;
                 montprod_dest_we    = 1;
                 montprod_calc       = 1;
-                modexp_ctrl_new = CTRL_CALCULATE_Z0;
-                modexp_ctrl_we  = 1;
+                modexp_ctrl_new     = CTRL_CALCULATE_Z0;
+                modexp_ctrl_we      = 1;
+                residue_valid_int_validated = 1'b1; //update registers telling residue is valid
               end
           end
 
