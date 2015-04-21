@@ -225,11 +225,10 @@ module modexp(
 
   reg            residue_calculate;
   wire           residue_ready;
-  //wire           residue_wire; ?
   reg [14 : 0]   residue_nn;
-  wire  [07 : 0] residue_length;
+  reg  [07 : 0]  residue_length;
   wire [07 : 0]  residue_opa_rd_addr;
-  reg  [31 : 0]  residue_opa_rd_data;
+  wire [31 : 0]  residue_opa_rd_data;
   wire [07 : 0]  residue_opa_wr_addr;
   wire [31 : 0]  residue_opa_wr_data;
   wire           residue_opa_wr_we;
