@@ -124,6 +124,10 @@ module modexp(
   localparam CTRL_CALCULATE_ZN   = 4'h8;
   localparam CTRL_DONE           = 4'h9;
 
+  localparam EXPONATION_MODE_SECRET_SECURE = 1'b0;
+  localparam EXPONATION_MODE_PUBLIC_FAST   = 1'b1; //for rsa, c=M^65537 etc, there is no need to slow down to hide the exponent
+
+
   localparam CORE_NAME0          = 32'h6d6f6465; // "mode"
   localparam CORE_NAME1          = 32'h78702020; // "xp  "
   localparam CORE_VERSION        = 32'h302e3031; // "0.01"
@@ -199,6 +203,11 @@ module modexp(
   reg          ei_reg;
   reg          ei_new;
   reg          ei_we;
+
+  reg          exponation_mode_reg;
+  reg          exponation_mode_new;
+  reg          exponation_mode_we;
+
 
   //----------------------------------------------------------------
   // Wires.
@@ -383,6 +392,7 @@ module modexp(
           loop_counter_reg    <= 13'b0;
           ei_reg              <= 1'b0;
           residue_valid_reg   <= 1'b0;
+          exponation_mode_reg <= EXPONATION_MODE_SECRET_SECURE; 
         end
       else
         begin
@@ -413,6 +423,9 @@ module modexp(
           one <= one_new;
 
           residue_valid_reg <= residue_valid_new;
+
+          if (exponation_mode_we)
+            exponation_mode_reg <= exponation_mode_new;
         end
     end // reg_update
 
@@ -430,6 +443,8 @@ module modexp(
       length_we           = 1'b0;
       tmp_read_data       = 32'h00000000;
       residue_valid_api_invalidate = 1'b0;
+      exponation_mode_we  = 1'b0; //TODO: Add API code to enable fast exponation for working with public exponents.
+      exponation_mode_new = EXPONATION_MODE_SECRET_SECURE;
 
       if (cs)
         begin
@@ -819,6 +834,14 @@ module modexp(
             montprod_calc       = 1;
             modexp_ctrl_new = CTRL_ITERATE_Z_P;
             modexp_ctrl_we  = 1;
+
+            if (ei_new == 1'b0 && exponation_mode_reg == EXPONATION_MODE_PUBLIC_FAST)
+              begin
+                //Skip the fake montgomery calculation, exponation_mode_reg optimizing for speed not blinding.
+                montprod_select_new = MONTPROD_SELECT_P_P;
+                montprod_dest_new   = MONTPROD_DEST_P;
+                modexp_ctrl_new     = CTRL_ITERATE_P_P;
+              end
           end
 
         CTRL_ITERATE_Z_P:
