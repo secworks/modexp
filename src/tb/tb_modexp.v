@@ -67,6 +67,10 @@ module tb_modexp();
   localparam ADDR_STATUS         = 8'h09;
   localparam STATUS_READY_BIT    = 0;
 
+  localparam ADDR_MODULUS_LENGTH  = 8'h20;
+  localparam ADDR_MESSAGE_LENGTH  = 8'h21;
+  localparam ADDR_EXPONENT_LENGTH = 8'h22;
+
   localparam MODULUS_PREFIX      = 4'h1;
   localparam ADDR_MODULUS_START  = 8'h00;
   localparam ADDR_MODULUS_END    = 8'hff;
@@ -319,12 +323,15 @@ module tb_modexp();
 
       // Write 13 to (m)esaage memory and set length to one word.
       write_word({MESSAGE_PREFIX, 8'h00}, 32'h0000000d);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_LENGTH}, 32'h00000001);
 
       // Write 11 to exponent memory and set length to one word.
       write_word({EXPONENT_PREFIX, 8'h00}, 32'h0000000b);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_LENGTH}, 32'h00000001);
 
-      // Write 7 to modulus memory.
+      // Write 7 to modulus memory and set length to one word.
       write_word({MODULUS_PREFIX, 8'h00}, 32'h00000007);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_LENGTH}, 32'h00000001);
 
       // Start processing and wait for ready.
       write_word({GENERAL_PREFIX, ADDR_CTRL}, 32'h00000001);

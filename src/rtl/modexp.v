@@ -79,21 +79,26 @@ module modexp(
   localparam ADDR_STATUS         = 8'h09;
   localparam STATUS_READY_BIT    = 0;
 
-  localparam ADDR_MODSIZE        = 8'h20;
-  localparam ADDR_LENGTH         = 8'h21;
-  localparam ADDR_EXPONENT       = 8'h22;
+  localparam ADDR_MODULUS_LENGTH  = 8'h20;
+  localparam ADDR_MESSAGE_LENGTH  = 8'h21;
+  localparam ADDR_EXPONENT_LENGTH = 8'h22;
+  localparam ADDR_LENGTH          = 8'h23; // Should be deprecated.
+
 
   localparam MODULUS_PREFIX      = 4'h1;
   localparam ADDR_MODULUS_START  = 8'h00;
   localparam ADDR_MODULUS_END    = 8'hff;
 
+
   localparam EXPONENT_PREFIX     = 4'h2;
   localparam ADDR_EXPONENT_START = 8'h00;
   localparam ADDR_EXPONENT_END   = 8'hff;
 
+
   localparam MESSAGE_PREFIX      = 4'h3;
   localparam MESSAGE_START       = 8'h00;
   localparam MESSAGE_END         = 8'hff;
+
 
   localparam RESULT_PREFIX       = 4'h4;
   localparam RESULT_START        = 8'h00;
@@ -135,6 +140,18 @@ module modexp(
   //----------------------------------------------------------------
   // Registers including update variables and write enable.
   //----------------------------------------------------------------
+  reg [07 : 0] modulus_length_reg;
+  reg [07 : 0] modulus_length_new;
+  reg          modulus_length_we;
+
+  reg [07 : 0] message_length_reg;
+  reg [07 : 0] message_length_new;
+  reg          message_length_we;
+
+  reg [07 : 0] exponent_length_reg;
+  reg [07 : 0] exponent_length_new;
+  reg          exponent_length_we;
+
   reg [07 : 0] length_reg;
   reg [07 : 0] length_new;
   reg [07 : 0] length_m1_reg;
@@ -383,6 +400,9 @@ module modexp(
     begin
       if (!reset_n)
         begin
+          modulus_length_reg  <= DEFAULT_MODLENGTH;
+          message_length_reg  <= DEFAULT_MODLENGTH;
+          exponent_length_reg <= DEFAULT_EXPLENGTH;
           start_reg           <= 1'b0;
           ready_reg           <= 1'b1;
           montprod_select_reg <= MONTPROD_SELECT_ONE_NR;
@@ -400,6 +420,15 @@ module modexp(
         begin
           one_reg <= one_new;
           residue_valid_reg <= residue_valid_new;
+
+          if (message_length_we)
+            message_length_reg <= message_length_new;
+
+          if (exponent_length_we)
+            exponent_length_reg <= exponent_length_new;
+
+          if (message_length_we)
+            message_length_reg <= message_length_new;
 
           if (start_we)
             start_reg <= start_new;
@@ -441,6 +470,9 @@ module modexp(
   //----------------------------------------------------------------
   always @*
     begin : api
+      modulus_length_we   = 1'b1;
+      message_length_we   = 1'b1;
+      exponent_length_we  = 1'b1;
       start_we            = 1'b0;
       modulus_mem_api_we  = 1'b0;
       exponent_mem_api_we = 1'b0;
@@ -452,6 +484,9 @@ module modexp(
       exponation_mode_we  = 1'b0;
 
       exponation_mode_new = EXPONATION_MODE_SECRET_SECURE;
+      modulus_length_new  = write_data[7 : 0];
+      message_length_new  = write_data[7 : 0];
+      exponent_length_new = write_data[7 : 0];
       length_new          = write_data[7 : 0];
       length_m1_new       = write_data[7 : 0] - 8'h1;
       start_new           = write_data[0];
@@ -471,6 +506,15 @@ module modexp(
 
                       ADDR_LENGTH:
                         length_we = 1'b1;
+
+                      ADDR_MODULUS_LENGTH:
+                        modulus_length_we = 1'b1;
+
+                      ADDR_MESSAGE_LENGTH:
+                        message_length_we = 1'b1;
+
+                      ADDR_EXPONENT_LENGTH:
+                        exponent_length_we = 1'b1;
 
                       default:
                         begin
@@ -494,6 +538,15 @@ module modexp(
 
                       ADDR_STATUS:
                         tmp_read_data = {31'h00000000, ready_reg};
+
+                      ADDR_MODULUS_LENGTH:
+                        tmp_read_data = {24'h000000, modulus_length_reg};
+
+                      ADDR_MESSAGE_LENGTH:
+                        tmp_read_data = {24'h000000, message_length_reg};
+
+                      ADDR_EXPONENT_LENGTH:
+                        tmp_read_data = {24'h000000, exponent_length_reg};
 
                       ADDR_LENGTH:
                         tmp_read_data = {24'h000000, length_reg};
