@@ -220,7 +220,7 @@ task reset_dut();
   begin
     $display("*** Toggle reset.");
     tb_reset_n = 0;
-    #(4 * CLK_HALF_PERIOD);
+    #(2 * CLK_PERIOD);
     tb_reset_n = 1;
   end
 endtask // reset_dut
@@ -260,7 +260,7 @@ task wait_ready();
       integer i;
       for (i=0; i<1000000; i=i+1)
         if (tb_ready == 0)
-          #(2 * CLK_HALF_PERIOD);
+          #(CLK_PERIOD);
     end
     if (tb_ready == 0)
        begin
@@ -276,7 +276,7 @@ task signal_calculate();
   begin
     $display("*** signal_calculate");
     tb_calculate = 1;
-    #(2 * CLK_HALF_PERIOD);
+    #(CLK_PERIOD);
     tb_calculate = 0;
   end
 endtask // signal_calculate
@@ -381,16 +381,16 @@ initial
 //* A=7fffffff B=10001 M= 11 A*B= 10 Ar=  8 Br=  2 Ar*Br= 10 A*B= 10
 //* A=7fffffff B= 11 M=10001 A*B=7ff8 Ar=8000 Br= 11 Ar*Br=7ff8 A*B=7ff8
 
-    //debug A =>        0        0        1 
-    //debug B =>        0        0     4000 
-    //debug M =>  1ffffff ffffffff ffffffff 
-    //debug s =>        0        0       80 
+    //debug A =>        0        0        1
+    //debug B =>        0        0     4000
+    //debug M =>  1ffffff ffffffff ffffffff
+    //debug s =>        0        0       80
     test_mont_prod( 3, {96'h1, 8096'h0}, {96'h4000, 8096'h0}, {96'h1ffffffffffffffffffffff,8096'h0}, {96'h80,8096'h0} );
 
- //debug A => 00000000 098b0437 ae647838 09d930b9 a1d269d5 03579a63 9c4e3ac5 fd070836 413389c2 321cfe8b a6a5732e bc7cbcf8 a2f1df87 19f7a767 43ef9b5d 6bd33597 23bfc574 8ec046da 5419d7ff 31811123 740b227b 709f3ace e53ba5cc 38cbc161 a0c15c88 64f26a18 423692ef a5e52a20 80d9f244 717aa2d5 e1a6680a b29eed64 57c6b005 
- //debug B => 00000000 098b0437 ae647838 09d930b9 a1d269d5 03579a63 9c4e3ac5 fd070836 413389c2 321cfe8b a6a5732e bc7cbcf8 a2f1df87 19f7a767 43ef9b5d 6bd33597 23bfc574 8ec046da 5419d7ff 31811123 740b227b 709f3ace e53ba5cc 38cbc161 a0c15c88 64f26a18 423692ef a5e52a20 80d9f244 717aa2d5 e1a6680a b29eed64 57c6b005 
- //debug M => 00000000 f14b5a0a 122ff247 85813db2 02c0d3af bd0a4615 2889ff7d 8f655e9e c866e586 f21003a0 e969769b 127ec8a5 67f07708 217775f7 7654cabc 3a624f9b 4074bdf1 55fa84c0 0354fe59 0ad04cfd 14e666c0 ce6cea72 788c31f4 edcf3dd7 3a5a59c1 b9b3ef41 565df033 69a82de8 f18c2793 0abd5502 f3730ec0 d1943dc4 a660a267 
- //debug s => 00000000 0a8a4a44 40e5c3b0 a05383c2 4ad92fc9 0af7b72e d22fa180 f3a99e64 38ffbe72 3854bc5e 93fffa55 ce49b2cf f809c9eb 81176d8b 4f8b942c 3de18f9c 6393a70a 89924a58 5684cb90 acfd1bde b408b2c0 a8d862c1 74b5a10d 90532d4e 79fe2f50 430decda 0ed75e0a ac354c46 69ce0bd8 eb36e857 b55623d1 527b9711 86cd4d75 
+ //debug A => 00000000 098b0437 ae647838 09d930b9 a1d269d5 03579a63 9c4e3ac5 fd070836 413389c2 321cfe8b a6a5732e bc7cbcf8 a2f1df87 19f7a767 43ef9b5d 6bd33597 23bfc574 8ec046da 5419d7ff 31811123 740b227b 709f3ace e53ba5cc 38cbc161 a0c15c88 64f26a18 423692ef a5e52a20 80d9f244 717aa2d5 e1a6680a b29eed64 57c6b005
+ //debug B => 00000000 098b0437 ae647838 09d930b9 a1d269d5 03579a63 9c4e3ac5 fd070836 413389c2 321cfe8b a6a5732e bc7cbcf8 a2f1df87 19f7a767 43ef9b5d 6bd33597 23bfc574 8ec046da 5419d7ff 31811123 740b227b 709f3ace e53ba5cc 38cbc161 a0c15c88 64f26a18 423692ef a5e52a20 80d9f244 717aa2d5 e1a6680a b29eed64 57c6b005
+ //debug M => 00000000 f14b5a0a 122ff247 85813db2 02c0d3af bd0a4615 2889ff7d 8f655e9e c866e586 f21003a0 e969769b 127ec8a5 67f07708 217775f7 7654cabc 3a624f9b 4074bdf1 55fa84c0 0354fe59 0ad04cfd 14e666c0 ce6cea72 788c31f4 edcf3dd7 3a5a59c1 b9b3ef41 565df033 69a82de8 f18c2793 0abd5502 f3730ec0 d1943dc4 a660a267
+ //debug s => 00000000 0a8a4a44 40e5c3b0 a05383c2 4ad92fc9 0af7b72e d22fa180 f3a99e64 38ffbe72 3854bc5e 93fffa55 ce49b2cf f809c9eb 81176d8b 4f8b942c 3de18f9c 6393a70a 89924a58 5684cb90 acfd1bde b408b2c0 a8d862c1 74b5a10d 90532d4e 79fe2f50 430decda 0ed75e0a ac354c46 69ce0bd8 eb36e857 b55623d1 527b9711 86cd4d75
 
     test_mont_prod(
        33,
