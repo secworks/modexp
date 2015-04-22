@@ -20,8 +20,8 @@
 // has is done. Additionally, any errors will also be asserted.
 //
 //
-// Author: Joachim Strombergson
-// Copyright (c) 2014, Secworks Sweden AB
+// Author: Joachim Strombergson, Peter Magnusson.
+// Copyright (c) 2015, Assured AB
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or
@@ -99,8 +99,6 @@ module modexp(
   localparam RESULT_START        = 8'h00;
   localparam RESULT_END          = 8'hff;
 
-  localparam LENGTH_PREFIX       = 4'h5;
-
   localparam DEFAULT_MODLENGTH   = 8'h80;
   localparam DEFAULT_EXPLENGTH   = 8'h80;
 
@@ -137,6 +135,54 @@ module modexp(
   //----------------------------------------------------------------
   // Registers including update variables and write enable.
   //----------------------------------------------------------------
+  reg [07 : 0] length_reg;
+  reg [07 : 0] length_new;
+  reg [07 : 0] length_m1_reg;
+  reg [07 : 0] length_m1_new;
+  reg          length_we;
+
+  reg          start_reg;
+  reg          start_new;
+  reg          start_we;
+
+  reg          ready_reg;
+  reg          ready_new;
+  reg          ready_we;
+
+  reg [2 : 0]  montprod_select_reg;
+  reg [2 : 0]  montprod_select_new;
+  reg          montprod_select_we;
+  reg [1 : 0]  montprod_dest_reg;
+  reg [1 : 0]  montprod_dest_new;
+  reg          montprod_dest_we;
+
+  reg [3 : 0]  modexp_ctrl_reg;
+  reg [3 : 0]  modexp_ctrl_new;
+  reg          modexp_ctrl_we;
+
+  reg [31 : 0] one_reg;
+  reg [31 : 0] one_new;
+
+  reg [12 : 0] loop_counter_reg;
+  reg [12 : 0] loop_counter_new;
+  reg          loop_counter_we;
+
+  reg [07 : 0] E_word_index;
+  reg [04 : 0] E_bit_index;
+  reg          last_iteration;
+
+  reg          ei_reg;
+  reg          ei_new;
+  reg          ei_we;
+
+  reg          exponation_mode_reg;
+  reg          exponation_mode_new;
+  reg          exponation_mode_we;
+
+
+  //----------------------------------------------------------------
+  // Wires.
+  //----------------------------------------------------------------
   reg [07 : 0]  modulus_mem_int_rd_addr;
   wire [31 : 0] modulus_mem_int_rd_data;
   wire [31 : 0] modulus_mem_api_rd_data;
@@ -167,51 +213,6 @@ module modexp(
   reg  [31 : 0] p_mem_wr_data;
   reg           p_mem_we;
 
-  reg [07 : 0] length_reg;
-  reg [07 : 0] length_m1_reg;
-  reg [07 : 0] length_new;    //TODO: API should write length!!!
-  reg [07 : 0] length_m1_new; //TODO: API should write length-1 when writing length!!!
-  reg          length_we;     //TODO: API should enable length_we!!!
-
-  reg          start_reg;
-  reg          start_we;  //TODO: API should start operations!!!
-
-  reg          ready_reg;
-  reg          ready_new;
-  reg          ready_we;
-
-  reg [2 : 0]  montprod_select_reg;
-  reg [2 : 0]  montprod_select_new;
-  reg          montprod_select_we;
-  reg [1 : 0]  montprod_dest_reg;
-  reg [1 : 0]  montprod_dest_new;
-  reg          montprod_dest_we;
-
-  reg [3 : 0]  modexp_ctrl_reg;
-  reg [3 : 0]  modexp_ctrl_new;
-  reg          modexp_ctrl_we;
-
-  reg [31 : 0] one;
-  reg [31 : 0] one_new;
-
-  reg [12 : 0] loop_counter_reg;
-  reg [12 : 0] loop_counter_new;
-  reg          loop_counter_we;
-  reg [07 : 0] E_word_index;
-  reg [04 : 0] E_bit_index;
-  reg          last_iteration;
-  reg          ei_reg;
-  reg          ei_new;
-  reg          ei_we;
-
-  reg          exponation_mode_reg;
-  reg          exponation_mode_new;
-  reg          exponation_mode_we;
-
-
-  //----------------------------------------------------------------
-  // Wires.
-  //----------------------------------------------------------------
   reg [31 : 0]  tmp_read_data;
   //reg           tmp_error;
 
@@ -387,7 +388,7 @@ module modexp(
           montprod_select_reg <= MONTPROD_SELECT_ONE_NR;
           montprod_dest_reg   <= MONTPROD_DEST_NOWHERE;
           modexp_ctrl_reg     <= CTRL_IDLE;
-          one                 <= 32'h0;
+          one_reg             <= 32'h0;
           length_reg          <= 8'h0;
           length_m1_reg       <= 8'h0;
           loop_counter_reg    <= 13'b0;
@@ -397,8 +398,11 @@ module modexp(
         end
       else
         begin
+          one_reg <= one_new;
+          residue_valid_reg <= residue_valid_new;
+
           if (start_we)
-            start_reg <= write_data[0];
+            start_reg <= start_new;
 
           if (ready_we)
             ready_reg <= ready_new;
@@ -414,8 +418,8 @@ module modexp(
 
           if (length_we)
             begin
-              length_reg    <= write_data[7 : 0];
-              length_m1_reg <= write_data[7 : 0] - 8'h1;
+              length_reg    <= length_new;
+              length_m1_reg <= length_m1_new;
             end
 
           if (loop_counter_we)
@@ -423,10 +427,6 @@ module modexp(
 
           if (ei_we)
             ei_reg <= ei_new;
-
-          one <= one_new;
-
-          residue_valid_reg <= residue_valid_new;
 
           if (exponation_mode_we)
             exponation_mode_reg <= exponation_mode_new;
@@ -446,10 +446,17 @@ module modexp(
       exponent_mem_api_we = 1'b0;
       message_mem_api_we  = 1'b0;
       length_we           = 1'b0;
-      tmp_read_data       = 32'h00000000;
       residue_valid_api_invalidate = 1'b0;
-      exponation_mode_we  = 1'b0; //TODO: Add API code to enable fast exponation for working with public exponents.
+
+      //TODO: Add API code to enable fast exponation for working with public exponents.
+      exponation_mode_we  = 1'b0;
+
       exponation_mode_new = EXPONATION_MODE_SECRET_SECURE;
+      length_new          = write_data[7 : 0];
+      length_m1_new       = write_data[7 : 0] - 8'h1;
+      start_new           = write_data[0];
+
+      tmp_read_data       = 32'h00000000;
 
       if (cs)
         begin
@@ -562,8 +569,10 @@ module modexp(
         one_new = 32'h00000000;
     end
 
+
   //----------------------------------------------------------------
-  // read mux for modulus, since it is being addressed by two sources
+  // Read mux for modulus. Needed since it is being
+  // addressed by two sources.
   //----------------------------------------------------------------
   always @*
     begin : modulus_mem_reader_process
@@ -573,18 +582,21 @@ module modexp(
         modulus_mem_int_rd_addr = montprod_opm_addr;
     end
 
+
   //----------------------------------------------------------------
-  // feeds residue calculator
+  // Feeds residue calculator.
   //----------------------------------------------------------------
   always @*
     begin : residue_process;
-      residue_nn = { 1'b0, length_reg, 6'h0 }; //N*2, N=length*32, *32 = shl5, *64 = shl6
+      //N*2, N=length*32, *32 = shl5, *64 = shl6
+      residue_nn = { 1'b0, length_reg, 6'h0 };
       residue_length = length_reg;
       residue_opm_data = modulus_mem_int_rd_data;
     end
 
+
   //----------------------------------------------------------------
-  // sets the register that dedides if residue is valid or not
+  // Sets the register that decides if residue is valid or not.
   //----------------------------------------------------------------
   always @*
     begin : residue_valid_process;
@@ -597,12 +609,11 @@ module modexp(
     end
 
 
-
   //----------------------------------------------------------------
   // montprod_op_select
   //
   // Select operands used during montprod calculations depending
-  // on what operation we want to do
+  // on what operation we want to do.
   //----------------------------------------------------------------
   always @*
     begin : montprod_op_select
@@ -620,7 +631,7 @@ module modexp(
       case (montprod_select_reg)
         MONTPROD_SELECT_ONE_NR:
           begin
-            montprod_opa_data       = one;
+            montprod_opa_data       = one_reg;
             montprod_opb_data       = residue_mem_montprod_read_data;
           end
 
@@ -644,7 +655,7 @@ module modexp(
 
         MONTPROD_SELECT_ONE_Z:
           begin
-            montprod_opa_data       = one;
+            montprod_opa_data       = one_reg;
             montprod_opb_data       = result_mem_int_rd_data;
           end
 
@@ -660,7 +671,7 @@ module modexp(
   //----------------------------------------------------------------
   // memory write mux
   //
-  // direct memory write signals to correct memory
+  // Direct memory write signals to correct memory.
   //----------------------------------------------------------------
   always @*
     begin : memory_write_process
@@ -691,7 +702,7 @@ module modexp(
   //----------------------------------------------------------------
   // loop_counter
   //
-  // Calculate the loop counter and related variables
+  // Calculate the loop counter and related variables.
   //----------------------------------------------------------------
   always @*
     begin : loop_counters_process
@@ -728,11 +739,12 @@ module modexp(
   //----------------------------------------------------------------
   // exponent
   //
-  // reads the exponent
+  // Reads the exponent.
   //----------------------------------------------------------------
   always @*
     begin : exponent_process
-      // accessing new instead of reg - pick up update at CTRL_ITERATE_NEW to remove a pipeline stall
+      // Accessing new instead of reg - pick up update at
+      // CTRL_ITERATE_NEW to remove a pipeline stall.
       E_word_index  = loop_counter_new[ 12 : 5 ];
 
       exponent_mem_int_rd_addr = E_word_index;
