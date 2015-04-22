@@ -18,5 +18,6 @@ void shift_left_1_array(uint32_t length, uint32_t *a, uint32_t *result);
 void zero_array(uint32_t length, uint32_t *a);
 void copy_array(uint32_t length, uint32_t *src, uint32_t *dst);
 void debugArray(char *msg, uint32_t length, uint32_t *array);
+void assertArrayEquals(uint32_t length, uint32_t *expected, uint32_t *actual);
 
 #endif /* BIGNUM_UINT32_T_H_ */

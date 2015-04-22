@@ -2,6 +2,19 @@
 #include <stdlib.h>
 #include "bignum_uint32_t.h"
 
+void assertArrayEquals(uint32_t length, uint32_t *expected, uint32_t *actual) { //needed in tests
+	int equals = 1;
+	for (uint32_t i = 0; i < length; i++)
+		equals &= expected[i] == actual[i];
+	printf("%s expected: [", equals ? "PASS" : "FAIL");
+	for (uint32_t i = 0; i < length - 1; i++)
+		printf("%8x, ", expected[i]);
+	printf("%8x] actual: [ ", expected[length - 1]);
+	for (uint32_t i = 0; i < length - 1; i++)
+		printf("%8x, ", actual[i]);
+	printf("%8x]\n", actual[length - 1]);
+}
+
 void copy_array(uint32_t length, uint32_t *src, uint32_t *dst) {
 	for (uint32_t i = 0; i < length; i++)
 		dst[i] = src[i];

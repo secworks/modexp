@@ -6,19 +6,6 @@
 const uint32_t TEST_CONSTANT_PRIME_15_1 = 65537;
 const uint32_t TEST_CONSTANT_PRIME_31_1 = 2147483647u; // eighth Mersenne prime
 
-void assertArrayEquals(int length, uint32_t *expected, uint32_t *actual) {
-	int equals = 1;
-	for (int i = 0; i < length; i++)
-		equals &= expected[i] == actual[i];
-	printf("%s expected: [", equals ? "PASS" : "FAIL");
-	for (int i = 0; i < length - 1; i++)
-		printf("%8x, ", expected[i]);
-	printf("%8x] actual: [ ", expected[length - 1]);
-	for (int i = 0; i < length - 1; i++)
-		printf("%8x, ", actual[i]);
-	printf("%8x]\n", actual[length - 1]);
-}
-
 void testShiftRight() {
 	printf("=== Test shift right ===\n");
 	uint32_t a[] = { 0x01234567, 0x89abcdef };
