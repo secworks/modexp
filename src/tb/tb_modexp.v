@@ -50,7 +50,7 @@ module tb_modexp();
   //----------------------------------------------------------------
   // Internal constant and parameter definitions.
   //----------------------------------------------------------------
-  parameter DEBUG     = 0;
+  parameter DEBUG = 1;
 
   localparam CLK_HALF_PERIOD = 1;
   localparam CLK_PERIOD      = 2 * CLK_HALF_PERIOD;
@@ -98,7 +98,7 @@ module tb_modexp();
   reg           tb_reset_n;
   reg           tb_cs;
   reg           tb_we;
-  reg [11  : 0]  tb_address;
+  reg [11  : 0] tb_address;
   reg [31 : 0]  tb_write_data;
   wire [31 : 0] tb_read_data;
   wire          tb_error;
@@ -159,8 +159,17 @@ module tb_modexp();
       $display("cycle: 0x%016x", cycle_ctr);
       $display("State of DUT");
       $display("------------");
+      $display("Inputs and outputs:");
+      $display("cs   = 0x%01x, we = 0x%01x", tb_cs, tb_we);
+      $display("addr = 0x%08x, read_data = 0x%08x, write_data = 0x%08x",
+               tb_address, tb_read_data, tb_write_data);
       $display("");
 
+      $display("State:");
+      $display("ready_reg = 0x%01x, start_reg = 0x%01x",
+               dut.ready_reg, dut.start_reg);
+      $display("ctrl_reg =  0x%04x", dut.modexp_ctrl_reg);
+      $display("");
     end
   endtask // dump_dut_state
 
@@ -235,7 +244,7 @@ module tb_modexp();
     begin
       if (DEBUG)
         begin
-          $display("*** Writing 0x%08x to 0x%02x.", word, address);
+          $display("*** (write_word) Writing 0x%08x to 0x%02x.", word, address);
           $display("");
         end
 
@@ -268,7 +277,7 @@ module tb_modexp();
 
       if (DEBUG)
         begin
-          $display("*** Reading 0x%08x from 0x%02x.", read_data, address);
+          $display("*** (read_word) Reading 0x%08x from 0x%02x.", read_data, address);
           $display("");
         end
     end
@@ -283,7 +292,10 @@ module tb_modexp();
   task wait_ready();
     begin
       while (tb_read_data != 32'h00000001)
-        read_word({GENERAL_PREFIX, ADDR_STATUS});
+          read_word({GENERAL_PREFIX, ADDR_STATUS});
+
+      if (DEBUG)
+        $display("*** (wait_ready) Ready flag has been set.");
     end
   endtask // wait_ready
 
@@ -299,6 +311,8 @@ module tb_modexp();
   //  c = 13 ** 11 % 7 = 6
   //----------------------------------------------------------------
   task tc1();
+    reg [31 : 0] read_data;
+
     begin
       tc_ctr = tc_ctr + 1;
       $display("TC1: Trying to calculate 13**11 mod 7 = 6");
@@ -318,7 +332,9 @@ module tb_modexp();
 
       // Read out result word and check result.
       read_word({RESULT_PREFIX, 8'h00});
-      if (tb_read_data == 32'h00000006)
+      read_data = tb_read_data;
+
+      if (read_data == 32'h00000006)
         begin
           $display("*** TC1 successful.");
           $display("");
@@ -326,7 +342,7 @@ module tb_modexp();
       else
         begin
           $display("*** ERROR: TC1 NOT successful.");
-          $display("Expected: 0x06, got 0x%08x", tb_read_data);
+          $display("Expected: 0x06, got 0x%08x", read_data);
           error_ctr = error_ctr + 1;
         end
     end
