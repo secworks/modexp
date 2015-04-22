@@ -71,12 +71,13 @@ module modexp(
   localparam ADDR_NAME0          = 8'h00;
   localparam ADDR_NAME1          = 8'h01;
   localparam ADDR_VERSION        = 8'h02;
-  localparam ADDR_CTRL           = 8'h03;
 
+  localparam ADDR_CTRL           = 8'h03;
   localparam CTRL_INIT_BIT       = 0;
   localparam CTRL_NEXT_BIT       = 1;
 
   localparam ADDR_STATUS         = 8'h09;
+  localparam STATUS_READY_BIT    = 0;
 
   localparam ADDR_MODSIZE        = 8'h20;
   localparam ADDR_LENGTH         = 8'h21;
@@ -173,7 +174,6 @@ module modexp(
   reg          length_we;     //TODO: API should enable length_we!!!
 
   reg          start_reg;
-  reg          start_new; //TODO: API should start operations!!!
   reg          start_we;  //TODO: API should start operations!!!
 
   reg          ready_reg;
@@ -382,6 +382,7 @@ module modexp(
     begin
       if (!reset_n)
         begin
+          start_reg           <= 1'b0;
           ready_reg           <= 1'b1;
           montprod_select_reg <= MONTPROD_SELECT_ONE_NR;
           montprod_dest_reg   <= MONTPROD_DEST_NOWHERE;
@@ -392,10 +393,13 @@ module modexp(
           loop_counter_reg    <= 13'b0;
           ei_reg              <= 1'b0;
           residue_valid_reg   <= 1'b0;
-          exponation_mode_reg <= EXPONATION_MODE_SECRET_SECURE; 
+          exponation_mode_reg <= EXPONATION_MODE_SECRET_SECURE;
         end
       else
         begin
+          if (start_we)
+            start_reg <= write_data[0];
+
           if (ready_we)
             ready_reg <= ready_new;
 
@@ -437,6 +441,7 @@ module modexp(
   //----------------------------------------------------------------
   always @*
     begin : api
+      start_we            = 1'b0;
       modulus_mem_api_we  = 1'b0;
       exponent_mem_api_we = 1'b0;
       message_mem_api_we  = 1'b0;
@@ -454,6 +459,9 @@ module modexp(
                 if (we)
                   begin
                     case (address[7 : 0])
+                      ADDR_CTRL:
+                        start_we = 1'b1;
+
                       ADDR_LENGTH:
                         length_we = 1'b1;
 
@@ -475,10 +483,10 @@ module modexp(
                         tmp_read_data = CORE_VERSION;
 
                       ADDR_CTRL:
-                        tmp_read_data = 32'h00000000;
+                        tmp_read_data = {31'h00000000, start_reg};
 
                       ADDR_STATUS:
-                        tmp_read_data = 32'h00000000;
+                        tmp_read_data = {31'h00000000, ready_reg};
 
                       ADDR_LENGTH:
                         tmp_read_data = {24'h000000, length_reg};
@@ -584,7 +592,7 @@ module modexp(
         residue_valid_new = 1'b0;
       else if ( residue_valid_int_validated == 1'b1)
         residue_valid_new = 1'b1;
-     else 
+     else
         residue_valid_new = residue_valid_reg;
     end
 
@@ -745,15 +753,15 @@ module modexp(
   //----------------------------------------------------------------
   always @*
     begin
-      ready_new           = 0;
-      ready_we            = 0;
+      ready_new           = 1'b0;
+      ready_we            = 1'b0;
       montprod_select_new = MONTPROD_SELECT_ONE_NR;
       montprod_select_we  = 0;
       montprod_dest_new   = MONTPROD_DEST_NOWHERE;
       montprod_dest_we    = 0;
       montprod_calc       = 0;
       modexp_ctrl_new     = CTRL_IDLE;
-      modexp_ctrl_we      = 0;
+      modexp_ctrl_we      = 1'b0;
 
       residue_calculate = 1'b0;
 
@@ -762,34 +770,37 @@ module modexp(
       case (modexp_ctrl_reg)
         CTRL_IDLE:
           begin
-            ready_new           = 0;
-            ready_we            = 1;
-            if (start_reg == 1'b1)
+            if (start_reg)
               begin
-                if (residue_valid_reg == 1'b1)
-                  begin
-                    //residue has alrady been calculated, start with MONTPROD( 1, Nr, MODULUS )
-                    montprod_select_new = MONTPROD_SELECT_ONE_NR;
-                    montprod_select_we  = 1;
-                    montprod_dest_new   = MONTPROD_DEST_Z;
-                    montprod_dest_we    = 1;
-                    montprod_calc       = 1;
-                    modexp_ctrl_new     = CTRL_CALCULATE_Z0;
-                    modexp_ctrl_we      = 1;
-                  end
-                else
-                  begin
-                    //modulus has been written and residue (Nr) must be calculated
-                    modexp_ctrl_new = CTRL_RESIDUE;
-                    modexp_ctrl_we  = 1;
-                    residue_calculate = 1'b1;
-                  end
+                ready_new       = 1'b0;
+                ready_we        = 1'b1;
+                modexp_ctrl_new = CTRL_DONE;
+                modexp_ctrl_we  = 1'b1;
+
+//                if (residue_valid_reg)
+//                  begin
+//                    //residue has alrady been calculated, start with MONTPROD( 1, Nr, MODULUS )
+//                    montprod_select_new = MONTPROD_SELECT_ONE_NR;
+//                    montprod_select_we  = 1;
+//                    montprod_dest_new   = MONTPROD_DEST_Z;
+//                    montprod_dest_we    = 1;
+//                    montprod_calc       = 1;
+//                    modexp_ctrl_new     = CTRL_CALCULATE_Z0;
+//                    modexp_ctrl_we      = 1;
+//                  end
+//                else
+//                  begin
+//                    //modulus has been written and residue (Nr) must be calculated
+//                    modexp_ctrl_new = CTRL_RESIDUE;
+//                    modexp_ctrl_we  = 1;
+//                    residue_calculate = 1'b1;
+//                  end
               end
           end
 
         CTRL_RESIDUE:
           begin
-            if (residue_ready == 1'b1)
+            if (residue_ready)
               begin
                 montprod_select_new = MONTPROD_SELECT_ONE_NR;
                 montprod_select_we  = 1;
@@ -804,7 +815,7 @@ module modexp(
 
         CTRL_CALCULATE_Z0:
           begin
-            if (montprod_ready == 1'b1)
+            if (montprod_ready)
               begin
                 montprod_select_new = MONTPROD_SELECT_X_NR;
                 montprod_select_we  = 1;
@@ -845,7 +856,7 @@ module modexp(
           end
 
         CTRL_ITERATE_Z_P:
-            if (montprod_ready == 1'b1)
+            if (montprod_ready)
               begin
                 montprod_select_new = MONTPROD_SELECT_P_P;
                 montprod_select_we  = 1;
@@ -865,7 +876,7 @@ module modexp(
 
         CTRL_ITERATE_END:
           begin
-            if (last_iteration == 1'b0)
+            if (!last_iteration)
               begin
                 modexp_ctrl_new = CTRL_ITERATE;
                 modexp_ctrl_we  = 1;
@@ -882,7 +893,7 @@ module modexp(
 
         CTRL_CALCULATE_ZN:
           begin
-            if (montprod_ready == 1'b1)
+            if (montprod_ready)
               begin
                 modexp_ctrl_new = CTRL_DONE;
                 modexp_ctrl_we  = 1;
@@ -891,8 +902,8 @@ module modexp(
 
         CTRL_DONE:
           begin
-            ready_new           = 1;
-            ready_we            = 1;
+            ready_new           = 1'b1;
+            ready_we            = 1'b1;
             modexp_ctrl_new     = CTRL_IDLE;
             modexp_ctrl_we      = 1;
           end
