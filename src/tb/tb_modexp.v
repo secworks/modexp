@@ -321,9 +321,8 @@ module tb_modexp();
       tc_ctr = tc_ctr + 1;
       $display("TC1: Trying to calculate 13**11 mod 7 = 6");
 
-      // Write 13 to (m)esaage memory and set length to one word.
+      // Write 13 to (m)esaage memory.
       write_word({MESSAGE_PREFIX, 8'h00}, 32'h0000000d);
-      write_word({GENERAL_PREFIX, ADDR_MESSAGE_LENGTH}, 32'h00000001);
 
       // Write 11 to exponent memory and set length to one word.
       write_word({EXPONENT_PREFIX, 8'h00}, 32'h0000000b);
