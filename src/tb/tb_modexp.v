@@ -56,13 +56,32 @@ module tb_modexp();
   localparam CLK_PERIOD      = 2 * CLK_HALF_PERIOD;
 
   // The DUT address map.
-  localparam ADDR_NAME0       = 8'h00;
-  localparam ADDR_NAME1       = 8'h01;
-  localparam ADDR_VERSION     = 8'h02;
+  localparam GENERAL_PREFIX      = 4'h0;
+  localparam ADDR_NAME0          = 8'h00;
+  localparam ADDR_NAME1          = 8'h01;
+  localparam ADDR_VERSION        = 8'h02;
 
-  localparam ADDR_CTRL        = 8'h08;
-  localparam CTRL_INIT_BIT    = 0;
-  localparam CTRL_NEXT_BIT    = 1;
+  localparam ADDR_CTRL           = 8'h08;
+  localparam CTRL_START_BIT      = 0;
+
+  localparam ADDR_STATUS         = 8'h09;
+  localparam STATUS_READY_BIT    = 0;
+
+  localparam MODULUS_PREFIX      = 4'h1;
+  localparam ADDR_MODULUS_START  = 8'h00;
+  localparam ADDR_MODULUS_END    = 8'hff;
+
+  localparam EXPONENT_PREFIX     = 4'h2;
+  localparam ADDR_EXPONENT_START = 8'h00;
+  localparam ADDR_EXPONENT_END   = 8'hff;
+
+  localparam MESSAGE_PREFIX      = 4'h3;
+  localparam MESSAGE_START       = 8'h00;
+  localparam MESSAGE_END         = 8'hff;
+
+  localparam RESULT_PREFIX       = 4'h4;
+  localparam RESULT_START        = 8'h00;
+  localparam RESULT_END          = 8'hff;
 
 
   //----------------------------------------------------------------
@@ -211,7 +230,7 @@ module tb_modexp();
   //
   // Write the given word to the DUT using the DUT interface.
   //----------------------------------------------------------------
-  task write_word(input [11 : 0]  address,
+  task write_word(input [11 : 0] address,
                   input [31 : 0] word);
     begin
       if (DEBUG)
@@ -238,7 +257,7 @@ module tb_modexp();
   // the word read will be available in the global variable
   // read_data.
   //----------------------------------------------------------------
-  task read_word(input [11 : 0]  address);
+  task read_word(input [11 : 0] address);
     begin
       tb_address = address;
       tb_cs = 1;
@@ -257,6 +276,64 @@ module tb_modexp();
 
 
   //----------------------------------------------------------------
+  // wait_ready()
+  //
+  // Wait until the ready flag in the core is set.
+  //----------------------------------------------------------------
+  task wait_ready();
+    begin
+      while (tb_read_data != 32'h00000001)
+        read_word({GENERAL_PREFIX, ADDR_STATUS});
+    end
+  endtask // wait_ready
+
+
+  //----------------------------------------------------------------
+  // tc1
+  //
+  // A first, very simple testcase where we want to do:
+  // c = m ** e % N with the following (decimal) test values:
+  //  m = 13
+  //  e = 11
+  //  n = 7
+  //  c = 13 ** 11 % 7 = 6
+  //----------------------------------------------------------------
+  task tc1();
+    begin
+      tc_ctr = tc_ctr + 1;
+      $display("TC1: Trying to calculate 13**11 mod 7 = 6");
+
+      // Write 13 to (m)esaage memory and set length to one word.
+      write_word({MESSAGE_PREFIX, 8'h00}, 32'h0000000d);
+
+      // Write 11 to exponent memory and set length to one word.
+      write_word({EXPONENT_PREFIX, 8'h00}, 32'h0000000b);
+
+      // Write 7 to modulus memory.
+      write_word({MODULUS_PREFIX, 8'h00}, 32'h00000007);
+
+      // Start processing and wait for ready.
+      write_word({GENERAL_PREFIX, ADDR_CTRL}, 32'h00000001);
+      wait_ready();
+
+      // Read out result word and check result.
+      read_word({RESULT_PREFIX, 8'h00});
+      if (tb_read_data == 32'h00000006)
+        begin
+          $display("*** TC1 successful.");
+          $display("");
+        end
+      else
+        begin
+          $display("*** ERROR: TC1 NOT successful.");
+          $display("Expected: 0x06, got 0x%08x", tb_read_data);
+          error_ctr = error_ctr + 1;
+        end
+    end
+  endtask // tc1
+
+
+  //----------------------------------------------------------------
   // main
   //
   // The main test functionality.
@@ -272,6 +349,8 @@ module tb_modexp();
       dump_dut_state();
       reset_dut();
       dump_dut_state();
+
+      tc1();
 
       display_test_results();
 
