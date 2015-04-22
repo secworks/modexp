@@ -4,19 +4,19 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../src/RSATestBench.c \
+../src/ModExpTestBench.c \
 ../src/bignum_uint32_t.c \
 ../src/montgomery_array.c \
 ../src/montgomery_array_test.c 
 
 OBJS += \
-./src/RSATestBench.o \
+./src/ModExpTestBench.o \
 ./src/bignum_uint32_t.o \
 ./src/montgomery_array.o \
 ./src/montgomery_array_test.o 
 
 C_DEPS += \
-./src/RSATestBench.d \
+./src/ModExpTestBench.d \
 ./src/bignum_uint32_t.d \
 ./src/montgomery_array.d \
 ./src/montgomery_array_test.d 

@@ -3,10 +3,10 @@
 #include "bignum_uint32_t.h"
 #include "montgomery_array.h"
 
-void mont_prod_array(int length, uint32_t *A, uint32_t *B, uint32_t *M,
+void mont_prod_array(uint32_t length, uint32_t *A, uint32_t *B, uint32_t *M,
 		uint32_t *temp, uint32_t *s) {
 	zero_array(length, s);
-	for (int wordIndex = length - 1; wordIndex >= 0; wordIndex--) {
+	for (int32_t wordIndex = ((int32_t) length) - 1; wordIndex >= 0; wordIndex--) {
 		for (int i = 0; i < 32; i++) {
 
 			int b = (B[wordIndex] >> i) & 1;
@@ -38,11 +38,11 @@ void mont_prod_array(int length, uint32_t *A, uint32_t *B, uint32_t *M,
 	}
 }
 
-void m_residue_2_2N_array(int length, int N, uint32_t *M, uint32_t *temp,
+void m_residue_2_2N_array(uint32_t length, uint32_t N, uint32_t *M, uint32_t *temp,
 		uint32_t *Nr) {
 	zero_array(length, Nr);
 	Nr[length - 1] = 1; // Nr = 1 == 2**(2N-2N)
-	for (int i = 0; i < 2 * N; i++) {
+	for (uint32_t i = 0; i < 2 * N; i++) {
 		shift_left_1_array(length, Nr, Nr);
 		modulus_array(length, Nr, M, temp, Nr);
 //			debugArray(length, Nr);
@@ -50,19 +50,19 @@ void m_residue_2_2N_array(int length, int N, uint32_t *M, uint32_t *temp,
 	// Nr = (2 ** 2N) mod M
 }
 
-int findN(int length, uint32_t *E) {
-	int n = -1;
-	for (int i = 0; i < 32 * length; i++) {
+uint32_t findN(uint32_t length, uint32_t *E) {
+	uint32_t n = 0;
+	for (uint32_t i = 0; i < 32 * length; i++) {
 		uint32_t ei_ = E[length - 1 - (i / 32)];
 		uint32_t ei = (ei_ >> (i % 32)) & 1;
 		if (ei == 1) {
-			n = i;
+			n = i+1;
 		}
 	}
-	return n + 1;
+	return n;
 }
 
-void mont_exp_array(int length, uint32_t *X, uint32_t *E, uint32_t *M,
+void mont_exp_array(uint32_t length, uint32_t *X, uint32_t *E, uint32_t *M,
 		uint32_t *Nr, uint32_t *P, uint32_t *ONE, uint32_t *temp,
 		uint32_t *temp2, uint32_t *Z) {
 	//debugArray("X ", length, X);
@@ -70,7 +70,7 @@ void mont_exp_array(int length, uint32_t *X, uint32_t *E, uint32_t *M,
 	//debugArray("M ", length, M);
 
 	// 1. Nr := 2 ** 2N mod M
-	const int N = 32 * length;
+	const uint32_t N = 32 * length;
 	m_residue_2_2N_array(length, N, M, temp, Nr);
 	//debugArray("Nr", length, Nr);
 
@@ -85,8 +85,8 @@ void mont_exp_array(int length, uint32_t *X, uint32_t *E, uint32_t *M,
 	//debugArray("P0", length, P);
 
 	// 4. for i = 0 to n-1 loop
-	const int n = findN(length, E); //loop optimization for low values of E. Not necessary.
-	for (int i = 0; i < n; i++) {
+	const uint32_t n = findN(length, E); //loop optimization for low values of E. Not necessary.
+	for (uint32_t i = 0; i < n; i++) {
 		uint32_t ei_ = E[length - 1 - (i / 32)];
 		uint32_t ei = (ei_ >> (i % 32)) & 1;
 		// 6. if (ei = 1) then Zi+1 := MontProd ( Zi, Pi, M) else Zi+1 := Zi
@@ -109,3 +109,26 @@ void mont_exp_array(int length, uint32_t *X, uint32_t *E, uint32_t *M,
 
 }
 
+void die(const char *c) {
+	printf("Fatal error: %s\n", c);
+	exit(1);
+}
+
+void mod_exp_array(uint32_t length, uint32_t *X, uint32_t *E, uint32_t *M, uint32_t *Z) {
+	uint32_t *Nr = calloc(length, sizeof(uint32_t));
+	uint32_t *P = calloc(length, sizeof(uint32_t));
+	uint32_t *ONE = calloc(length, sizeof(uint32_t));
+	uint32_t *temp = calloc(length, sizeof(uint32_t));
+	uint32_t *temp2 = calloc(length, sizeof(uint32_t));
+	if (Nr == NULL) die("calloc");
+	if (P == NULL) die("calloc");
+	if (ONE == NULL) die("calloc");
+	if (temp == NULL) die("calloc");
+	if (temp2 == NULL) die("calloc");
+	mont_exp_array(length, X, E, M, Nr, P, ONE, temp, temp2, Z);
+	free(Nr);
+	free(P);
+	free(ONE);
+	free(temp);
+	free(temp2);
+}
