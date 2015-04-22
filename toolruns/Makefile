@@ -53,16 +53,16 @@ RESIDUE_SRC = ../src/rtl/residue.v
 MONTPROD_TB = ../src/tb/tb_montprod.v
 MONTPROD_SRC = ../src/rtl/montprod.v
 
-TOP_SRC=../src/rtl/modexp.v $(MONTPROD_SRC) $(RESIDUE_SRC) $(COMMON_SRC)
-TOP_TB=../src/tb/tb_modexp.v
+MODEXP_SRC=../src/rtl/modexp.v $(MONTPROD_SRC) $(RESIDUE_SRC) $(COMMON_SRC)
+MODEXP_TB=../src/tb/tb_modexp.v
 
 
 # Rules.
-all: top.sim montprod.sim residue.sim
+all: modexp.sim montprod.sim residue.sim
 
 
-top.sim: $(TOP_TB) $(TOP_SRC)
-	$(CC) $(CCFLAGS) -o top.sim $(TOP_TB) $(TOP_SRC)
+modexp.sim: $(MODEXP_TB) $(MODEXP_SRC)
+	$(CC) $(CCFLAGS) -o modexp.sim $(MODEXP_TB) $(MODEXP_SRC)
 
 
 montprod.sim: $(MONTPROD_TB) $(MONTPROD_SRC) $(COMMON_SRC)
@@ -73,8 +73,8 @@ residue.sim: $(RESIDUE_TB) $(RESIDUE_SRC) $(COMMON_SRC)
 	$(CC) $(CCFLAGS) -o residue.sim $(RESIDUE_TB) $(RESIDUE_SRC) $(COMMON_SRC)
 
 
-sim-top: top.sim
-	./top.sim
+sim-modexp: modexp.sim
+	./modexp.sim
 
 
 sim-montprod: montprod.sim
@@ -95,12 +95,12 @@ lint:
 	@echo ""
 
 	@echo "Linting of modexp:"
-	$(LINT) $(LINTFLAGS) --top-module modexp $(TOP_SRC)
+	$(LINT) $(LINTFLAGS) --top-module modexp $(MODEXP_SRC)
 	@echo ""
 
 
 clean:
-	rm -f top.sim
+	rm -f modexp.sim
 	rm -f montprod.sim
 	rm -f residue.sim
 
@@ -112,7 +112,7 @@ help:
 	@echo "------------------"
 	@echo "all:          Build all simulation targets."
 	@echo "lint:         Lint all modules and hierarchies."
-	@echo "top.sim:      Build top level simulation target."
+	@echo "modexp.sim:   Build modexp simulation target."
 	@echo "montprod.sim: Build Montgomery product simulation target."
 	@echo "residue.sim:  Build Residue calculation simulation target."
 	@echo "sim-top:      Run top level simulation."
