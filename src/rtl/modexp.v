@@ -139,17 +139,13 @@ module modexp(
   //----------------------------------------------------------------
   // Registers including update variables and write enable.
   //----------------------------------------------------------------
-  reg [07 : 0] modulus_length_reg;
-  reg [07 : 0] modulus_length_new;
-  reg          modulus_length_we;
-
-  reg [07 : 0] message_length_reg;
-  reg [07 : 0] message_length_new;
-  reg          message_length_we;
-
   reg [07 : 0] exponent_length_reg;
   reg [07 : 0] exponent_length_new;
   reg          exponent_length_we;
+
+  reg [07 : 0] modulus_length_reg;
+  reg [07 : 0] modulus_length_new;
+  reg          modulus_length_we;
 
   reg [07 : 0] length_reg;
   reg [07 : 0] length_new;
@@ -267,7 +263,7 @@ module modexp(
 
   reg           residue_valid_reg;
   reg           residue_valid_new;
-  reg           residue_valid_api_invalidate;
+  reg           invalidate_residue;
   reg           residue_valid_int_validated;
 
   //----------------------------------------------------------------
@@ -400,8 +396,8 @@ module modexp(
     begin
       if (!reset_n)
         begin
-          modulus_length_reg  <= DEFAULT_MODLENGTH;
           exponent_length_reg <= DEFAULT_EXPLENGTH;
+          modulus_length_reg  <= DEFAULT_MODLENGTH;
           start_reg           <= 1'b0;
           ready_reg           <= 1'b1;
           montprod_select_reg <= MONTPROD_SELECT_ONE_NR;
@@ -420,11 +416,11 @@ module modexp(
           one_reg <= one_new;
           residue_valid_reg <= residue_valid_new;
 
-          if (modulus_length_we)
-            modulus_length_reg <= modulus_length_new;
-
           if (exponent_length_we)
             exponent_length_reg <= exponent_length_new;
+
+          if (modulus_length_we)
+            modulus_length_reg <= modulus_length_new;
 
           if (start_we)
             start_reg <= start_new;
@@ -466,15 +462,15 @@ module modexp(
   //----------------------------------------------------------------
   always @*
     begin : api
-      modulus_length_we   = 1'b1;
-      exponent_length_we  = 1'b1;
+      modulus_length_we   = 1'b0;
+      exponent_length_we  = 1'b0;
       start_new           = 1'b0;
       start_we            = 1'b0;
       modulus_mem_api_we  = 1'b0;
       exponent_mem_api_we = 1'b0;
       message_mem_api_we  = 1'b0;
       length_we           = 1'b0;
-      residue_valid_api_invalidate = 1'b0;
+      invalidate_residue  = 1'b0;
 
       //TODO: Add API code to enable fast exponation for working with public exponents.
       exponation_mode_we  = 1'b0;
@@ -562,7 +558,7 @@ module modexp(
                 if (we)
                   begin
                     modulus_mem_api_we = 1'b1;
-                    residue_valid_api_invalidate = 1'b1;
+                    invalidate_residue = 1'b1;
                   end
                 else
                   begin
@@ -652,7 +648,7 @@ module modexp(
   //----------------------------------------------------------------
   always @*
     begin : residue_valid_process;
-      if ( residue_valid_api_invalidate == 1'b1)
+      if (invalidate_residue)
         residue_valid_new = 1'b0;
       else if ( residue_valid_int_validated == 1'b1)
         residue_valid_new = 1'b1;
@@ -909,8 +905,8 @@ module modexp(
             montprod_dest_new   = MONTPROD_DEST_Z;
             montprod_dest_we    = 1;
             montprod_calc       = 1;
-            modexp_ctrl_new = CTRL_ITERATE_Z_P;
-            modexp_ctrl_we  = 1;
+            modexp_ctrl_new     = CTRL_ITERATE_Z_P;
+            modexp_ctrl_we      = 1;
 
             if (ei_new == 1'b0 && exponation_mode_reg == EXPONATION_MODE_PUBLIC_FAST)
               begin
@@ -929,8 +925,8 @@ module modexp(
                 montprod_dest_new   = MONTPROD_DEST_P;
                 montprod_dest_we    = 1;
                 montprod_calc       = 1;
-                modexp_ctrl_new = CTRL_ITERATE_P_P;
-                modexp_ctrl_we  = 1;
+                modexp_ctrl_new     = CTRL_ITERATE_P_P;
+                modexp_ctrl_we      = 1;
               end
 
         CTRL_ITERATE_P_P:
@@ -952,8 +948,8 @@ module modexp(
                 montprod_select_new = MONTPROD_SELECT_ONE_Z;
                 montprod_select_we  = 1;
                 montprod_calc       = 1;
-                modexp_ctrl_new = CTRL_CALCULATE_ZN;
-                modexp_ctrl_we  = 1;
+                modexp_ctrl_new     = CTRL_CALCULATE_ZN;
+                modexp_ctrl_we      = 1;
               end
           end
 
