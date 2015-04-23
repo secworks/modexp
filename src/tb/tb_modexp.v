@@ -172,6 +172,11 @@ module tb_modexp();
       $display("State:");
       $display("ready_reg = 0x%01x, start_reg = 0x%01x",
                dut.ready_reg, dut.start_reg);
+      $display("residue_valid = 0x%01x", dut.residue_valid_reg);
+      $display("loop_counter = 0x%08x", dut.loop_counter_reg);
+      $display("exponent_length = 0x%02x, modulus_length = 0x%02x, length = 0x%02x, length_m1 = 0x%02x",
+               dut.exponent_length_reg, dut.modulus_length_reg,
+               dut.length_reg, dut.length_m1_reg);
       $display("ctrl_reg =  0x%04x", dut.modexp_ctrl_reg);
       $display("");
     end
