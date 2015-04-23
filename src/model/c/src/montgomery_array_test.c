@@ -677,15 +677,23 @@ void test_modExp_8192bit() {
 	assertArrayEquals(257, expected, Z);
 }
 
-void montgomery_array_tests() {
-	test_montgomery_modexp();
-	test_modExp_4096bit_e65537();
-	test_modExp_8192_e65537();
-	test_modExp_8192bit();
-	testShiftRight();
-	testAdd();
-	testSub();
-	test_montgomery_one_item_array();
-	test_montgomery_modulus();
-}
+void montgomery_array_tests(int bigtests) {
+  // Sub function tests.
+  testShiftRight();
+  testAdd();
+  testSub();
+  test_montgomery_one_item_array();
+  test_montgomery_modulus();
 
+  // modexp tests.
+  test_montgomery_modexp();
+
+  // Fairly big.
+  test_modExp_4096bit_e65537();
+  test_modExp_8192_e65537();
+
+  // Bigtests.
+  if (bigtests) {
+    test_modExp_8192bit();
+  }
+}

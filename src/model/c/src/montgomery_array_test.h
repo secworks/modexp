@@ -8,6 +8,6 @@
 #ifndef MONTGOMERY_ARRAY_TEST_H_
 #define MONTGOMERY_ARRAY_TEST_H_
 
-void montgomery_array_tests();
+void montgomery_array_tests(int bigtests);
 
 #endif /* MONTGOMERY_ARRAY_TEST_H_ */
