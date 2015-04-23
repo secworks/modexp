@@ -178,7 +178,7 @@ module tb_modexp();
                dut.exponent_length_reg, dut.modulus_length_reg);
       $display("length_reg = 0x%02x, length_m1_reg = 0x%02x",
                dut.length_reg, dut.length_m1_reg);
-      $display("ctrl_reg =  0x%04x", dut.modexp_ctrl_reg);
+      $display("ctrl_reg = 0x%04x", dut.modexp_ctrl_reg);
       $display("");
     end
   endtask // dump_dut_state

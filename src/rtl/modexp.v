@@ -833,7 +833,6 @@ module modexp(
           begin
             if (start_reg)
               begin
-                clear_start     = 1'b1;
                 ready_new       = 1'b0;
                 ready_we        = 1'b1;
                 modexp_ctrl_new = CTRL_DONE;
@@ -964,10 +963,11 @@ module modexp(
 
         CTRL_DONE:
           begin
-            ready_new           = 1'b1;
-            ready_we            = 1'b1;
-            modexp_ctrl_new     = CTRL_IDLE;
-            modexp_ctrl_we      = 1;
+            clear_start     = 1'b1;
+            ready_new       = 1'b1;
+            ready_we        = 1'b1;
+            modexp_ctrl_new = CTRL_IDLE;
+            modexp_ctrl_we  = 1;
           end
 
         default:
