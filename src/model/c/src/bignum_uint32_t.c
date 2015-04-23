@@ -2,14 +2,27 @@
 #include <stdlib.h>
 #include "bignum_uint32_t.h"
 
-void copy_array(int length, uint32_t *src, uint32_t *dst) {
-	for (int i = 0; i < length; i++)
+void assertArrayEquals(uint32_t length, uint32_t *expected, uint32_t *actual) { //needed in tests
+	int equals = 1;
+	for (uint32_t i = 0; i < length; i++)
+		equals &= expected[i] == actual[i];
+	printf("%s expected: [", equals ? "PASS" : "FAIL");
+	for (uint32_t i = 0; i < length - 1; i++)
+		printf("%8x, ", expected[i]);
+	printf("%8x] actual: [ ", expected[length - 1]);
+	for (uint32_t i = 0; i < length - 1; i++)
+		printf("%8x, ", actual[i]);
+	printf("%8x]\n", actual[length - 1]);
+}
+
+void copy_array(uint32_t length, uint32_t *src, uint32_t *dst) {
+	for (uint32_t i = 0; i < length; i++)
 		dst[i] = src[i];
 }
 
-void add_array(int length, uint32_t *a, uint32_t *b, uint32_t *result) {
+void add_array(uint32_t length, uint32_t *a, uint32_t *b, uint32_t *result) {
 	uint64_t carry = 0;
-	for (int i = length - 1; i >= 0; i--) {
+	for (int32_t i = ((int32_t) length) - 1; i >= 0; i--) {
 		uint64_t r = carry;
 		uint32_t aa = a[i];
 		uint32_t bb = b[i];
@@ -20,9 +33,9 @@ void add_array(int length, uint32_t *a, uint32_t *b, uint32_t *result) {
 	}
 }
 
-void sub_array(int length, uint32_t *a, uint32_t *b, uint32_t *result) {
+void sub_array(uint32_t length, uint32_t *a, uint32_t *b, uint32_t *result) {
 	uint64_t carry = 1;
-	for (int wordIndex = length - 1; wordIndex >= 0; wordIndex--) {
+	for (int32_t wordIndex = ((int32_t) length) - 1; wordIndex >= 0; wordIndex--) {
 		uint64_t r = carry;
 		uint32_t aa = a[wordIndex];
 		uint32_t bb = ~b[wordIndex];
@@ -33,18 +46,18 @@ void sub_array(int length, uint32_t *a, uint32_t *b, uint32_t *result) {
 	}
 }
 
-void shift_right_1_array(int length, uint32_t *a, uint32_t *result) {
+void shift_right_1_array(uint32_t length, uint32_t *a, uint32_t *result) {
 	uint32_t prev = 0; // MSB will be zero extended
-	for (int wordIndex = 0; wordIndex < length; wordIndex++) {
+	for (uint32_t wordIndex = 0; wordIndex < length; wordIndex++) {
 		uint32_t aa = a[wordIndex];
 		result[wordIndex] = (aa >> 1) | (prev << 31);
 		prev = aa & 1; // Lower word will be extended with LSB of this word
 	}
 }
 
-void shift_left_1_array(int length, uint32_t *a, uint32_t *result) {
+void shift_left_1_array(uint32_t length, uint32_t *a, uint32_t *result) {
 	uint32_t prev = 0; // LSB will be zero extended
-	for (int wordIndex = length - 1; wordIndex >= 0; wordIndex--) {
+	for (int32_t wordIndex = ((int32_t) length) - 1; wordIndex >= 0; wordIndex--) {
 		uint32_t aa = a[wordIndex];
 		result[wordIndex] = (aa << 1) | prev;
 
@@ -53,15 +66,15 @@ void shift_left_1_array(int length, uint32_t *a, uint32_t *result) {
 	}
 }
 
-void debugArray(char *msg, int length, uint32_t *array) {
+void debugArray(char *msg, uint32_t length, uint32_t *array) {
 	printf("%s ", msg);
-	for (int i = 0; i < length; i++) {
+	for (uint32_t i = 0; i < length; i++) {
 		printf("%8x ", array[i]);
 	}
 	printf("\n");
 }
 
-void modulus_array(int length, uint32_t *a, uint32_t *modulus, uint32_t *temp,
+void modulus_array(uint32_t length, uint32_t *a, uint32_t *modulus, uint32_t *temp,
 		uint32_t *reminder) {
 	copy_array(length, a, reminder);
 
@@ -77,13 +90,13 @@ void modulus_array(int length, uint32_t *a, uint32_t *modulus, uint32_t *temp,
 	}
 }
 
-void zero_array(int length, uint32_t *a) {
-	for (int i = 0; i < length; i++)
+void zero_array(uint32_t length, uint32_t *a) {
+	for (uint32_t i = 0; i < length; i++)
 		a[i] = 0;
 }
 
-int greater_than_array(int length, uint32_t *a, uint32_t *b) {
-	for (int i = 0; i < length; i++) {
+int greater_than_array(uint32_t length, uint32_t *a, uint32_t *b) {
+	for (uint32_t i = 0; i < length; i++) {
 		if (a[i] > b[i])
 			return 1;
 		if (a[i] < b[i])
