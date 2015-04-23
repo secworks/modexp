@@ -42,10 +42,21 @@
 
 void simple_3_7_11(void) {
   printf("=== Simple test with X = 3, E = 7 and M = 11 ===\n");
-  uint32_t X[] = { 0x3d746ec5 };
-  uint32_t E[] = { 0x3f7ea6d5 };
-  uint32_t M[] = { 0x29b6675f };
-  uint32_t expected[] = { 0x040c43d8 };
+  uint32_t X[] = { 0x3 };
+  uint32_t E[] = { 0x7 };
+  uint32_t M[] = { 0xb };
+  uint32_t expected[] = { 0x9 };
+  uint32_t Z[] = { 0x00000000 };
+  mod_exp_array(1, X, E, M, Z);
+  assertArrayEquals(1, expected, Z);
+}
+
+void simple_251_251_257(void) {
+  printf("=== Simple test with X = 251, E = 251 and M = 257 ===\n");
+  uint32_t X[] = { 0xfb };
+  uint32_t E[] = { 0xfb };
+  uint32_t M[] = { 0x101 };
+  uint32_t expected[] = { 0xb7 };
   uint32_t Z[] = { 0x00000000 };
   mod_exp_array(1, X, E, M, Z);
   assertArrayEquals(1, expected, Z);
@@ -53,6 +64,7 @@ void simple_3_7_11(void) {
 
 void simple_tests(void) {
   simple_3_7_11();
+  simple_251_251_257();
 }
 
 //======================================================================
