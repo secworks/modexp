@@ -160,6 +160,7 @@ module modexp(
   reg          start_reg;
   reg          start_new;
   reg          start_we;
+  reg          clear_start;
 
   reg          ready_reg;
   reg          ready_new;
@@ -467,6 +468,7 @@ module modexp(
     begin : api
       modulus_length_we   = 1'b1;
       exponent_length_we  = 1'b1;
+      start_new           = 1'b0;
       start_we            = 1'b0;
       modulus_mem_api_we  = 1'b0;
       exponent_mem_api_we = 1'b0;
@@ -482,9 +484,16 @@ module modexp(
       exponent_length_new = write_data[7 : 0];
       length_new          = write_data[7 : 0];
       length_m1_new       = write_data[7 : 0] - 8'h1;
-      start_new           = write_data[0];
 
       tmp_read_data       = 32'h00000000;
+
+      // We need to be able to clear start bit after we have
+      // started a modexp operation.
+      if (clear_start)
+        begin
+          start_new = 1'b0;
+          start_we  = 1'b1;
+        end
 
       if (cs)
         begin
@@ -495,7 +504,10 @@ module modexp(
                   begin
                     case (address[7 : 0])
                       ADDR_CTRL:
-                        start_we = 1'b1;
+                        begin
+                          start_new = write_data[0];
+                          start_we  = 1'b1;
+                        end
 
                       ADDR_LENGTH:
                         length_we = 1'b1;
@@ -814,6 +826,7 @@ module modexp(
       montprod_calc       = 0;
       modexp_ctrl_new     = CTRL_IDLE;
       modexp_ctrl_we      = 1'b0;
+      clear_start         = 1'b0;
 
       residue_calculate = 1'b0;
 
@@ -824,6 +837,7 @@ module modexp(
           begin
             if (start_reg)
               begin
+                clear_start     = 1'b1;
                 ready_new       = 1'b0;
                 ready_we        = 1'b1;
                 modexp_ctrl_new = CTRL_DONE;
