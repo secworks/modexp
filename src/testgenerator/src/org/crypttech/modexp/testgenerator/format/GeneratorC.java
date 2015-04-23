@@ -1,5 +1,6 @@
 package org.crypttech.modexp.testgenerator.format;
 
+import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 
 import org.crypttech.modexp.testgenerator.TestVector;
@@ -7,8 +8,8 @@ import org.crypttech.modexp.testgenerator.TestVector;
 public class GeneratorC extends ModExpTestFormater {
 	private static final char LF = (char) 10;
 
-	public GeneratorC(PrintWriter pw) {
-		super(pw);
+	public GeneratorC(String file) throws FileNotFoundException {
+		super(new PrintWriter(file));
 		out("#include <stdio.h>" + LF);
 		out("#include <stdlib.h>" + LF);
 		out("#include \"montgomery_array.h\"" + LF);
