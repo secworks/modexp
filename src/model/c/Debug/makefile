@@ -20,22 +20,22 @@ endif
 
 -include ../makefile.defs
 
-# Add inputs and outputs from these tool invocations to the build variables 
+# Add inputs and outputs from these tool invocations to the build variables
 
 # All Target
-all: rsa
+all: modexp
 
 # Tool invocations
-rsa: $(OBJS) $(USER_OBJS)
+modexp: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: MacOS X C Linker'
-	gcc  -o "rsa" $(OBJS) $(USER_OBJS) $(LIBS)
+	gcc  -o "modexp" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(EXECUTABLES)$(OBJS)$(C_DEPS) rsa
+	-$(RM) $(EXECUTABLES)$(OBJS)$(C_DEPS) modexp
 	-@echo ' '
 
 .PHONY: all clean dependents
