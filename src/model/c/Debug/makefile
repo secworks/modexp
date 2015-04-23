@@ -5,6 +5,7 @@
 -include ../makefile.init
 
 RM := rm -rf
+CC = clang
 
 # All of the sources participating in the build are defined here
 -include sources.mk
@@ -29,7 +30,7 @@ all: modexp
 modexp: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: MacOS X C Linker'
-	gcc  -o "modexp" $(OBJS) $(USER_OBJS) $(LIBS)
+	$(CC) -o "modexp" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
