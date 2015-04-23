@@ -309,27 +309,27 @@ module tb_modexp();
   //
   // A first, very simple testcase where we want to do:
   // c = m ** e % N with the following (decimal) test values:
-  //  m = 13
-  //  e = 11
-  //  n = 7
-  //  c = 13 ** 11 % 7 = 6
+  //  m = 3
+  //  e = 7
+  //  n = 11
+  //  c = 3 ** 7 % 11 = 9
   //----------------------------------------------------------------
   task tc1();
     reg [31 : 0] read_data;
 
     begin
       tc_ctr = tc_ctr + 1;
-      $display("TC1: Trying to calculate 13**11 mod 7 = 6");
+      $display("TC1: Trying to calculate 3**7 mod 11 = 9");
 
       // Write 13 to (m)esaage memory.
-      write_word({MESSAGE_PREFIX, 8'h00}, 32'h0000000d);
+      write_word({MESSAGE_PREFIX, 8'h00}, 32'h00000003);
 
       // Write 11 to exponent memory and set length to one word.
-      write_word({EXPONENT_PREFIX, 8'h00}, 32'h0000000b);
+      write_word({EXPONENT_PREFIX, 8'h00}, 32'h00000007);
       write_word({GENERAL_PREFIX, ADDR_EXPONENT_LENGTH}, 32'h00000001);
 
       // Write 7 to modulus memory and set length to one word.
-      write_word({MODULUS_PREFIX, 8'h00}, 32'h00000007);
+      write_word({MODULUS_PREFIX, 8'h00}, 32'h0000000b);
       write_word({GENERAL_PREFIX, ADDR_MODULUS_LENGTH}, 32'h00000001);
 
       // Start processing and wait for ready.
@@ -340,7 +340,7 @@ module tb_modexp();
       read_word({RESULT_PREFIX, 8'h00});
       read_data = tb_read_data;
 
-      if (read_data == 32'h00000006)
+      if (read_data == 32'h00000009)
         begin
           $display("*** TC1 successful.");
           $display("");
