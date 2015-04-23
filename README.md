@@ -36,6 +36,13 @@ No results yet.
 
 ## Status ##
 
+***(2015-04-23)***
+
+The Montgomery multiplication module works. The Residue calculation
+module works. Top level integration and debugging is onging. The core
+does not yet work and there are dragons to be found.
+
+
 ***(2014-12-07)***
 
 Renamed the core tom modexp from rsa to make it more clear that it
