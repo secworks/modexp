@@ -829,24 +829,24 @@ module modexp(
                 modexp_ctrl_new = CTRL_DONE;
                 modexp_ctrl_we  = 1'b1;
 
-//                if (residue_valid_reg)
-//                  begin
-//                    //residue has alrady been calculated, start with MONTPROD( 1, Nr, MODULUS )
-//                    montprod_select_new = MONTPROD_SELECT_ONE_NR;
-//                    montprod_select_we  = 1;
-//                    montprod_dest_new   = MONTPROD_DEST_Z;
-//                    montprod_dest_we    = 1;
-//                    montprod_calc       = 1;
-//                    modexp_ctrl_new     = CTRL_CALCULATE_Z0;
-//                    modexp_ctrl_we      = 1;
-//                  end
-//                else
-//                  begin
-//                    //modulus has been written and residue (Nr) must be calculated
-//                    modexp_ctrl_new = CTRL_RESIDUE;
-//                    modexp_ctrl_we  = 1;
-//                    residue_calculate = 1'b1;
-//                  end
+                if (residue_valid_reg)
+                  begin
+                    //residue has alrady been calculated, start with MONTPROD( 1, Nr, MODULUS )
+                    montprod_select_new = MONTPROD_SELECT_ONE_NR;
+                    montprod_select_we  = 1;
+                    montprod_dest_new   = MONTPROD_DEST_Z;
+                    montprod_dest_we    = 1;
+                    montprod_calc       = 1;
+                    modexp_ctrl_new     = CTRL_CALCULATE_Z0;
+                    modexp_ctrl_we      = 1;
+                  end
+                else
+                  begin
+                    //modulus has been written and residue (Nr) must be calculated
+                    modexp_ctrl_new = CTRL_RESIDUE;
+                    modexp_ctrl_we  = 1;
+                    residue_calculate = 1'b1;
+                  end
               end
           end
 
