@@ -72,7 +72,7 @@ module modexp(
   localparam ADDR_NAME1          = 8'h01;
   localparam ADDR_VERSION        = 8'h02;
 
-  localparam ADDR_CTRL           = 8'h03;
+  localparam ADDR_CTRL           = 8'h08;
   localparam CTRL_INIT_BIT       = 0;
   localparam CTRL_NEXT_BIT       = 1;
 
@@ -496,23 +496,34 @@ module modexp(
           case (address[11 : 8])
             GENERAL_PREFIX:
               begin
+                $display("GENERAL_PREFIX ACTIVE");
                 if (we)
                   begin
                     case (address[7 : 0])
                       ADDR_CTRL:
                         begin
+                          $display("WRITE CTRL");
                           start_new = write_data[0];
                           start_we  = 1'b1;
                         end
 
                       ADDR_LENGTH:
-                        length_we = 1'b1;
+                        begin
+                          $display("WRITE LENGTH");
+                          length_we = 1'b1;
+                        end
 
                       ADDR_MODULUS_LENGTH:
-                        modulus_length_we = 1'b1;
+                        begin
+                          $display("WRITE MODULUS LENGTH");
+                          modulus_length_we = 1'b1;
+                        end
 
                       ADDR_EXPONENT_LENGTH:
-                        exponent_length_we = 1'b1;
+                        begin
+                          $display("WRITE EXPONENT LENGTH");
+                          exponent_length_we = 1'b1;
+                        end
 
                       default:
                         begin
@@ -555,6 +566,7 @@ module modexp(
 
             MODULUS_PREFIX:
               begin
+                $display("MODULUS_PREFIX ACTIVE");
                 if (we)
                   begin
                     modulus_mem_api_we = 1'b1;
@@ -568,6 +580,7 @@ module modexp(
 
             EXPONENT_PREFIX:
               begin
+                $display("EXPONENT_PREFIX ACTIVE");
                 if (we)
                   begin
                     exponent_mem_api_we = 1'b1;
@@ -580,6 +593,7 @@ module modexp(
 
             MESSAGE_PREFIX:
               begin
+                $display("MESSAGE_PREFIX ACTIVE");
                 if (we)
                   begin
                     message_mem_api_we = 1'b1;
@@ -592,6 +606,7 @@ module modexp(
 
             RESULT_PREFIX:
               begin
+                $display("RESULT_PREFIX ACTIVE");
                 tmp_read_data = result_mem_api_rd_data;
               end
 

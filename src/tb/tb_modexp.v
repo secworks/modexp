@@ -170,8 +170,8 @@ module tb_modexp();
       $display("");
 
       $display("State:");
-      $display("ready_reg = 0x%01x, start_reg = 0x%01x",
-               dut.ready_reg, dut.start_reg);
+      $display("ready_reg = 0x%01x, start_reg = 0x%01x, start_new = 0x%01x, start_we = 0x%01x",
+               dut.ready_reg, dut.start_reg, dut.start_new, dut.start_we);
       $display("residue_valid = 0x%01x", dut.residue_valid_reg);
       $display("loop_counter_reg = 0x%08x", dut.loop_counter_reg);
       $display("exponent_length_reg = 0x%02x, modulus_length_reg = 0x%02x",
