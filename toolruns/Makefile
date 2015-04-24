@@ -99,6 +99,10 @@ lint:
 	@echo ""
 
 
+autogenerate-tests:
+	javac -cp ../src/testgenerator/src/ -d ../src/testgenerator/bin/ ../src/testgenerator/src/org/crypttech/modexp/testgenerator/TestGenerator.java
+	java -cp ../src/testgenerator/bin/ org.crypttech.modexp.testgenerator.TestGenerator ../src
+
 clean:
 	rm -f modexp.sim
 	rm -f montprod.sim
