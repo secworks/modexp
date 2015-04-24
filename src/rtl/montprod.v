@@ -301,6 +301,7 @@ module montprod(
   //----------------------------------------------------------------
   always @*
    begin : loop_counter_process
+     loop_counter_new  = loop_counter;
       length_m1        = length - 1'b1;
       loop_counter_dec = loop_counter - 1'b1;
       B_word_index     = loop_counter[12:5];

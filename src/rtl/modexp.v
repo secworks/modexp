@@ -760,6 +760,9 @@ module modexp(
   //----------------------------------------------------------------
   always @*
     begin : loop_counters_process
+      loop_counter_new = 13'b0;
+      loop_counter_we  = 1'b0;
+
       E_bit_index      = loop_counter_reg[ 04 : 0 ];
 
       if (loop_counter_reg == { length_m1_reg, 5'b11111 })
