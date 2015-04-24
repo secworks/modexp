@@ -625,7 +625,7 @@ module modexp(
   // generates the big integer one ( 00... 01 )
   //----------------------------------------------------------------
   always @*
-    begin : one_process;
+    begin : one_process
       if (montprod_opa_addr == length_m1_reg)
         one_new = 32'h00000001;
       else
@@ -650,7 +650,7 @@ module modexp(
   // Feeds residue calculator.
   //----------------------------------------------------------------
   always @*
-    begin : residue_process;
+    begin : residue_process
       //N*2, N=length*32, *32 = shl5, *64 = shl6
       residue_nn = { 1'b0, length_reg, 6'h0 };
       residue_length = length_reg;
@@ -662,7 +662,7 @@ module modexp(
   // Sets the register that decides if residue is valid or not.
   //----------------------------------------------------------------
   always @*
-    begin : residue_valid_process;
+    begin : residue_valid_process
       if (invalidate_residue)
         residue_valid_new = 1'b0;
       else if ( residue_valid_int_validated == 1'b1)
