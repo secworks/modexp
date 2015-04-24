@@ -50,7 +50,7 @@ module tb_modexp();
   //----------------------------------------------------------------
   // Internal constant and parameter definitions.
   //----------------------------------------------------------------
-  parameter DEBUG = 1;
+  parameter DEBUG = 0;
 
   localparam CLK_HALF_PERIOD = 1;
   localparam CLK_PERIOD      = 2 * CLK_HALF_PERIOD;
@@ -474,9 +474,6 @@ module tb_modexp();
       write_word({MODULUS_PREFIX, 8'h00}, 32'h0000000b);
       write_word({GENERAL_PREFIX, ADDR_MODULUS_LENGTH}, 32'h00000001);
 
-      // Check contents in memories.
-      dump_memories();
-
       // Start processing and wait for ready.
       write_word({GENERAL_PREFIX, ADDR_CTRL}, 32'h00000001);
       wait_ready();
@@ -500,7 +497,6 @@ module tb_modexp();
   endtask // tc1
 
 
-
   //----------------------------------------------------------------
   // tc2
   //
@@ -515,7 +511,7 @@ module tb_modexp();
 
     begin
       tc_ctr = tc_ctr + 1;
-      $display("TC1: Trying to calculate 251**251 mod 257 = 183");
+      $display("TC2: Trying to calculate 251**251 mod 257 = 183");
 
       // Write 13 to (m)esaage memory.
       write_word({MESSAGE_PREFIX, 8'h00}, 32'h000000fb);
@@ -528,9 +524,6 @@ module tb_modexp();
       write_word({MODULUS_PREFIX, 8'h00}, 32'h00000101);
       write_word({GENERAL_PREFIX, ADDR_MODULUS_LENGTH}, 32'h00000001);
 
-      // Check contents in memories.
-      dump_memories();
-
       // Start processing and wait for ready.
       write_word({GENERAL_PREFIX, ADDR_CTRL}, 32'h00000001);
       wait_ready();
@@ -541,17 +534,67 @@ module tb_modexp();
 
       if (read_data == 32'h000000b7)
         begin
-          $display("*** TC1 successful.");
+          $display("*** TC2 successful.");
           $display("");
         end
       else
         begin
-          $display("*** ERROR: TC1 NOT successful.");
+          $display("*** ERROR: TC2 NOT successful.");
           $display("Expected: 0x06, got 0x%08x", read_data);
           error_ctr = error_ctr + 1;
         end
     end
   endtask // tc2
+
+
+  //----------------------------------------------------------------
+  // tc3
+  //
+  // c = m ** e % N with the following (decimal) test values:
+  //  m = 0x81
+  //  e = 0x41
+  //  n = 0x87
+  //  c = 0x81 ** 0x41 % 0x87 = 0x36
+  //----------------------------------------------------------------
+  task tc3();
+    reg [31 : 0] read_data;
+
+    begin
+      tc_ctr = tc_ctr + 1;
+      $display("TC3: Trying to calculate 0x81 ** 0x41 mod 0x87 = 0x36");
+
+      // Write 13 to (m)esaage memory.
+      write_word({MESSAGE_PREFIX, 8'h00}, 32'h00000081);
+
+      // Write 11 to exponent memory and set length to one word.
+      write_word({EXPONENT_PREFIX, 8'h00}, 32'h00000041);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_LENGTH}, 32'h00000001);
+
+      // Write 7 to modulus memory and set length to one word.
+      write_word({MODULUS_PREFIX, 8'h00}, 32'h00000087);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_LENGTH}, 32'h00000001);
+
+      // Start processing and wait for ready.
+      write_word({GENERAL_PREFIX, ADDR_CTRL}, 32'h00000001);
+      wait_ready();
+
+      // Read out result word and check result.
+      read_word({RESULT_PREFIX, 8'h00});
+      read_data = tb_read_data;
+
+      if (read_data == 32'h00000036)
+        begin
+          $display("*** TC3 successful.");
+          $display("");
+        end
+      else
+        begin
+          $display("*** ERROR: TC3 NOT successful.");
+          $display("Expected: 0x06, got 0x%08x", read_data);
+          error_ctr = error_ctr + 1;
+        end
+    end
+  endtask // tc3
 
 
   //----------------------------------------------------------------
@@ -571,10 +614,12 @@ module tb_modexp();
       reset_dut();
       dump_dut_state();
 
-      tc1();
+//      tc1();
       tc2();
+      tc3();
 
       display_test_results();
+//      dump_memories();
 
       $display("");
       $display("*** modexp simulation done. ***");
