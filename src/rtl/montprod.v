@@ -63,6 +63,8 @@ module montprod(
   //----------------------------------------------------------------
   // Internal constant and parameter definitions.
   //----------------------------------------------------------------
+  localparam DEBUG = 0;
+
   localparam CTRL_IDLE           = 4'h0;
   localparam CTRL_INIT_S         = 4'h1;
   localparam CTRL_LOOP_INIT      = 4'h2;
@@ -217,8 +219,10 @@ module montprod(
         SMUX_SHR:
           s_mem_new = shr_adiv2;
       endcase
-      $display("SMUX%x: %x", s_mux_reg, s_mem_new);
+      if (DEBUG)
+        $display("SMUX%x: %x", s_mux_reg, s_mem_new);
     end
+
 
   //----------------------------------------------------------------
   // reg_update
@@ -286,7 +290,8 @@ module montprod(
            //opa_addr will point to length-1 to get A LSB.
            //s_read_addr will point to length-1
            q = s_mem_read_data[0] ^ (opa_data[0] & b);
-           $display("s_mem_read_data: %x opa_data %x b %x q %x B_bit_index_reg %x", s_mem_read_data, opa_data, b, q, B_bit_index_reg);
+           if (DEBUG)
+             $display("s_mem_read_data: %x opa_data %x b %x q %x B_bit_index_reg %x", s_mem_read_data, opa_data, b, q, B_bit_index_reg);
         end
    end
 
@@ -365,7 +370,7 @@ module montprod(
         word_index_new = 8'h0;
       else if (montprod_ctrl_reg == CTRL_L_CALC_SDIV2)
         word_index_new = word_index + 1'b1;
-      else   
+      else
         word_index_new = word_index - 1'b1;
     end // prodcalc
 
@@ -560,7 +565,8 @@ module montprod(
 
         CTRL_EMIT_S:
            begin
-             $display("EMIT_S word_index: %d", word_index);
+             if (DEBUG)
+               $display("EMIT_S word_index: %d", word_index);
              if (word_index_prev == 8'h0)
                begin
                  montprod_ctrl_new = CTRL_DONE;
