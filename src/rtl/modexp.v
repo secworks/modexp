@@ -955,6 +955,8 @@ module modexp(
               begin
                 montprod_select_new = MONTPROD_SELECT_ONE_Z;
                 montprod_select_we  = 1;
+                montprod_dest_new   = MONTPROD_DEST_Z;
+                montprod_dest_we    = 1;
                 montprod_calc       = 1;
                 modexp_ctrl_new     = CTRL_CALCULATE_ZN;
                 modexp_ctrl_we      = 1;
