@@ -110,7 +110,7 @@ module modexp(
   localparam MONTPROD_SELECT_X_NR   = 3'h1;
   localparam MONTPROD_SELECT_Z_P    = 3'h2;
   localparam MONTPROD_SELECT_P_P    = 3'h3;
-  localparam MONTPROD_SELECT_ONE_Z  = 3'h4;
+  localparam MONTPROD_SELECT_Z_ONE  = 3'h4;
 
   localparam MONTPROD_DEST_Z        = 2'b00;
   localparam MONTPROD_DEST_P        = 2'b01;
@@ -175,6 +175,8 @@ module modexp(
 
   reg [31 : 0] one_reg;
   reg [31 : 0] one_new;
+  reg [31 : 0] b_one_reg;
+  reg [31 : 0] b_one_new;
 
   reg [12 : 0] loop_counter_reg;
   reg [12 : 0] loop_counter_new;
@@ -404,6 +406,7 @@ module modexp(
           montprod_dest_reg   <= MONTPROD_DEST_NOWHERE;
           modexp_ctrl_reg     <= CTRL_IDLE;
           one_reg             <= 32'h0;
+          b_one_reg           <= 32'h0;
           length_reg          <= 8'h0;
           length_m1_reg       <= 8'h0;
           loop_counter_reg    <= 13'b0;
@@ -414,6 +417,7 @@ module modexp(
       else
         begin
           one_reg <= one_new;
+          b_one_reg <= b_one_new;
           residue_valid_reg <= residue_valid_new;
 
           if (exponent_length_we)
@@ -617,10 +621,12 @@ module modexp(
   //----------------------------------------------------------------
   always @*
     begin : one_process
+      one_new = 32'h00000000;
+      b_one_new = 32'h00000000;
       if (montprod_opa_addr == length_m1_reg)
         one_new = 32'h00000001;
-      else
-        one_new = 32'h00000000;
+      if (montprod_opb_addr == length_m1_reg)
+        b_one_new = 32'h00000001;
     end
 
 
@@ -707,10 +713,10 @@ module modexp(
             montprod_opb_data       = p_mem_rd1_data;
           end
 
-        MONTPROD_SELECT_ONE_Z:
+        MONTPROD_SELECT_Z_ONE:
           begin
-            montprod_opa_data       = one_reg;
-            montprod_opb_data       = result_mem_int_rd_data;
+            montprod_opa_data       = result_mem_int_rd_data;
+            montprod_opb_data       = b_one_reg;
           end
 
         default:
@@ -953,7 +959,7 @@ module modexp(
               end
             else
               begin
-                montprod_select_new = MONTPROD_SELECT_ONE_Z;
+                montprod_select_new = MONTPROD_SELECT_Z_ONE;
                 montprod_select_we  = 1;
                 montprod_dest_new   = MONTPROD_DEST_Z;
                 montprod_dest_we    = 1;
