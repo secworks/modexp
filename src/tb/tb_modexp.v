@@ -490,7 +490,7 @@ module tb_modexp();
       else
         begin
           $display("*** ERROR: TC1 NOT successful.");
-          $display("Expected: 0x06, got 0x%08x", read_data);
+          $display("Expected: 0x09, got 0x%08x", read_data);
           error_ctr = error_ctr + 1;
         end
     end
@@ -614,7 +614,7 @@ module tb_modexp();
       reset_dut();
       dump_dut_state();
 
-//      tc1();
+      tc1();
       tc2();
       tc3();
 
