@@ -3,22 +3,15 @@
 #include "bignum_uint32_t.h"
 #include "montgomery_array.h"
 
-void mont_prod_array(uint32_t length, uint32_t *A, uint32_t *B, uint32_t *M,
-		uint32_t *temp, uint32_t *s) {
+void mont_prod_array(uint32_t length, uint32_t *A, uint32_t *B, uint32_t *M, uint32_t *s) {
 	zero_array(length, s);
 	for (int32_t wordIndex = ((int32_t) length) - 1; wordIndex >= 0; wordIndex--) {
 		for (int i = 0; i < 32; i++) {
 
-			int b = (B[wordIndex] >> i) & 1;
+			uint32_t b = (B[wordIndex] >> i) & 1;
 
 			//q = (s - b * A) & 1;
-			sub_array(length, s, A, temp);
-			int q;
-			if (b == 1) {
-				q = temp[length - 1] & 1;
-			} else {
-				q = s[length - 1] & 1;
-			}
+			uint32_t q = (s[length-1] ^ (A[length-1] & b)) & 1; // int q = (s - b * A) & 1;
 
 			// s = (s + q*M + b*A) >>> 1;
 			if (q == 1) {
@@ -77,11 +70,11 @@ void mont_exp_array(uint32_t length, uint32_t *X, uint32_t *E, uint32_t *M,
 	// 2. Z0 := MontProd( 1, Nr, M )
 	zero_array(length, ONE);
 	ONE[length - 1] = 1;
-	mont_prod_array(length, ONE, Nr, M, temp, Z);
+	mont_prod_array(length, ONE, Nr, M, Z);
 	//debugArray("Z0", length, Z);
 
 	// 3. P0 := MontProd( X, Nr, M );
-	mont_prod_array(length, X, Nr, M, temp, P);
+	mont_prod_array(length, X, Nr, M, P);
 	//debugArray("P0", length, P);
 
 	// 4. for i = 0 to n-1 loop
@@ -91,18 +84,18 @@ void mont_exp_array(uint32_t length, uint32_t *X, uint32_t *E, uint32_t *M,
 		uint32_t ei = (ei_ >> (i % 32)) & 1;
 		// 6. if (ei = 1) then Zi+1 := MontProd ( Zi, Pi, M) else Zi+1 := Zi
 		if (ei == 1) {
-			mont_prod_array(length, Z, P, M, temp, temp2);
+			mont_prod_array(length, Z, P, M, temp2);
 			copy_array(length, temp2, Z);
 			//debugArray("Z ", length, Z);
 		}
 		// 5. Pi+1 := MontProd( Pi, Pi, M );
-		mont_prod_array(length, P, P, M, temp, temp2);
+		mont_prod_array(length, P, P, M, temp2);
 		copy_array(length, temp2, P);
 		//debugArray("P ", length, P);
 		// 7. end for
 	}
 	// 8. Zn := MontProd( 1, Zn, M );
-	mont_prod_array(length, ONE, Z, M, temp, temp2);
+	mont_prod_array(length, ONE, Z, M, temp2);
 	copy_array(length, temp2, Z);
 	//debugArray("Z ", length, Z);
 	// 9. RETURN Zn

@@ -9,7 +9,7 @@
 #define MONTGOMERY_ARRAY_H_
 
 void mont_prod_array(uint32_t length, uint32_t *A, uint32_t *B, uint32_t *M,
-		uint32_t *temp, uint32_t *s);
+		uint32_t *s);
 void mod_exp_array(uint32_t length, uint32_t *X, uint32_t *E, uint32_t *M, uint32_t *Z);
 
 #endif /* MONTGOMERY_ARRAY_H_ */
