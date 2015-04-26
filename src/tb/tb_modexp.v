@@ -167,6 +167,10 @@ module tb_modexp();
           $display("loop counter %d: ei = %d", dut.loop_counter_reg, dut.ei_reg);
     end
 
+  always @*
+    begin : z_monitor
+      $display("result_mem[0] = %d",dut.result_mem.mem[0]);
+    end
 
 
   //----------------------------------------------------------------
@@ -479,14 +483,14 @@ module tb_modexp();
       tc_ctr = tc_ctr + 1;
       $display("TC1: Trying to calculate 3**7 mod 11 = 9");
 
-      // Write 13 to (m)esaage memory.
+      // Write 3 to message memory.
       write_word({MESSAGE_PREFIX, 8'h00}, 32'h00000003);
 
-      // Write 11 to exponent memory and set length to one word.
+      // Write 7 to exponent memory and set length to one word.
       write_word({EXPONENT_PREFIX, 8'h00}, 32'h00000007);
       write_word({GENERAL_PREFIX, ADDR_EXPONENT_LENGTH}, 32'h00000001);
 
-      // Write 7 to modulus memory and set length to one word.
+      // Write 11 to modulus memory and set length to one word.
       write_word({MODULUS_PREFIX, 8'h00}, 32'h0000000b);
       write_word({GENERAL_PREFIX, ADDR_MODULUS_LENGTH}, 32'h00000001);
 
@@ -508,6 +512,8 @@ module tb_modexp();
           $display("*** ERROR: TC1 NOT successful.");
           $display("Expected: 0x09, got 0x%08x", read_data);
           error_ctr = error_ctr + 1;
+          dump_memories();
+          $display("BUG! C model updates Z as follows: Z=1 Z=9 Z=3 Z=9. Verilog model: Z=1,9,3. Final Z write doesn't occur"); 
         end
     end
   endtask // tc1
@@ -579,7 +585,6 @@ module tb_modexp();
       tc_ctr = tc_ctr + 1;
       $display("TC3: Trying to calculate 0x81 ** 0x41 mod 0x87 = 0x36");
 
-      // Write 13 to (m)esaage memory.
       write_word({MESSAGE_PREFIX, 8'h00}, 32'h00000081);
 
       // Write 11 to exponent memory and set length to one word.
