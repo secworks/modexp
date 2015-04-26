@@ -51,6 +51,7 @@ module tb_modexp();
   // Internal constant and parameter definitions.
   //----------------------------------------------------------------
   parameter DEBUG = 0;
+  parameter DEBUG_EI = 1;
 
   localparam CLK_HALF_PERIOD = 1;
   localparam CLK_PERIOD      = 2 * CLK_HALF_PERIOD;
@@ -151,6 +152,21 @@ module tb_modexp();
           dump_dut_state();
         end
     end
+
+  //----------------------------------------------------------------
+  // ei_monitor()
+  //
+  // Displays ei_new, the most important variable for determining
+  // what modexp will do (i.e. should Z=MONTPROD( Z, P, M) be 
+  // performed 
+  //----------------------------------------------------------------
+  always @*
+    begin : ei_monitor
+      if (DEBUG_EI)
+        if (dut.modexp_ctrl_reg == dut.CTRL_ITERATE_Z_P)
+          $display("loop counter %d: ei = %d", dut.loop_counter_reg, dut.ei_reg);
+    end
+
 
 
   //----------------------------------------------------------------
