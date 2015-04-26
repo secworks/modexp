@@ -14,6 +14,7 @@ public class TestGeneratorBasic {
 		generateTestVectors(rng, list, 30, 1);
 		//generateTestVectors(rng, list, 32, 1); //will generate failing tests in C model 
 		//generateTestVectors(rng, list, 31, 1); //will generate failing tests in C model 
+		generateTestVectors(rng, list, 126, 4);
 		return list;
 	}
 
