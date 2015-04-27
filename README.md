@@ -43,6 +43,14 @@ the planet.
 
 ## FPGA-results ##
 
+## Altera Cyclone-V ###
+
+- 203 registers
+- 387 ALMs
+- 106496 block memory bits
+- 107 MHz
+
+
 ### Xilinx Artix-7 100T ###
 
 - 160 registers
