@@ -38,7 +38,7 @@ public class TestGeneratorBasic {
 			BigInteger z = x.modPow(e, m);
 			TestVector tv = Util.generateTestVector("BASIC", Long.toString(seed), wordLength, m, x, e, z);
 			list.add(tv);
-			System.out.printf("%s Generated test: bits: %d seed: %x\n", TestGeneratorBasic.class.getName(), bitLength, seed);
+			System.out.printf("%s Generated test: bits: %d seed: %d\n", TestGeneratorBasic.class.getName(), bitLength, seed);
 		}
 	}
 
