@@ -43,7 +43,14 @@ the planet.
 
 ## FPGA-results ##
 
-### Xilinx Spartan-6 ###
+### Xilinx Artix-7 100T ###
+
+- 160 registers
+- 565 LUTs
+- 13 RAMB18E1 block memories
+- 160 MHz
+
+### Xilinx Spartan-6 LX45 ###
 
 - 169 registers
 - 589 LUTs
