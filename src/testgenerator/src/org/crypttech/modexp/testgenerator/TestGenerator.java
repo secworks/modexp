@@ -18,6 +18,7 @@ public class TestGenerator {
 		System.out.println("Generating modexp test values.");
 
 		List<TestVector> vectors = new ArrayList<TestVector>();
+		vectors.addAll(TestGeneratorRSA.getTestVectors());
 		vectors.addAll(TestGenerator65537.getTestVectors());
 		vectors.addAll(TestGeneratorBasic.getTestVectors());
 		try (GeneratorC genC = new GeneratorC(
