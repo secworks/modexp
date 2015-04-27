@@ -36,7 +36,7 @@ public class TestGeneratorBasic {
 			BigInteger x = BigInteger.probablePrime(bitLength, rng);
 			BigInteger e = BigInteger.probablePrime(bitLength, rng);
 			BigInteger z = x.modPow(e, m);
-			TestVector tv = Util.generateTestVector("BASIC", Long.toString(seed), wordLength, m, x, e, z);
+			TestVector tv = Util.generateTestVector("BASIC_"+bitLength, Long.toString(seed), wordLength, m, x, e, z);
 			list.add(tv);
 			System.out.printf("%s Generated test: bits: %d seed: %d\n", TestGeneratorBasic.class.getName(), bitLength, seed);
 		}
