@@ -33,5 +33,6 @@ public abstract class ModExpTestFormater implements AutoCloseable {
 	@Override
 	public void close() throws Exception {
 		pw.close();
+		System.out.printf("%s closing...\n", this.getClass().getName());
 	}
 }
