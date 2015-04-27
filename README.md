@@ -9,10 +9,14 @@ The core calculates the following function:
   C = M ** e mod N
 
   M is a message with a length of n bits
-  e is the exponent with a length of at most 32 bits
+  e is the exponent with a length of m bits
   N is the modulus  with a length of n bits
-  n is can be 32 and up to and including 8192 bits in steps
-  of 32 bits.
+
+The size n be one and up to and including 8192 bits in steps of 32
+bits.
+
+The size m be one and up to and including 8192 bits in steps of 32
+bits.
 
 The core has a 32-bit memory like interface, but provides status signals
 to inform the system that a given operation has is done. Additionally,
@@ -24,17 +28,37 @@ FPGA and ASIC devices. No vendor specific macros are used in the code.
 
 ## Implementation details ##
 
-The core is iterative and will not be the fastest core on the
-planet. The core will perform blinding to protect against side channel
-attacks.
+The core is iterative with 32-bit operands and not the fastest core on
+the planet.
+
+
+## Future developments ##
+
+- The core will perform blinding to protect against side channel
+  attacks.
+
+- Increased operands to 64-, 128-, or possibly even 256 bits for
+  increased performance.
 
 
 ## FPGA-results ##
 
-No results yet.
+### Xilinx Spartan-6 ###
+
+- 169 registers
+- 589 LUTs
+- 13 RAMB8BWER block memories
+- 136 MHz
 
 
 ## Status ##
+
+***(2015-04-27)***
+
+Modexp simulation with exponent and modolus with up to 1280 bits
+simulates. The auto test generation system works. Implementation in
+different FPGA types and vendors works.
+
 
 ***(2015-04-23)***
 
