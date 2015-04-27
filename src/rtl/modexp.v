@@ -133,7 +133,7 @@ module modexp(
 
   localparam CORE_NAME0          = 32'h6d6f6465; // "mode"
   localparam CORE_NAME1          = 32'h78702020; // "xp  "
-  localparam CORE_VERSION        = 32'h302e3031; // "0.01"
+  localparam CORE_VERSION        = 32'h302e3530; // "0.50"
 
 
   //----------------------------------------------------------------
