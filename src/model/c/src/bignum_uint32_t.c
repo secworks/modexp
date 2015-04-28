@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include "bignum_uint32_t.h"
 
+int assert_array_total = 0;
+int assert_array_error = 0;
 void assertArrayEquals(uint32_t length, uint32_t *expected, uint32_t *actual) { //needed in tests
 	int equals = 1;
 	for (uint32_t i = 0; i < length; i++)
@@ -13,6 +15,13 @@ void assertArrayEquals(uint32_t length, uint32_t *expected, uint32_t *actual) { 
 	for (uint32_t i = 0; i < length - 1; i++)
 		printf("%8x, ", actual[i]);
 	printf("%8x]\n", actual[length - 1]);
+	assert_array_total++;
+	if (!equals)
+		assert_array_error++;
+}
+
+void print_assert_array_stats(void) {
+	printf("%d tests, failed: %d\n", assert_array_total, assert_array_error);
 }
 
 void copy_array(uint32_t length, uint32_t *src, uint32_t *dst) {
