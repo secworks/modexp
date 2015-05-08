@@ -309,7 +309,7 @@ module montprod(
 
       case (montprod_ctrl_reg)
         CTRL_LOOP_INIT:
-          loop_counter_new = {length, 5'b00000}-1;
+          loop_counter_new = {length, 5'b00000} - 1'b1;
 
         CTRL_LOOP_ITER:
           begin
