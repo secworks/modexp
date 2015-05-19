@@ -62,36 +62,32 @@ module tb_modexp();
 
 
   // The DUT address map.
-  localparam GENERAL_PREFIX      = 4'h0;
-  localparam ADDR_NAME0          = 8'h00;
-  localparam ADDR_NAME1          = 8'h01;
-  localparam ADDR_VERSION        = 8'h02;
+  localparam GENERAL_PREFIX        = 4'h0;
+  localparam ADDR_NAME0            = 8'h00;
+  localparam ADDR_NAME1            = 8'h01;
+  localparam ADDR_VERSION          = 8'h02;
 
-  localparam ADDR_CTRL           = 8'h08;
-  localparam CTRL_START_BIT      = 0;
+  localparam ADDR_CTRL             = 8'h08;
+  localparam CTRL_START_BIT        = 0;
 
-  localparam ADDR_STATUS         = 8'h09;
-  localparam STATUS_READY_BIT    = 0;
+  localparam ADDR_STATUS           = 8'h09;
+  localparam STATUS_READY_BIT      = 0;
 
-  localparam ADDR_MODULUS_LENGTH  = 8'h20;
-  localparam ADDR_EXPONENT_LENGTH = 8'h21;
-  localparam ADDR_LENGTH          = 8'h22;
+  localparam ADDR_MODULUS_LENGTH   = 8'h20;
+  localparam ADDR_EXPONENT_LENGTH  = 8'h21;
+  localparam ADDR_LENGTH           = 8'h22;
 
-  localparam MODULUS_PREFIX      = 4'h1;
-  localparam ADDR_MODULUS_START  = 8'h00;
-  localparam ADDR_MODULUS_END    = 8'hff;
+  localparam ADDR_MODULUS_PTR_RST  = 8'h30;
+  localparam ADDR_MODULUS_DATA     = 8'h31;
 
-  localparam EXPONENT_PREFIX     = 4'h2;
-  localparam ADDR_EXPONENT_START = 8'h00;
-  localparam ADDR_EXPONENT_END   = 8'hff;
+  localparam ADDR_EXPONENT_PTR_RST = 8'h40;
+  localparam ADDR_EXPONENT_DATA    = 8'h41;
 
-  localparam MESSAGE_PREFIX      = 4'h3;
-  localparam MESSAGE_START       = 8'h00;
-  localparam MESSAGE_END         = 8'hff;
+  localparam ADDR_MESSAGE_PTR_RST  = 8'h50;
+  localparam ADDR_MESSAGE_DATA     = 8'h51;
 
-  localparam RESULT_PREFIX       = 4'h4;
-  localparam RESULT_START        = 8'h00;
-  localparam RESULT_END          = 8'hff;
+  localparam ADDR_RESULT_PTR_RST   = 8'h60;
+  localparam ADDR_RESULT_DATA      = 8'h61;
 
 
   //----------------------------------------------------------------
@@ -366,7 +362,7 @@ module tb_modexp();
       tb_write_data = word;
       tb_cs = 1;
       tb_we = 1;
-      #(2 * CLK_PERIOD);
+      #(CLK_PERIOD);
       tb_cs = 0;
       tb_we = 0;
     end
@@ -543,16 +539,19 @@ module tb_modexp();
       $display("TC1: Trying to calculate 3**7 mod 11 = 9");
 
       // Write 3 to message memory.
-      write_word({MESSAGE_PREFIX, 8'h00}, 32'h00000003);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_PTR_RST}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h00000003);
+      write_word({GENERAL_PREFIX, ADDR_LENGTH}, 32'h00000001);
 
       // Write 7 to exponent memory and set length to one word.
-      write_word({EXPONENT_PREFIX, 8'h00}, 32'h00000007);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_PTR_RST}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000007);
       write_word({GENERAL_PREFIX, ADDR_EXPONENT_LENGTH}, 32'h00000001);
 
       // Write 11 to modulus memory and set length to one word.
-      write_word({MODULUS_PREFIX, 8'h00}, 32'h0000000b);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_PTR_RST}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h0000000b);
       write_word({GENERAL_PREFIX, ADDR_MODULUS_LENGTH}, 32'h00000001);
-      write_word({GENERAL_PREFIX, ADDR_LENGTH}, 32'h00000001);
 
       start_test_cycle_ctr();
 
@@ -563,7 +562,8 @@ module tb_modexp();
       stop_test_cycle_ctr();
 
       // Read out result word and check result.
-      read_word({RESULT_PREFIX, 8'h00});
+      write_word({GENERAL_PREFIX, ADDR_RESULT_PTR_RST}, 32'h00000000);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA});
       read_data = tb_read_data;
 
       if (read_data == 32'h00000009)
@@ -598,17 +598,20 @@ module tb_modexp();
       tc_ctr = tc_ctr + 1;
       $display("TC2: Trying to calculate 251**251 mod 257 = 183");
 
-      // Write 13 to (m)esaage memory.
-      write_word({MESSAGE_PREFIX, 8'h00}, 32'h000000fb);
+      // Write 13 to message memory.
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_PTR_RST}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h000000fb);
+      write_word({GENERAL_PREFIX, ADDR_LENGTH}, 32'h00000001);
 
       // Write 11 to exponent memory and set length to one word.
-      write_word({EXPONENT_PREFIX, 8'h00}, 32'h000000fb);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_PTR_RST}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h000000fb);
       write_word({GENERAL_PREFIX, ADDR_EXPONENT_LENGTH}, 32'h00000001);
 
       // Write 7 to modulus memory and set length to one word.
-      write_word({MODULUS_PREFIX, 8'h00}, 32'h00000101);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_PTR_RST}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h00000101);
       write_word({GENERAL_PREFIX, ADDR_MODULUS_LENGTH}, 32'h00000001);
-      write_word({GENERAL_PREFIX, ADDR_LENGTH}, 32'h00000001);
 
       start_test_cycle_ctr();
 
@@ -619,7 +622,8 @@ module tb_modexp();
       stop_test_cycle_ctr();
 
       // Read out result word and check result.
-      read_word({RESULT_PREFIX, 8'h00});
+      write_word({GENERAL_PREFIX, ADDR_RESULT_PTR_RST}, 32'h00000000);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA});
       read_data = tb_read_data;
 
       if (read_data == 32'h000000b7)
@@ -630,7 +634,7 @@ module tb_modexp();
       else
         begin
           $display("*** ERROR: TC2 NOT successful.");
-          $display("Expected: 0x06, got 0x%08x", read_data);
+          $display("Expected: 0x000000b7, got 0x%08x", read_data);
           error_ctr = error_ctr + 1;
         end
     end
@@ -653,16 +657,19 @@ module tb_modexp();
       tc_ctr = tc_ctr + 1;
       $display("TC3: Trying to calculate 0x81 ** 0x41 mod 0x87 = 0x36");
 
-      write_word({MESSAGE_PREFIX, 8'h00}, 32'h00000081);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_PTR_RST}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h00000081);
+      write_word({GENERAL_PREFIX, ADDR_LENGTH}, 32'h00000001);
 
       // Write 11 to exponent memory and set length to one word.
-      write_word({EXPONENT_PREFIX, 8'h00}, 32'h00000041);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_PTR_RST}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000041);
       write_word({GENERAL_PREFIX, ADDR_EXPONENT_LENGTH}, 32'h00000001);
 
       // Write 7 to modulus memory and set length to one word.
-      write_word({MODULUS_PREFIX, 8'h00}, 32'h00000087);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_PTR_RST}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h00000087);
       write_word({GENERAL_PREFIX, ADDR_MODULUS_LENGTH}, 32'h00000001);
-      write_word({GENERAL_PREFIX, ADDR_LENGTH}, 32'h00000001);
 
       start_test_cycle_ctr();
 
@@ -673,7 +680,8 @@ module tb_modexp();
       stop_test_cycle_ctr();
 
       // Read out result word and check result.
-      read_word({RESULT_PREFIX, 8'h00});
+      write_word({GENERAL_PREFIX, ADDR_RESULT_PTR_RST}, 32'h00000000);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA});
       read_data = tb_read_data;
 
       if (read_data == 32'h00000036)
@@ -722,12 +730,17 @@ module tb_modexp();
       tc_ctr = tc_ctr + 1;
       $display("autogenerated_BASIC_M4962768465676381896: 00000001946473e1 ** h000000010e85e74f mod 0000000170754797 ");
 
-      write_word({MESSAGE_PREFIX, 8'h00}, 32'h00000001); //TEMPLATE_MESSAGE_VALES
-      write_word({MESSAGE_PREFIX, 8'h01}, 32'h946473e1); //TEMPLATE_MESSAGE_VALES
-      write_word({EXPONENT_PREFIX, 8'h00}, 32'h00000001); //TEMPLATE_EXPONENT_VALES
-      write_word({EXPONENT_PREFIX, 8'h01}, 32'h0e85e74f); //TEMPLATE_EXPONENT_VALES
-      write_word({MODULUS_PREFIX, 8'h00}, 32'h00000001); //TEMPLATE_MODULUS_VALUES
-      write_word({MODULUS_PREFIX, 8'h01}, 32'h70754797); //TEMPLATE_MODULUS_VALUES
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_PTR_RST}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h00000001); //TEMPLATE_MESSAGE_VALUES
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h946473e1); //TEMPLATE_MESSAGE_VALUES
+
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_PTR_RST}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000001); //TEMPLATE_EXPONENT_VALUES
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h0e85e74f); //TEMPLATE_EXPONENT_VALUES
+
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_PTR_RST}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h00000001); //TEMPLATE_MODULUS_VALUES
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h70754797); //TEMPLATE_MODULUS_VALUES
 
       write_word({GENERAL_PREFIX, ADDR_EXPONENT_LENGTH}, 32'h00000002); //TEMPLATE_MESSAGE_LENGTH
       write_word({GENERAL_PREFIX, ADDR_MODULUS_LENGTH}, 32'h00000002); //TEMPLATE_MODULUS_LENGTH
@@ -741,8 +754,9 @@ module tb_modexp();
 
       stop_test_cycle_ctr();
 
-      read_word({RESULT_PREFIX, 8'h00}); read_data = tb_read_data; success = success & assertEquals(32'h00000000, read_data); //TEMPLATE_EXPECTED_VALUES
-      read_word({RESULT_PREFIX, 8'h01}); read_data = tb_read_data; success = success & assertEquals(32'h7761ed4f, read_data); //TEMPLATE_EXPECTED_VALUES
+      write_word({GENERAL_PREFIX, ADDR_RESULT_PTR_RST}, 32'h00000000);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h00000000, read_data); //TEMPLATE_EXPECTED_VALUES
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h7761ed4f, read_data); //TEMPLATE_EXPECTED_VALUES
 
       if (success !== 1)
         begin

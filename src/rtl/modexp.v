@@ -10,9 +10,12 @@
 //   C = M ** e mod N
 //
 //   M is a message with a length of n bits
-//   e is the exponent with a length of at most 32 bits
+//   e is the exponent with a length of m bits
 //   N is the modulus  with a length of n bits
-//   n is can be 32 and up to and including 8192 bits in steps
+//
+//   n can be 32 and up to and including 8192 bits in steps
+//   of 32 bits.
+//   m can be one and up to and including 8192 bits in steps
 //   of 32 bits.
 //
 // The core has a 32-bit memory like interface, but provides
@@ -20,7 +23,7 @@
 // has is done. Additionally, any errors will also be asserted.
 //
 //
-// Author: Joachim Strombergson, Peter Magnusson.
+// Author: Joachim Strombergson, Peter Magnusson
 // Copyright (c) 2015, Assured AB
 // All rights reserved.
 //
@@ -48,6 +51,7 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 // ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
 //
 //======================================================================
 
@@ -83,27 +87,19 @@ module modexp(
   localparam ADDR_EXPONENT_LENGTH = 8'h21;
   localparam ADDR_LENGTH          = 8'h22; // Should be deprecated.
 
+  localparam ADDR_MODULUS_PTR_RST  = 8'h30;
+  localparam ADDR_MODULUS_DATA     = 8'h31;
 
-  localparam MODULUS_PREFIX      = 4'h1;
-  localparam ADDR_MODULUS_START  = 8'h00;
-  localparam ADDR_MODULUS_END    = 8'hff;
+  localparam ADDR_EXPONENT_PTR_RST = 8'h40;
+  localparam ADDR_EXPONENT_DATA    = 8'h41;
 
+  localparam ADDR_MESSAGE_PTR_RST  = 8'h50;
+  localparam ADDR_MESSAGE_DATA     = 8'h51;
 
-  localparam EXPONENT_PREFIX     = 4'h2;
-  localparam ADDR_EXPONENT_START = 8'h00;
-  localparam ADDR_EXPONENT_END   = 8'hff;
+  localparam ADDR_RESULT_PTR_RST   = 8'h60;
+  localparam ADDR_RESULT_DATA      = 8'h61;
 
-
-  localparam MESSAGE_PREFIX      = 4'h3;
-  localparam MESSAGE_START       = 8'h00;
-  localparam MESSAGE_END         = 8'hff;
-
-
-  localparam RESULT_PREFIX       = 4'h4;
-  localparam RESULT_START        = 8'h00;
-  localparam RESULT_END          = 8'hff;
-
-  localparam DEFAULT_MODLENGTH   = 8'h80;
+  localparam DEFAULT_MODLENGTH   = 8'h80; // 2048 bits.
   localparam DEFAULT_EXPLENGTH   = 8'h80;
 
   localparam MONTPROD_SELECT_ONE_NR = 3'h0;
@@ -133,7 +129,7 @@ module modexp(
 
   localparam CORE_NAME0          = 32'h6d6f6465; // "mode"
   localparam CORE_NAME1          = 32'h78702020; // "xp  "
-  localparam CORE_VERSION        = 32'h302e3530; // "0.50"
+  localparam CORE_VERSION        = 32'h302e3531; // "0.51"
 
 
   //----------------------------------------------------------------
@@ -194,11 +190,6 @@ module modexp(
   reg          exponation_mode_new;
   reg          exponation_mode_we;
 
-  reg          residue_valid_reg;
-  reg          residue_valid_new;
-  reg          invalidate_residue;
-  reg          residue_valid_int_validated;
-
 
   //----------------------------------------------------------------
   // Wires.
@@ -206,17 +197,14 @@ module modexp(
   reg [07 : 0]  modulus_mem_int_rd_addr;
   wire [31 : 0] modulus_mem_int_rd_data;
   wire [31 : 0] modulus_mem_api_rd_data;
-  reg           modulus_mem_api_we;
 
   reg [07 : 0]  message_mem_int_rd_addr;
   wire [31 : 0] message_mem_int_rd_data;
   wire [31 : 0] message_mem_api_rd_data;
-  reg           message_mem_api_we;
 
   reg [07 : 0]  exponent_mem_int_rd_addr;
   wire [31 : 0] exponent_mem_int_rd_data;
   wire [31 : 0] exponent_mem_api_rd_data;
-  reg           exponent_mem_api_we;
 
   wire [31 : 0] result_mem_api_rd_data;
   reg  [07 : 0] result_mem_int_rd_addr;
@@ -268,6 +256,26 @@ module modexp(
   reg  [07 : 0] residue_mem_montprod_read_addr;
   wire [31 : 0] residue_mem_montprod_read_data;
 
+  reg           residue_valid_reg;
+  reg           residue_valid_new;
+  reg           invalidate_residue;
+  reg           residue_valid_int_validated;
+
+  reg           modulus_mem_api_rst;
+  reg           modulus_mem_api_cs;
+  reg           modulus_mem_api_wr;
+
+  reg           exponent_mem_api_rst;
+  reg           exponent_mem_api_cs;
+  reg           exponent_mem_api_wr;
+
+  reg           message_mem_api_rst;
+  reg           message_mem_api_cs;
+  reg           message_mem_api_wr;
+
+  reg           result_mem_api_rst;
+  reg           result_mem_api_cs;
+
 
   //----------------------------------------------------------------
   // Concurrent connectivity for ports etc.
@@ -301,6 +309,7 @@ module modexp(
                          .result_we(montprod_result_we)
                         );
 
+
   residue residue_inst(
                      .clk(clk),
                      .reset_n(reset_n),
@@ -328,49 +337,57 @@ module modexp(
                            .write_data(residue_opa_wr_data)
                           );
 
-  blockmem2r1w modulus_mem(
-                           .clk(clk),
-                           .read_addr0(modulus_mem_int_rd_addr),
-                           .read_data0(modulus_mem_int_rd_data),
-                           .read_addr1(address[7 : 0]),
-                           .read_data1(modulus_mem_api_rd_data),
-                           .wr(modulus_mem_api_we),
-                           .write_addr(address[7 : 0]),
-                           .write_data(write_data)
-                          );
+  blockmem2r1wptr modulus_mem(
+                              .clk(clk),
+                              .reset_n(reset_n),
+                              .read_addr0(modulus_mem_int_rd_addr),
+                              .read_data0(modulus_mem_int_rd_data),
+                              .read_data1(modulus_mem_api_rd_data),
+                              .rst(modulus_mem_api_rst),
+                              .cs(modulus_mem_api_cs),
+                              .wr(modulus_mem_api_wr),
+                              .write_data(write_data)
+                             );
 
-  blockmem2r1w message_mem(
-                           .clk(clk),
-                           .read_addr0(message_mem_int_rd_addr),
-                           .read_data0(message_mem_int_rd_data),
-                           .read_addr1(address[7 : 0]),
-                           .read_data1(message_mem_api_rd_data),
-                           .wr(message_mem_api_we),
-                           .write_addr(address[7 : 0]),
-                           .write_data(write_data)
-                          );
 
-  blockmem2r1w exponent_mem(
-                           .clk(clk),
-                           .read_addr0(exponent_mem_int_rd_addr),
-                           .read_data0(exponent_mem_int_rd_data),
-                           .read_addr1(address[7 : 0]),
-                           .read_data1(exponent_mem_api_rd_data),
-                           .wr(exponent_mem_api_we),
-                           .write_addr(address[7 : 0]),
-                           .write_data(write_data)
-                           );
+  blockmem2r1wptr message_mem(
+                              .clk(clk),
+                              .reset_n(reset_n),
+                              .read_addr0(message_mem_int_rd_addr),
+                              .read_data0(message_mem_int_rd_data),
+                              .read_data1(message_mem_api_rd_data),
+                              .rst(message_mem_api_rst),
+                              .cs(message_mem_api_cs),
+                              .wr(message_mem_api_wr),
+                              .write_data(write_data)
+                             );
 
-  blockmem2r1w result_mem(
-                          .clk(clk),
-                          .read_addr0(result_mem_int_rd_addr[7 : 0]),
-                          .read_data0(result_mem_int_rd_data),
-                          .read_addr1(address[7 : 0]),
-                          .read_data1(result_mem_api_rd_data),
-                          .wr(result_mem_int_we),
-                          .write_addr(result_mem_int_wr_addr),
-                          .write_data(result_mem_int_wr_data)
-                         );
+
+  blockmem2r1wptr exponent_mem(
+                               .clk(clk),
+                               .reset_n(reset_n),
+                               .read_addr0(exponent_mem_int_rd_addr),
+                               .read_data0(exponent_mem_int_rd_data),
+                               .read_data1(exponent_mem_api_rd_data),
+                               .rst(exponent_mem_api_rst),
+                               .cs(exponent_mem_api_cs),
+                               .wr(exponent_mem_api_wr),
+                               .write_data(write_data)
+                              );
+
+
+  blockmem2rptr1w result_mem(
+                             .clk(clk),
+                             .reset_n(reset_n),
+                             .read_addr0(result_mem_int_rd_addr[7 : 0]),
+                             .read_data0(result_mem_int_rd_data),
+                             .read_data1(result_mem_api_rd_data),
+                             .rst(result_mem_api_rst),
+                             .cs(result_mem_api_cs),
+                             .wr(result_mem_int_we),
+                             .write_addr(result_mem_int_wr_addr),
+                             .write_data(result_mem_int_wr_data)
+                            );
 
   blockmem2r1w p_mem(
                      .clk(clk),
@@ -404,7 +421,7 @@ module modexp(
           modexp_ctrl_reg     <= CTRL_IDLE;
           one_reg             <= 32'h0;
           b_one_reg           <= 32'h0;
-          length_reg          <= 8'h0;
+          length_reg          <= DEFAULT_MODLENGTH;
           length_m1_reg       <= 8'h0;
           loop_counter_reg    <= 13'b0;
           ei_reg              <= 1'b0;
@@ -413,9 +430,9 @@ module modexp(
         end
       else
         begin
-          one_reg <= one_new;
-          b_one_reg <= b_one_new;
-          residue_valid_reg <= residue_valid_new;
+          one_reg             <= one_new;
+          b_one_reg           <= b_one_new;
+          residue_valid_reg   <= residue_valid_new;
 
           if (exponent_length_we)
             exponent_length_reg <= exponent_length_new;
@@ -467,11 +484,24 @@ module modexp(
       exponent_length_we  = 1'b0;
       start_new           = 1'b0;
       start_we            = 1'b0;
-      modulus_mem_api_we  = 1'b0;
-      exponent_mem_api_we = 1'b0;
-      message_mem_api_we  = 1'b0;
       length_we           = 1'b0;
       invalidate_residue  = 1'b0;
+
+      modulus_mem_api_rst  = 1'b0;
+      modulus_mem_api_cs   = 1'b0;
+      modulus_mem_api_wr   = 1'b0;
+
+      exponent_mem_api_rst = 1'b0;
+      exponent_mem_api_cs  = 1'b0;
+      exponent_mem_api_wr  = 1'b0;
+
+      message_mem_api_rst  = 1'b0;
+      message_mem_api_cs   = 1'b0;
+      message_mem_api_wr   = 1'b0;
+
+      result_mem_api_rst   = 1'b0;
+      result_mem_api_cs    = 1'b0;
+
 
       //TODO: Add API code to enable fast exponation for working with public exponents.
       exponation_mode_we  = 1'b0;
@@ -506,11 +536,6 @@ module modexp(
                           start_we  = 1'b1;
                         end
 
-                      ADDR_LENGTH:
-                        begin
-                          length_we = 1'b1;
-                        end
-
                       ADDR_MODULUS_LENGTH:
                         begin
                           modulus_length_we = 1'b1;
@@ -519,6 +544,50 @@ module modexp(
                       ADDR_EXPONENT_LENGTH:
                         begin
                           exponent_length_we = 1'b1;
+                        end
+
+                      ADDR_LENGTH:
+                        begin
+                          length_we = 1'b1;
+                        end
+
+                      ADDR_MODULUS_PTR_RST:
+                        begin
+                          modulus_mem_api_rst = 1'b1;
+                        end
+
+                      ADDR_MODULUS_DATA:
+                        begin
+                          modulus_mem_api_cs = 1'b1;
+                          modulus_mem_api_wr = 1'b1;
+                          invalidate_residue = 1'b1;
+                        end
+
+                      ADDR_EXPONENT_PTR_RST:
+                        begin
+                          exponent_mem_api_rst = 1'b1;
+                        end
+
+                      ADDR_EXPONENT_DATA:
+                        begin
+                          exponent_mem_api_cs = 1'b1;
+                          exponent_mem_api_wr = 1'b1;
+                        end
+
+                      ADDR_MESSAGE_PTR_RST:
+                        begin
+                          message_mem_api_rst = 1'b1;
+                        end
+
+                      ADDR_MESSAGE_DATA:
+                        begin
+                          message_mem_api_cs = 1'b1;
+                          message_mem_api_wr = 1'b1;
+                        end
+
+                      ADDR_RESULT_PTR_RST:
+                        begin
+                          result_mem_api_rst = 1'b1;
                         end
 
                       default:
@@ -553,53 +622,35 @@ module modexp(
                       ADDR_LENGTH:
                         tmp_read_data = {24'h000000, length_reg};
 
+                      ADDR_MODULUS_DATA:
+                        begin
+                          modulus_mem_api_cs = 1'b1;
+                          tmp_read_data      = modulus_mem_api_rd_data;
+                        end
+
+                      ADDR_EXPONENT_DATA:
+                        begin
+                          exponent_mem_api_cs = 1'b1;
+                          tmp_read_data       = exponent_mem_api_rd_data;
+                        end
+
+                      ADDR_MESSAGE_DATA:
+                        begin
+                          message_mem_api_cs = 1'b1;
+                          tmp_read_data      = message_mem_api_rd_data;
+                        end
+
+                      ADDR_RESULT_DATA:
+                        begin
+                          result_mem_api_cs = 1'b1;
+                          tmp_read_data     = result_mem_api_rd_data;
+                        end
+
                       default:
                         begin
                         end
                     endcase // case (address[7 : 0])
                   end
-              end
-
-            MODULUS_PREFIX:
-              begin
-                if (we)
-                  begin
-                    modulus_mem_api_we = 1'b1;
-                    invalidate_residue = 1'b1;
-                  end
-                else
-                  begin
-                    tmp_read_data = modulus_mem_api_rd_data;
-                  end
-              end
-
-            EXPONENT_PREFIX:
-              begin
-                if (we)
-                  begin
-                    exponent_mem_api_we = 1'b1;
-                  end
-                else
-                  begin
-                    tmp_read_data = exponent_mem_api_rd_data;
-                  end
-              end
-
-            MESSAGE_PREFIX:
-              begin
-                if (we)
-                  begin
-                    message_mem_api_we = 1'b1;
-                  end
-                else
-                  begin
-                    tmp_read_data = message_mem_api_rd_data;
-                  end
-              end
-
-            RESULT_PREFIX:
-              begin
-                tmp_read_data = result_mem_api_rd_data;
               end
 
             default:
