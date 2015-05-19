@@ -194,6 +194,11 @@ module modexp(
   reg          exponation_mode_new;
   reg          exponation_mode_we;
 
+  reg          residue_valid_reg;
+  reg          residue_valid_new;
+  reg          invalidate_residue;
+  reg          residue_valid_int_validated;
+
 
   //----------------------------------------------------------------
   // Wires.
@@ -263,10 +268,6 @@ module modexp(
   reg  [07 : 0] residue_mem_montprod_read_addr;
   wire [31 : 0] residue_mem_montprod_read_data;
 
-  reg           residue_valid_reg;
-  reg           residue_valid_new;
-  reg           invalidate_residue;
-  reg           residue_valid_int_validated;
 
   //----------------------------------------------------------------
   // Concurrent connectivity for ports etc.
@@ -299,7 +300,6 @@ module modexp(
                          .result_data(montprod_result_data),
                          .result_we(montprod_result_we)
                         );
-
 
   residue residue_inst(
                      .clk(clk),
@@ -339,7 +339,6 @@ module modexp(
                            .write_data(write_data)
                           );
 
-
   blockmem2r1w message_mem(
                            .clk(clk),
                            .read_addr0(message_mem_int_rd_addr),
@@ -351,7 +350,6 @@ module modexp(
                            .write_data(write_data)
                           );
 
-
   blockmem2r1w exponent_mem(
                            .clk(clk),
                            .read_addr0(exponent_mem_int_rd_addr),
@@ -362,7 +360,6 @@ module modexp(
                            .write_addr(address[7 : 0]),
                            .write_data(write_data)
                            );
-
 
   blockmem2r1w result_mem(
                           .clk(clk),
