@@ -50,11 +50,16 @@ module tb_modexp();
   //----------------------------------------------------------------
   // Internal constant and parameter definitions.
   //----------------------------------------------------------------
-  parameter DEBUG = 0;
-  parameter DEBUG_EI = 1;
+  // Debug output control.
+  parameter DEBUG               = 0;
+  parameter DEBUG_EI            = 0;
+  parameter DISPLAY_TEST_CYCLES = 1;
 
+
+  // Clock defines.
   localparam CLK_HALF_PERIOD = 1;
   localparam CLK_PERIOD      = 2 * CLK_HALF_PERIOD;
+
 
   // The DUT address map.
   localparam GENERAL_PREFIX      = 4'h0;
@@ -69,8 +74,8 @@ module tb_modexp();
   localparam STATUS_READY_BIT    = 0;
 
   localparam ADDR_MODULUS_LENGTH  = 8'h20;
-  localparam ADDR_MESSAGE_LENGTH  = 8'h21;
-  localparam ADDR_EXPONENT_LENGTH = 8'h22;
+  localparam ADDR_EXPONENT_LENGTH = 8'h21;
+  localparam ADDR_LENGTH          = 8'h22;
 
   localparam MODULUS_PREFIX      = 4'h1;
   localparam ADDR_MODULUS_START  = 8'h00;
@@ -92,6 +97,10 @@ module tb_modexp();
   //----------------------------------------------------------------
   // Register and Wire declarations.
   //----------------------------------------------------------------
+  reg [31 : 0]  test_cycle_ctr;
+  reg           test_cycle_ctr_rst;
+  reg           test_cycle_ctr_inc;
+
   reg [31 : 0]  cycle_ctr;
   reg [31 : 0]  error_ctr;
   reg [31 : 0]  tc_ctr;
@@ -153,12 +162,62 @@ module tb_modexp();
         end
     end
 
+
+  //----------------------------------------------------------------
+  // test_cycle_counter
+  //
+  // Used to measure the number of cycles it takes to perform
+  // a given test case.
+  //----------------------------------------------------------------
+  always @ (posedge tb_clk)
+    begin
+      if (test_cycle_ctr_rst)
+        test_cycle_ctr = 64'h0000000000000000;
+
+      if (test_cycle_ctr_inc)
+        test_cycle_ctr = test_cycle_ctr + 1;
+    end
+
+
+  //----------------------------------------------------------------
+  // start_test_cycle_ctr
+  //
+  // Reset and start the test cycle counter.
+  //----------------------------------------------------------------
+  task start_test_cycle_ctr();
+    begin
+      test_cycle_ctr_rst = 1;
+      #(CLK_PERIOD);
+      test_cycle_ctr_rst = 0;
+
+      test_cycle_ctr_inc = 1;
+    end
+  endtask // start_test_cycle_ctr()
+
+
+  //----------------------------------------------------------------
+  // stop_test_cycle_ctr()
+  //
+  // Stop the test cycle counter and optionally display the
+  // result.
+  //----------------------------------------------------------------
+  task stop_test_cycle_ctr();
+    begin
+      test_cycle_ctr_inc = 0;
+      #(CLK_PERIOD);
+
+      if (DISPLAY_TEST_CYCLES)
+        $display("*** Number of cycles performed during test: 0x%016x", test_cycle_ctr);
+    end
+  endtask // stop_test_cycle_ctr()
+
+
   //----------------------------------------------------------------
   // ei_monitor()
   //
   // Displays ei_new, the most important variable for determining
-  // what modexp will do (i.e. should Z=MONTPROD( Z, P, M) be 
-  // performed 
+  // what modexp will do (i.e. should Z=MONTPROD( Z, P, M) be
+  // performed
   //----------------------------------------------------------------
   always @*
     begin : ei_monitor
@@ -493,10 +552,15 @@ module tb_modexp();
       // Write 11 to modulus memory and set length to one word.
       write_word({MODULUS_PREFIX, 8'h00}, 32'h0000000b);
       write_word({GENERAL_PREFIX, ADDR_MODULUS_LENGTH}, 32'h00000001);
+      write_word({GENERAL_PREFIX, ADDR_LENGTH}, 32'h00000001);
+
+      start_test_cycle_ctr();
 
       // Start processing and wait for ready.
       write_word({GENERAL_PREFIX, ADDR_CTRL}, 32'h00000001);
       wait_ready();
+
+      stop_test_cycle_ctr();
 
       // Read out result word and check result.
       read_word({RESULT_PREFIX, 8'h00});
@@ -544,10 +608,15 @@ module tb_modexp();
       // Write 7 to modulus memory and set length to one word.
       write_word({MODULUS_PREFIX, 8'h00}, 32'h00000101);
       write_word({GENERAL_PREFIX, ADDR_MODULUS_LENGTH}, 32'h00000001);
+      write_word({GENERAL_PREFIX, ADDR_LENGTH}, 32'h00000001);
+
+      start_test_cycle_ctr();
 
       // Start processing and wait for ready.
       write_word({GENERAL_PREFIX, ADDR_CTRL}, 32'h00000001);
       wait_ready();
+
+      stop_test_cycle_ctr();
 
       // Read out result word and check result.
       read_word({RESULT_PREFIX, 8'h00});
@@ -593,10 +662,15 @@ module tb_modexp();
       // Write 7 to modulus memory and set length to one word.
       write_word({MODULUS_PREFIX, 8'h00}, 32'h00000087);
       write_word({GENERAL_PREFIX, ADDR_MODULUS_LENGTH}, 32'h00000001);
+      write_word({GENERAL_PREFIX, ADDR_LENGTH}, 32'h00000001);
+
+      start_test_cycle_ctr();
 
       // Start processing and wait for ready.
       write_word({GENERAL_PREFIX, ADDR_CTRL}, 32'h00000001);
       wait_ready();
+
+      stop_test_cycle_ctr();
 
       // Read out result word and check result.
       read_word({RESULT_PREFIX, 8'h00});
@@ -616,6 +690,9 @@ module tb_modexp();
     end
   endtask // tc3
 
+
+  //----------------------------------------------------------------
+  //----------------------------------------------------------------
   function assertEquals(
       input [31:0] expected,
       input [31:0] actual
@@ -635,6 +712,9 @@ module tb_modexp();
 
   integer success;
 
+
+  //----------------------------------------------------------------
+  //----------------------------------------------------------------
   task autogenerated_BASIC_M4962768465676381896();
     reg [31 : 0] read_data;
     begin
@@ -651,16 +731,21 @@ module tb_modexp();
 
       write_word({GENERAL_PREFIX, ADDR_EXPONENT_LENGTH}, 32'h00000002); //TEMPLATE_MESSAGE_LENGTH
       write_word({GENERAL_PREFIX, ADDR_MODULUS_LENGTH}, 32'h00000002); //TEMPLATE_MODULUS_LENGTH
+      write_word({GENERAL_PREFIX, ADDR_LENGTH}, 32'h00000002); //TEMPLATE_LENGTH
+
+      start_test_cycle_ctr();
 
       // Start processing and wait for ready.
       write_word({GENERAL_PREFIX, ADDR_CTRL}, 32'h00000001);
       wait_ready();
 
-      read_word({RESULT_PREFIX, 8'h00}); read_data = tb_read_data; success = success & assertEquals(32'h00000000, read_data); //TEMPLATE_EXPECTED_VALUES 
-      read_word({RESULT_PREFIX, 8'h01}); read_data = tb_read_data; success = success & assertEquals(32'h7761ed4f, read_data); //TEMPLATE_EXPECTED_VALUES 
-     
+      stop_test_cycle_ctr();
+
+      read_word({RESULT_PREFIX, 8'h00}); read_data = tb_read_data; success = success & assertEquals(32'h00000000, read_data); //TEMPLATE_EXPECTED_VALUES
+      read_word({RESULT_PREFIX, 8'h01}); read_data = tb_read_data; success = success & assertEquals(32'h7761ed4f, read_data); //TEMPLATE_EXPECTED_VALUES
+
       if (success !== 1)
-        begin  
+        begin
           $display("*** ERROR: autogenerated_BASIC_M4962768465676381896 was NOT successful.");
           error_ctr = error_ctr + 1;
         end
