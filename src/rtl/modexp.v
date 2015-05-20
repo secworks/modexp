@@ -143,11 +143,8 @@ module modexp(
   reg [07 : 0] modulus_length_new;
   reg          modulus_length_we;
 
-  reg [07 : 0] length_reg;
-  reg [07 : 0] length_new;
   reg [07 : 0] length_m1_reg;
   reg [07 : 0] length_m1_new;
-  reg          length_we;
 
   reg          start_reg;
   reg          start_new;
@@ -421,7 +418,6 @@ module modexp(
           modexp_ctrl_reg     <= CTRL_IDLE;
           one_reg             <= 32'h0;
           b_one_reg           <= 32'h0;
-          length_reg          <= DEFAULT_MODLENGTH;
           length_m1_reg       <= 8'h0;
           loop_counter_reg    <= 13'b0;
           ei_reg              <= 1'b0;
@@ -438,7 +434,10 @@ module modexp(
             exponent_length_reg <= exponent_length_new;
 
           if (modulus_length_we)
-            modulus_length_reg <= modulus_length_new;
+            begin
+              modulus_length_reg <= modulus_length_new;
+              length_m1_reg <= length_m1_new;
+            end
 
           if (start_we)
             start_reg <= start_new;
@@ -454,12 +453,6 @@ module modexp(
 
           if (modexp_ctrl_we)
             modexp_ctrl_reg <= modexp_ctrl_new;
-
-          if (length_we)
-            begin
-              length_reg    <= length_new;
-              length_m1_reg <= length_m1_new;
-            end
 
           if (loop_counter_we)
             loop_counter_reg <= loop_counter_new;
@@ -484,7 +477,6 @@ module modexp(
       exponent_length_we  = 1'b0;
       start_new           = 1'b0;
       start_we            = 1'b0;
-      length_we           = 1'b0;
       invalidate_residue  = 1'b0;
 
       modulus_mem_api_rst  = 1'b0;
@@ -509,7 +501,6 @@ module modexp(
       exponation_mode_new = EXPONATION_MODE_SECRET_SECURE;
       modulus_length_new  = write_data[7 : 0];
       exponent_length_new = write_data[7 : 0];
-      length_new          = write_data[7 : 0];
       length_m1_new       = write_data[7 : 0] - 8'h1;
 
       tmp_read_data       = 32'h00000000;
@@ -544,11 +535,6 @@ module modexp(
                       ADDR_EXPONENT_LENGTH:
                         begin
                           exponent_length_we = 1'b1;
-                        end
-
-                      ADDR_LENGTH:
-                        begin
-                          length_we = 1'b1;
                         end
 
                       ADDR_MODULUS_PTR_RST:
@@ -618,9 +604,6 @@ module modexp(
 
                       ADDR_EXPONENT_LENGTH:
                         tmp_read_data = {24'h000000, exponent_length_reg};
-
-                      ADDR_LENGTH:
-                        tmp_read_data = {24'h000000, length_reg};
 
                       ADDR_MODULUS_DATA:
                         begin
@@ -697,8 +680,8 @@ module modexp(
   always @*
     begin : residue_process
       //N*2, N=length*32, *32 = shl5, *64 = shl6
-      residue_nn = { 1'b0, length_reg, 6'h0 };
-      residue_length = length_reg;
+      residue_nn = { 1'b0, modulus_length_reg, 6'h0 };
+      residue_length = modulus_length_reg;
       residue_opm_data = modulus_mem_int_rd_data;
     end
 
@@ -726,7 +709,7 @@ module modexp(
   always @*
     begin : montprod_op_select
 
-      montprod_length          = length_reg;
+      montprod_length          = modulus_length_reg;
 
       result_mem_int_rd_addr   = montprod_opa_addr;
       message_mem_int_rd_addr  = montprod_opa_addr;
