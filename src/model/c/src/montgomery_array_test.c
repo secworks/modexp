@@ -71,11 +71,10 @@ void test_montgomery_a_b_m(uint32_t A, uint32_t B, uint32_t M) {
 	uint32_t Ar[] = { m_residue(A, M) };
 	uint32_t Br[] = { m_residue(B, M) };
 	uint32_t s[1];
-	uint32_t temp[1];
-	mont_prod_array(1, Ar, Br, MM, temp, s);
+	mont_prod_array(1, Ar, Br, MM, s);
 	uint32_t ONE[] = { 1 };
 	uint32_t monProd[1];
-	mont_prod_array(1, ONE, s, MM, temp, monProd);
+	mont_prod_array(1, ONE, s, MM, monProd);
 	uint32_t productModulusMontgomery = monProd[0];
 	uint32_t success = productModulus == productModulusMontgomery;
 	printf("%c A=%3x B=%3x M=%3x A*B=%3x Ar=%3x Br=%3x Ar*Br=%3x A*B=%3x\n",
