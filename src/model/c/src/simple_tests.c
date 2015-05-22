@@ -62,9 +62,61 @@ void simple_251_251_257(void) {
   assertArrayEquals(1, expected, Z);
 }
 
+
+void small_e_256_mod(void) {
+  printf("=== Simple test with small, implicit e ===\n");
+  uint32_t X[] = {0x00000000, 0xbd589a51, 0x2ba97013,
+                  0xc4736649, 0xe233fd5c, 0x39fcc5e5,
+                  0x2d60b324, 0x1112f2d0, 0x1177c62b};
+  uint32_t E[] = {0x00000000, 0x00000000, 0x00000000,
+                  0x00000000, 0x00000000, 0x00000000,
+                  0x00000000, 0x00000000, 0x00010001};
+
+  uint32_t M[] = {0x00000000, 0xf169d36e, 0xbe2ce61d,
+                   0xc2e87809, 0x4fed15c3, 0x7c70eac5,
+                   0xa123e643, 0x299b36d2, 0x788e583b };
+
+  uint32_t expected[] = {0x00000000, 0x7c5f0fee, 0x73028fc5,
+                         0xc4fe57c4, 0x91a6f5be, 0x33a5c174,
+                         0x2d2c2bcd, 0xda80e7d6, 0xfb4c889f};
+
+  uint32_t Z[] = {0x00000000, 0x00000000, 0x00000000,
+                  0x00000000, 0x00000000, 0x00000000,
+                  0x00000000, 0x00000000, 0x00000000};
+
+  mod_exp_array(9, X, E, M, Z);
+  assertArrayEquals(9, expected, Z);
+}
+
+void small_e_256_mod2(void) {
+  printf("=== Simple test with explicit e ===\n");
+  uint32_t X[] = {0x00000000, 0xbd589a51, 0x2ba97013,
+                  0xc4736649, 0xe233fd5c, 0x39fcc5e5,
+                  0x2d60b324, 0x1112f2d0, 0x1177c62b};
+  uint32_t E[] = {0x00010001};
+
+  uint32_t M[] = {0x00000000, 0xf169d36e, 0xbe2ce61d,
+                   0xc2e87809, 0x4fed15c3, 0x7c70eac5,
+                   0xa123e643, 0x299b36d2, 0x788e583b };
+
+  uint32_t expected[] = {0x00000000, 0x7c5f0fee, 0x73028fc5,
+                         0xc4fe57c4, 0x91a6f5be, 0x33a5c174,
+                         0x2d2c2bcd, 0xda80e7d6, 0xfb4c889f};
+
+  uint32_t Z[] = {0x00000000, 0x00000000, 0x00000000,
+                  0x00000000, 0x00000000, 0x00000000,
+                  0x00000000, 0x00000000, 0x00000000};
+
+  mod_exp_array2(1, 9, X, E, M, Z);
+  assertArrayEquals(9, expected, Z);
+}
+
+
 void simple_tests(void) {
   simple_3_7_11();
   simple_251_251_257();
+  small_e_256_mod();
+  small_e_256_mod2();
 }
 
 //======================================================================
