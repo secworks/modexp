@@ -436,7 +436,7 @@ module modexp(
           if (modulus_length_we)
             begin
               modulus_length_reg <= modulus_length_new;
-              length_m1_reg <= length_m1_new;
+              length_m1_reg      <= length_m1_new;
             end
 
           if (start_we)
@@ -797,13 +797,16 @@ module modexp(
   //----------------------------------------------------------------
   always @*
     begin : loop_counters_process
+      reg [7 : 0] explen_m1;
+
       loop_counter_new = 13'b0;
       loop_counter_we  = 1'b0;
+      last_iteration   = 1'b0;
 
-      if (loop_counter_reg == { length_m1_reg, 5'b11111 })
+      explen_m1 = {exponent_length_reg, 5'b00000} - 1'b1;
+
+      if (loop_counter_reg == explen_m1)
         last_iteration = 1'b1;
-      else
-        last_iteration = 1'b0;
 
       case (modexp_ctrl_reg)
         CTRL_CALCULATE_P0:
@@ -820,11 +823,8 @@ module modexp(
 
         default:
           begin
-            loop_counter_new = loop_counter_reg;
-            loop_counter_we  = 1'b0;
           end
-
-      endcase
+      endcase // case (modexp_ctrl_reg)
     end
 
 
@@ -837,13 +837,13 @@ module modexp(
     begin : exponent_process
       // Accessing new instead of reg - pick up update at
       // CTRL_ITERATE_NEW to remove a pipeline stall.
-      E_word_index  = length_m1_reg - loop_counter_new[ 12 : 5 ];
+      E_word_index  = (exponent_length_reg - 1'b1) - loop_counter_new[12 : 5];
 
-      E_bit_index   = loop_counter_reg[ 04 : 0 ];
+      E_bit_index   = loop_counter_reg[04 : 0];
 
       exponent_mem_int_rd_addr = E_word_index;
 
-      ei_new = exponent_mem_int_rd_data[ E_bit_index ];
+      ei_new = exponent_mem_int_rd_data[E_bit_index];
 
       if (modexp_ctrl_reg == CTRL_ITERATE)
         ei_we = 1'b1;
