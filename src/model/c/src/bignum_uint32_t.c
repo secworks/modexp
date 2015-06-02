@@ -8,13 +8,24 @@ void assertArrayEquals(uint32_t length, uint32_t *expected, uint32_t *actual) { 
 	int equals = 1;
 	for (uint32_t i = 0; i < length; i++)
 		equals &= expected[i] == actual[i];
-	printf("%s expected: [", equals ? "PASS" : "FAIL");
-	for (uint32_t i = 0; i < length - 1; i++)
-		printf("%8x, ", expected[i]);
-	printf("%8x] actual: [ ", expected[length - 1]);
-	for (uint32_t i = 0; i < length - 1; i++)
-		printf("%8x, ", actual[i]);
-	printf("%8x]\n", actual[length - 1]);
+	printf("%s expected: \n[", equals ? "PASS" : "FAIL");
+	for (uint32_t i = 0; i < length - 1; i++) {
+          if ((i > 0) && (!(i % 4)))
+            printf("\n ");
+          printf("0x%08x, ", expected[i]);
+        }
+        printf("0x%08x]", expected[length - 1]);
+
+        printf("\n\n");
+        printf("actual:\n[");
+	for (uint32_t i = 0; i < length - 1; i++) {
+          if ((i > 0) && (!(i % 4)))
+            printf("\n ");
+          printf("0x%08x, ", actual[i]);
+        }
+	printf("0x%08x]\n", actual[length - 1]);
+
+        printf("\n");
 	assert_array_total++;
 	if (!equals)
 		assert_array_error++;
