@@ -252,13 +252,13 @@ module tb_modexp();
       $display("");
 
       $display("State:");
-      $display("ready_reg = 0x%01x, start_reg = 0x%01x, start_new = 0x%01x, start_we = 0x%01x",
-               dut.ready_reg, dut.start_reg, dut.start_new, dut.start_we);
-      $display("residue_valid = 0x%01x", dut.residue_valid_reg);
-      $display("loop_counter_reg = 0x%08x", dut.loop_counter_reg);
-      $display("exponent_length_reg = 0x%02x, modulus_length_reg = 0x%02x length_m1_reg = 0x%02x",
-               dut.exponent_length_reg, dut.modulus_length_reg, dut.length_m1_reg);
-      $display("ctrl_reg = 0x%04x", dut.modexp_ctrl_reg);
+      $display("ready_reg = 0x%01x, start_reg = 0x%01x, start_new = 0x%01x",
+               dut.core_inst.ready_reg, dut.start_reg, dut.start_new);
+      $display("residue_valid = 0x%01x", dut.core_inst.residue_valid_reg);
+      $display("loop_counter_reg = 0x%08x", dut.core_inst.loop_counter_reg);
+      $display("exponent_length_reg = 0x%02x, modulus_length_reg = 0x%02x length_m1 = 0x%02x",
+               dut.exponent_length_reg, dut.modulus_length_reg, dut.core_inst.length_m1);
+      $display("ctrl_reg = 0x%04x", dut.core_inst.modexp_ctrl_reg);
       $display("");
     end
   endtask // dump_dut_state
@@ -403,10 +403,10 @@ module tb_modexp();
         begin
           $display("message_mem[0x%02x .. 0x%02x] = 0x%08x 0x%08x 0x%08x 0x%08x  0x%08x 0x%08x 0x%08x 0x%08x",
                    i[7 : 0], (i[7 : 0] + 8'h07),
-                   dut.message_mem.mem[(i[7 : 0] + 0)], dut.message_mem.mem[(i[7 : 0] + 1)],
-                   dut.message_mem.mem[(i[7 : 0] + 2)], dut.message_mem.mem[(i[7 : 0] + 3)],
-                   dut.message_mem.mem[(i[7 : 0] + 4)], dut.message_mem.mem[(i[7 : 0] + 5)],
-                   dut.message_mem.mem[(i[7 : 0] + 6)], dut.message_mem.mem[(i[7 : 0] + 7)],
+                   dut.core_inst.message_mem.mem[(i[7 : 0] + 0)], dut.core_inst.message_mem.mem[(i[7 : 0] + 1)],
+                   dut.core_inst.message_mem.mem[(i[7 : 0] + 2)], dut.core_inst.message_mem.mem[(i[7 : 0] + 3)],
+                   dut.core_inst.message_mem.mem[(i[7 : 0] + 4)], dut.core_inst.message_mem.mem[(i[7 : 0] + 5)],
+                   dut.core_inst.message_mem.mem[(i[7 : 0] + 6)], dut.core_inst.message_mem.mem[(i[7 : 0] + 7)],
                    );
         end
       $display("");
@@ -427,10 +427,10 @@ module tb_modexp();
         begin
           $display("exponent_mem[0x%02x .. 0x%02x] = 0x%08x 0x%08x 0x%08x 0x%08x  0x%08x 0x%08x 0x%08x 0x%08x",
                    i[7 : 0], (i[7 : 0] + 8'h07),
-                   dut.exponent_mem.mem[(i[7 : 0] + 0)], dut.exponent_mem.mem[(i[7 : 0] + 1)],
-                   dut.exponent_mem.mem[(i[7 : 0] + 2)], dut.exponent_mem.mem[(i[7 : 0] + 3)],
-                   dut.exponent_mem.mem[(i[7 : 0] + 4)], dut.exponent_mem.mem[(i[7 : 0] + 5)],
-                   dut.exponent_mem.mem[(i[7 : 0] + 6)], dut.exponent_mem.mem[(i[7 : 0] + 7)],
+                   dut.core_inst.exponent_mem.mem[(i[7 : 0] + 0)], dut.core_inst.exponent_mem.mem[(i[7 : 0] + 1)],
+                   dut.core_inst.exponent_mem.mem[(i[7 : 0] + 2)], dut.core_inst.exponent_mem.mem[(i[7 : 0] + 3)],
+                   dut.core_inst.exponent_mem.mem[(i[7 : 0] + 4)], dut.core_inst.exponent_mem.mem[(i[7 : 0] + 5)],
+                   dut.core_inst.exponent_mem.mem[(i[7 : 0] + 6)], dut.core_inst.exponent_mem.mem[(i[7 : 0] + 7)],
                    );
         end
       $display("");
@@ -451,10 +451,10 @@ module tb_modexp();
         begin
           $display("modulus_mem[0x%02x .. 0x%02x] = 0x%08x 0x%08x 0x%08x 0x%08x  0x%08x 0x%08x 0x%08x 0x%08x",
                    i[7 : 0], (i[7 : 0] + 8'h07),
-                   dut.modulus_mem.mem[(i[7 : 0] + 0)], dut.modulus_mem.mem[(i[7 : 0] + 1)],
-                   dut.modulus_mem.mem[(i[7 : 0] + 2)], dut.modulus_mem.mem[(i[7 : 0] + 3)],
-                   dut.modulus_mem.mem[(i[7 : 0] + 4)], dut.modulus_mem.mem[(i[7 : 0] + 5)],
-                   dut.modulus_mem.mem[(i[7 : 0] + 6)], dut.modulus_mem.mem[(i[7 : 0] + 7)],
+                   dut.core_inst.modulus_mem.mem[(i[7 : 0] + 0)], dut.core_inst.modulus_mem.mem[(i[7 : 0] + 1)],
+                   dut.core_inst.modulus_mem.mem[(i[7 : 0] + 2)], dut.core_inst.modulus_mem.mem[(i[7 : 0] + 3)],
+                   dut.core_inst.modulus_mem.mem[(i[7 : 0] + 4)], dut.core_inst.modulus_mem.mem[(i[7 : 0] + 5)],
+                   dut.core_inst.modulus_mem.mem[(i[7 : 0] + 6)], dut.core_inst.modulus_mem.mem[(i[7 : 0] + 7)],
                    );
         end
       $display("");
@@ -475,10 +475,10 @@ module tb_modexp();
         begin
           $display("residue_mem[0x%02x .. 0x%02x] = 0x%08x 0x%08x 0x%08x 0x%08x  0x%08x 0x%08x 0x%08x 0x%08x",
                    i[7 : 0], (i[7 : 0] + 8'h07),
-                   dut.residue_mem.mem[(i[7 : 0] + 0)], dut.residue_mem.mem[(i[7 : 0] + 1)],
-                   dut.residue_mem.mem[(i[7 : 0] + 2)], dut.residue_mem.mem[(i[7 : 0] + 3)],
-                   dut.residue_mem.mem[(i[7 : 0] + 4)], dut.residue_mem.mem[(i[7 : 0] + 5)],
-                   dut.residue_mem.mem[(i[7 : 0] + 6)], dut.residue_mem.mem[(i[7 : 0] + 7)],
+                   dut.core_inst.residue_mem.mem[(i[7 : 0] + 0)], dut.core_inst.residue_mem.mem[(i[7 : 0] + 1)],
+                   dut.core_inst.residue_mem.mem[(i[7 : 0] + 2)], dut.core_inst.residue_mem.mem[(i[7 : 0] + 3)],
+                   dut.core_inst.residue_mem.mem[(i[7 : 0] + 4)], dut.core_inst.residue_mem.mem[(i[7 : 0] + 5)],
+                   dut.core_inst.residue_mem.mem[(i[7 : 0] + 6)], dut.core_inst.residue_mem.mem[(i[7 : 0] + 7)],
                    );
         end
       $display("");
@@ -499,10 +499,10 @@ module tb_modexp();
         begin
           $display("result_mem[0x%02x .. 0x%02x] = 0x%08x 0x%08x 0x%08x 0x%08x  0x%08x 0x%08x 0x%08x 0x%08x",
                    i[7 : 0], (i[7 : 0] + 8'h07),
-                   dut.result_mem.mem[(i[7 : 0] + 0)], dut.result_mem.mem[(i[7 : 0] + 1)],
-                   dut.result_mem.mem[(i[7 : 0] + 2)], dut.result_mem.mem[(i[7 : 0] + 3)],
-                   dut.result_mem.mem[(i[7 : 0] + 4)], dut.result_mem.mem[(i[7 : 0] + 5)],
-                   dut.result_mem.mem[(i[7 : 0] + 6)], dut.result_mem.mem[(i[7 : 0] + 7)],
+                   dut.core_inst.result_mem.mem[(i[7 : 0] + 0)], dut.core_inst.result_mem.mem[(i[7 : 0] + 1)],
+                   dut.core_inst.result_mem.mem[(i[7 : 0] + 2)], dut.core_inst.result_mem.mem[(i[7 : 0] + 3)],
+                   dut.core_inst.result_mem.mem[(i[7 : 0] + 4)], dut.core_inst.result_mem.mem[(i[7 : 0] + 5)],
+                   dut.core_inst.result_mem.mem[(i[7 : 0] + 6)], dut.core_inst.result_mem.mem[(i[7 : 0] + 7)],
                    );
         end
       $display("");
@@ -1015,14 +1015,13 @@ module tb_modexp();
       tc1();
       tc2();
       tc3();
-//      autogenerated_BASIC_33bit();
-//      autogenerated_BASIC_128bit();
-      e65537_64it_modulus();
-      e65537_128it_modulus();
-      e65537_256bit_modulus();
+      autogenerated_BASIC_33bit();
+      autogenerated_BASIC_128bit();
+//      e65537_64bit_modulus();
+//      e65537_128bit_modulus();
+//      e65537_256bit_modulus();
 
       display_test_results();
-//      dump_memories();
 
       $display("");
       $display("*** modexp simulation done. ***");
