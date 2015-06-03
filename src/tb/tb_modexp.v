@@ -996,6 +996,362 @@ module tb_modexp();
 
 
   //----------------------------------------------------------------
+  // rob_dec_1024()
+  //
+  // Task that tests modexp with 1024 bit decipher/sign with
+  // real RSA key operands.
+  //----------------------------------------------------------------
+  task rob_dec_1024();
+    reg [31 : 0] read_data;
+    begin
+      success = 32'h1;
+      tc_ctr = tc_ctr + 1;
+      $display("Desipher/Sign Test with Rob 1024 bit operands.");
+
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_PTR_RST}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h3ff26c9e);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h32685b93);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h66570228);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'hf0603c4e);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h04a717c1);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h8038b116);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'heb48325e);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'hcada992a);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h920bb241);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h5aee4afe);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'he2a37e87);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'hb35b9519);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'hb335775d);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h989553e9);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h1326f46e);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h2cdf6b7b);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h84aabfa9);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'hef24c600);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'hb56872ad);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h5edb9041);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'he8ecd7f8);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h535133fb);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'hdefc92c7);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h42384226);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h7d40e5f5);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'hc91bd745);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h9578e460);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'hfc858374);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h3172bed3);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h73b6957c);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'hc0d6a68e);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h33156a61);
+
+
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_PTR_RST}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h0001ffff);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hffffffff);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hffffffff);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hffffffff);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hffffffff);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hffffffff);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hffffffff);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hffffffff);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hffffffff);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hffffffff);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hffffffff);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hffffffff);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hffffffff);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hffffffff);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hffffffff);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hffffffff);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hffffffff);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hffffffff);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hffffffff);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h00303130);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h0d060960);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h86480165);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h03040201);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h05000420);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h8e36fc9a);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'ha31724c3);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h2416263c);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h0366a175);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hfabbb92b);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h741ca649);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h6107074d);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h0343b597);
+
+
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_PTR_RST}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'hd075ec0a);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h95048ef8);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'hcaa69073);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h8d9d58e9);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h1764b437);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h50b58cad);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h8a6e3199);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h135f80ee);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h84eb2bde);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h58d38ee3);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h5825e91e);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'hafdeb1ba);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'ha15a160b);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h0057c47c);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'hc7765e31);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h868a3e15);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h5ee57cef);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'hb008c4dd);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h6a0a89ee);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h98a4ee9c);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h971a07de);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h61e5b0d3);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'hcf70e1cd);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'hc6a0de5b);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h451f2fb9);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'hdb995196);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h9f2f884b);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h4b09749a);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'he6c4ddbe);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h7ee61f79);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h265c6adf);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'hb16b3015);
+
+
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_LENGTH}, 32'h00000021);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_LENGTH}, 32'h00000021);
+
+      start_test_cycle_ctr();
+
+      // Start processing and wait for ready.
+      write_word({GENERAL_PREFIX, ADDR_CTRL}, 32'h00000001);
+      wait_ready();
+
+      stop_test_cycle_ctr();
+
+      write_word({GENERAL_PREFIX, ADDR_RESULT_PTR_RST}, 32'h00000000);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h00000000, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h06339a64, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h367db02a, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hf41158cc, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h95e76049, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h4519c165, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h111184be, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'he41d8ee2, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h2ae5f5d1, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h1da7f962, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hac93ac88, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h915eee13, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'ha3350c22, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hf0dfa62e, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hfdfc2b62, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h29f26e27, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hbebdc84e, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h4746df79, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h7b387ad2, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h13423c9f, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h98e8a146, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hff486b6c, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h1a85414e, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h73117121, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hb700e547, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hab4e07b2, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h21b988b8, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h24dd77c2, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h046b0a20, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hcddb986a, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hac75c2f2, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hb044ed59, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hea565879, read_data);
+
+      if (success !== 1)
+        begin
+          $display("*** ERROR: rob_dec_1024 was NOT successful.");
+          error_ctr = error_ctr + 1;
+        end
+      else
+        $display("*** rob_dec_1024 success.");
+    end
+  endtask // rob_dec_1024
+
+
+  //----------------------------------------------------------------
+  // rob_enc_1024()
+  //
+  // Task that tests modexp with 1024 bit encipher/verify with
+  // real RSA key operands.
+  //----------------------------------------------------------------
+  task rob_enc_1024();
+    reg [31 : 0] read_data;
+    begin
+      success = 32'h1;
+      tc_ctr = tc_ctr + 1;
+      $display("Encipher/Verify Test with Rob 1024 bit operands.");
+
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_PTR_RST}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_DATA}, 32'h00010001);
+
+
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_PTR_RST}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h06339a64);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h367db02a);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hf41158cc);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h95e76049);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h4519c165);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h111184be);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'he41d8ee2);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h2ae5f5d1);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h1da7f962);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hac93ac88);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h915eee13);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'ha3350c22);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hf0dfa62e);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hfdfc2b62);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h29f26e27);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hbebdc84e);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h4746df79);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h7b387ad2);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h13423c9f);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h98e8a146);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hff486b6c);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h1a85414e);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h73117121);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hb700e547);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hab4e07b2);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h21b988b8);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h24dd77c2);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'h046b0a20);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hcddb986a);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hac75c2f2);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hb044ed59);
+      write_word({GENERAL_PREFIX, ADDR_MESSAGE_DATA}, 32'hea565879);
+
+
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_PTR_RST}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h00000000);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'hd075ec0a);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h95048ef8);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'hcaa69073);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h8d9d58e9);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h1764b437);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h50b58cad);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h8a6e3199);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h135f80ee);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h84eb2bde);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h58d38ee3);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h5825e91e);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'hafdeb1ba);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'ha15a160b);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h0057c47c);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'hc7765e31);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h868a3e15);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h5ee57cef);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'hb008c4dd);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h6a0a89ee);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h98a4ee9c);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h971a07de);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h61e5b0d3);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'hcf70e1cd);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'hc6a0de5b);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h451f2fb9);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'hdb995196);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h9f2f884b);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h4b09749a);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'he6c4ddbe);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h7ee61f79);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'h265c6adf);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_DATA}, 32'hb16b3015);
+
+
+      write_word({GENERAL_PREFIX, ADDR_EXPONENT_LENGTH}, 32'h00000021);
+      write_word({GENERAL_PREFIX, ADDR_MODULUS_LENGTH}, 32'h00000021);
+
+      start_test_cycle_ctr();
+
+      // Start processing and wait for ready.
+      write_word({GENERAL_PREFIX, ADDR_CTRL}, 32'h00000001);
+      wait_ready();
+
+      stop_test_cycle_ctr();
+
+      write_word({GENERAL_PREFIX, ADDR_RESULT_PTR_RST}, 32'h00000000);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h00000000, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h0001ffff, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hffffffff, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hffffffff, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hffffffff, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hffffffff, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hffffffff, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hffffffff, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hffffffff, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hffffffff, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hffffffff, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hffffffff, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hffffffff, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hffffffff, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hffffffff, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hffffffff, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hffffffff, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hffffffff, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hffffffff, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hffffffff, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h00303130, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h0d060960, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h86480165, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h03040201, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h05000420, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h8e36fc9a, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'ha31724c3, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h2416263c, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h0366a175, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'hfabbb92b, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h741ca649, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h6107074d, read_data);
+      read_word({GENERAL_PREFIX, ADDR_RESULT_DATA}); read_data = tb_read_data; success = success & assertEquals(32'h0343b597, read_data);
+
+      if (success !== 1)
+        begin
+          $display("*** ERROR: rob_enc_1024 was NOT successful.");
+          error_ctr = error_ctr + 1;
+        end
+      else
+        $display("*** rob_enc_1024 success.");
+    end
+  endtask // rob_enc_1024
+
+
+  //----------------------------------------------------------------
   // main
   //
   // The main test functionality.
@@ -1012,14 +1368,17 @@ module tb_modexp();
       reset_dut();
       dump_dut_state();
 
-      tc1();
-      tc2();
-      tc3();
-      autogenerated_BASIC_33bit();
-      autogenerated_BASIC_128bit();
+//      tc1();
+//      tc2();
+//      tc3();
+//      autogenerated_BASIC_33bit();
+//      autogenerated_BASIC_128bit();
 //      e65537_64bit_modulus();
 //      e65537_128bit_modulus();
 //      e65537_256bit_modulus();
+
+//      rob_dec_1024();
+      rob_enc_1024();
 
       display_test_results();
 
