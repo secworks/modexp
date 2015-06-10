@@ -1,0 +1,1 @@
+This is the destination directory for the java compiler. Must be present.
