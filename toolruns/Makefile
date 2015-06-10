@@ -110,8 +110,8 @@ autogenerate-tests:
 	java -cp ../src/testgenerator/bin/ org.crypttech.modexp.testgenerator.TestGenerator ../src
 
 run-java-model-test:
-	javac -cp junit-4.12.jar:../src/model/java/src:../src/model/java/tests -d ../src/model/java/bin -d ../src/model/java/bin ../src/model/java/test/rsa/MontgomeryArrayTest.java
-	java -cp ../src/model/java/bin:junit-4.12.jar:hamcrest-core-1.3.jar org.junit.runner.JUnitCore rsa.MontgomeryArrayTest
+	javac -cp ../src/model/java/lib/junit-4.12.jar:../src/model/java/src:../src/model/java/tests -d ../src/model/java/bin -d ../src/model/java/bin ../src/model/java/test/rsa/MontgomeryArrayTest.java
+	java -cp ../src/model/java/bin:../src/model/java/lib/junit-4.12.jar:../src/model/java/lib/hamcrest-core-1.3.jar org.junit.runner.JUnitCore rsa.MontgomeryArrayTest
 
 clean:
 	rm -f modexp.sim
