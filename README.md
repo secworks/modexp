@@ -26,6 +26,11 @@ The core is written in Verilog 2001 and suitable for implementation in
 FPGA and ASIC devices. No vendor specific macros are used in the code.
 
 
+## Status ##
+
+Really broken. Does **NOT** work.
+
+
 ## Implementation details ##
 
 The core is iterative with 32-bit operands and not the fastest core on
